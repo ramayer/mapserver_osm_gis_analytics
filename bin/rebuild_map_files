@@ -1,0 +1,1 @@
+erb -r `pwd`/templates/styles/example_style.rb  templates/qsgeo.map.erb  > map/qsgeo.map
