@@ -1,0 +1,90 @@
+#!/usr/bin/env ruby
+
+$usage = %Q{
+
+   ruby make_map > tmp/6.newer.png
+   ruby make_map --size=5000 > tmp/6-5000.newer.png
+
+   ruby make_map --size=5000 --bounds=-14248894.821539,-15538711.096309,14248894.821539,15538711.096309  > tmp/world.newer.png
+
+
+   To convert from lat/lon - you can use: 
+
+      echo '-128 -80' | pg91 cs2cs -f  '%10f' +init=epsg:4326 +to +init=epsg:900913  | perl -pe 's/[ \t]+/,/g' | cut -d , -f 1,2
+      echo '128 80' | pg91 cs2cs -f  '%10f' +init=epsg:4326 +to +init=epsg:900913 | perl -pe 's/[ \t]+/,/g' | cut -d , -f 1,2
+
+}
+
+
+
+
+# env REQUEST_METHOD=GET QUERY_STRING='map=printable_basemap_with_userfeatures.map&SERVICE=WMS&force_browser_cache=1&LAYERS=default,opd&FORMAT=image%2Fpng&VERSION=1.1.1&REQUEST=GetMap&STYLES=&EXCEPTIONS=application%2Fvnd.ogc.se_inimage&SRS=EPSG%3A900913&BBOX=-13621881.964143,4527674.5121469,-13587926.8243654,4563374.55468279&WIDTH=500&HEIGHT=500' /opt/mapserver/bin/mapserv | perl -ne 'print if $. > 2' > /tmp/1.png
+
+require 'uri'
+
+layers=%W{default opd opd_beats}
+layers = ['default']
+
+class Reprojecter
+  def initialize(from='epsg:2276',to='epsg:4326')
+    @cmd = "pg91 cs2cs -f  '%10f' +init=#{from}  +to  +init=#{to}"
+    # @cs2cs_out,@cs2cs_in,@cs2cs_pid = PTY.spawn(@cmd)
+  end
+  def project(x,y)
+    # @cs2cs_in.write "#{lat} #{lon}\n"
+    # @cs2cs_in.flush
+    result = `echo #{x} #{y} | #{@cmd}`
+    x,y,z = result.scan(/[\-\+]?\d+\.?\d*/).map{|x| x.to_f}
+    return x,y,z
+  end
+end
+reproj = Reprojecter.new('epsg:4326','epsg:900913')
+
+
+args = {
+    'map'                 => 'map/qsgeo.map',
+    'SERVICE'		  => 'WMS',
+    'LAYERS'		  => layers.join(','),
+    'FORMAT'		  => 'image/png',
+    'VERSION'		  => '1.1.1',
+    'REQUEST' => 'GetMap',
+    'STYLES' => '',
+    'EXCEPTIONS' => 'application/vnd.ogc.se_inimage',
+    'SRS' => 'EPSG:900913',
+    'BBOX' => '-13621881.964143,4527674.5121469,-13587926.8243654,4563374.55468279',
+    'WIDTH' => '500',
+    'HEIGHT' => '500',
+}
+
+ARGV.each{|x|
+    if x =~ /--size=(.*)/
+        args['WIDTH']=args['HEIGHT']=$1
+    elsif x =~ /--latlon_bounds=(.*)/   # will make rectangle square
+        xmin,ymin,xmax,ymax = * $1.split(',').map{|x| x.to_f}
+        xmin,ymin = *reproj.project(xmin,ymin)
+        xmax,ymax = *reproj.project(xmax,ymax)
+        xc,yc = (xmax+xmin)/2,(ymax+ymin)/2
+        xd,yd = (xmax-xmin)  ,(ymax-ymin)
+        md = xd>yd ? xd/2 : yd/2
+        xmin,ymin,xmax,ymax = xc-md,yc-md,xc+md,yc+md
+        args['BBOX']=[xmin,ymin,xmax,ymax].join(',')
+    elsif x =~ /--bounds=(.*)/   # will make rectangle square
+        xmin,ymin,xmax,ymax = * $1.split(',').map{|x| x.to_f}
+        xc,yc = (xmax+xmin)/2,(ymax+ymin)/2
+        xd,yd = (xmax-xmin)  ,(ymax-ymin)
+        md = xd>yd ? xd/2 : yd/2
+        xmin,ymin,xmax,ymax = xc-md,yc-md,xc+md,yc+md
+        args['BBOX']=[xmin,ymin,xmax,ymax].join(',')
+    elsif x=~/(.*?)=(.*)/
+        args[$1] = $2
+    end
+}
+
+qs = args.keys.map{|x| "#{x}=#{URI::encode args[x]}"}.join('&')
+
+# cmd = %Q{env REQUEST_METHOD=GET QUERY_STRING='#{qs}' /opt/mapserver/bin/mapserv | perl -ne 'print if $. > 2'}
+# cmd = %Q{env REQUEST_METHOD=GET QUERY_STRING='#{qs}' /opt/mapserver5.7/mapserv | perl -ne 'print if $. > 2'}
+cmd = %Q{env REQUEST_METHOD=GET QUERY_STRING='#{qs}' /usr/lib/cgi-bin/mapserv | perl -ne 'print if $. > 2'}
+$stderr.puts cmd
+
+system cmd
