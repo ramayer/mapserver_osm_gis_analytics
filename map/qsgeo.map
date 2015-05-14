@@ -1,20 +1,46 @@
 <%
    # see http://wiki.openstreetmap.org/wiki/Key:highway
-   road_color_1 = '#aa9977'    # major highways
-   road_color_2 = '#ddccaa'    # oregon expressway, etc
-   road_color_3 = '#eeddbb'    # el camino, alma, hwy 9, etc.
-   road_color_4 = '#ffeecc'    # the inside of smaller roads - Stevenson and all smalll roads.
-   road_color_5 = '#aaaaaa'    # roads zoomed out so they're just 1px wide
-   oneway_color = '#9A9ACA'
 
-   water_color  = '#99b3cc'    # water
-   forest_color = '#CCDEAD'   # forest
-   grass_color  = '#DADEAD'    # grass
+   original_colors = {
+       road_color_1: '#aa9977',    # major highways
+       road_color_2: '#ddccaa',    # oregon expressway, etc
+       road_color_3: '#eeddbb',    # el camino, alma, hwy 9, etc.
+       road_color_4: '#ffeecc',    # the inside of smaller roads - Stevenson and all smalll roads.
+       road_color_5: '#aaaaaa',    # roads zoomed out so they're just 1px wide
+       oneway_color: '#9A9ACA',    # the arrows on one-way roads
+       water_color : '#99b3cc',    # water
+       forest_color: '#CCDEAD',    # forest
+       grass_color : '#DADEAD',    # grass
+       land_color_1: '#ffffff',    # basic polygons
+       land_outline_color_1: '#aaaaaa'    # state outline
+   }
 
-   land_color_1 = '#ffffff'    # basic polygons
-   land_outline_color_1 = '#aaaaaa'    # state outline
+   nicer_colors = {
+  	oneway_color : '#000000'
+   }
 
-    oneway_color  = '#000000'
+   colors = default_colors.merge(nicer_colors)
+   colors = colors.merge($map_options) if $map_options
+
+   def get_color(c)
+       colors[c]
+   end
+
+#   road_color_1 = '#aa9977'    # major highways
+#   road_color_2 = '#ddccaa'    # oregon expressway, etc
+#   road_color_3 = '#eeddbb'    # el camino, alma, hwy 9, etc.
+#   road_color_4 = '#ffeecc'    # the inside of smaller roads - Stevenson and all smalll roads.
+#   road_color_5 = '#aaaaaa'    # roads zoomed out so they're just 1px wide
+#   oneway_color = '#9A9ACA'
+#
+#   water_color  = '#99b3cc'    # water
+#   forest_color = '#CCDEAD'   # forest
+#   grass_color  = '#DADEAD'    # grass
+#
+#   land_color_1 = '#ffffff'    # basic polygons
+#   land_outline_color_1 = '#aaaaaa'    # state outline
+#
+#   oneway_color  = '#000000'
  
 %> 
 
@@ -35,7 +61,7 @@ SIZE 800 800
 #EXTENT 47586 1621243 1197769 2679357
 EXTENT 16805492 -4049385 16857351 -3975830
 UNITS meters
-IMAGECOLOR "<%= water_color %>"
+IMAGECOLOR "<%= get_color("water_color") %>"
 WEB
     LOG '/tmp/mapserver.log'
     METADATA
@@ -69,7 +95,7 @@ LAYER
     MINSCALEDENOM 500000
     CLASS
         STYLE
-           COLOR "<%= land_color_1 %>"
+           COLOR "<%= get_color("land_color_1") %>"
         END
     END
 END
@@ -84,7 +110,7 @@ LAYER
     MAXSCALEDENOM 500000
     CLASS
         STYLE
-           COLOR "<%= land_color_1 %>"
+           COLOR "<%= get_color("land_color_1") %>"
         END
     END
 END
@@ -99,7 +125,7 @@ LAYER
     MINSCALEDENOM 250000
     CLASS
         STYLE
-            OUTLINECOLOR "<%= land_outline_color_1 %>"
+            OUTLINECOLOR "<%= get_color("land_outline_color_1") %>"
         END
     END
 END
@@ -300,8 +326,8 @@ LAYER
     CLASS
         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
         STYLE
-            COLOR "<%= forest_color %>"
-            OUTLINECOLOR "<%= forest_color %>"
+            COLOR "<%= get_color("forest_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
             OUTLINEWIDTH 0.3
         END
         LABEL
@@ -320,8 +346,8 @@ LAYER
     CLASS
         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
         STYLE
-            COLOR "<%= grass_color %>"
-            OUTLINECOLOR "<%= forest_color %>"
+            COLOR "<%= get_color("grass_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
             OUTLINEWIDTH 0.3
         END
     END
@@ -357,9 +383,9 @@ LAYER
     LABELITEM "name"
     CLASS
         STYLE
-            COLOR "<%= water_color %>"
+            COLOR "<%= get_color("water_color") %>"
             WIDTH 0.5
-            OUTLINECOLOR "<%= water_color %>"
+            OUTLINECOLOR "<%= get_color("water_color") %>"
         END
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -387,7 +413,7 @@ LAYER
     CLASS
         EXPRESSION "river"
         STYLE
-            COLOR "<%= water_color %>"
+            COLOR "<%= get_color("water_color") %>"
             WIDTH 30
             MINWIDTH 0.5
         END
@@ -396,7 +422,7 @@ LAYER
         MAXSCALEDENOM 105000
         EXPRESSION "stream"
         STYLE
-            COLOR "<%= water_color %>"
+            COLOR "<%= get_color("water_color") %>"
             WIDTH 5
             MINWIDTH 0.5
         END
@@ -404,7 +430,7 @@ LAYER
     CLASS
         EXPRESSION "canal"
         STYLE
-            COLOR "<%= water_color %>"
+            COLOR "<%= get_color("water_color") %>"
             WIDTH 10
             MINWIDTH 0.5
         END
@@ -457,7 +483,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -470,7 +496,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -483,7 +509,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -496,7 +522,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -509,7 +535,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -522,7 +548,7 @@ LAYER
         END
         STYLE
             WIDTH 13
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -535,7 +561,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -547,7 +573,7 @@ LAYER
         END
         STYLE
             WIDTH 12
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -586,7 +612,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -609,7 +635,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -622,7 +648,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -644,7 +670,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -656,7 +682,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -668,7 +694,7 @@ LAYER
         END
         STYLE
             WIDTH 13
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -677,7 +703,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_3 %>"
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -690,7 +716,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -702,7 +728,7 @@ LAYER
         END
         STYLE
             WIDTH 12
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -711,7 +737,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -724,7 +750,7 @@ LAYER
         END
         STYLE
             WIDTH 11
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -733,7 +759,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -746,7 +772,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -755,7 +781,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -849,7 +875,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -862,7 +888,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -875,7 +901,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -888,7 +914,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -901,7 +927,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -914,7 +940,7 @@ LAYER
         END
         STYLE
             WIDTH 13
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -927,7 +953,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -939,7 +965,7 @@ LAYER
         END
         STYLE
             WIDTH 12
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -978,7 +1004,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1001,7 +1027,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -1014,7 +1040,7 @@ LAYER
         END
         STYLE
             WIDTH 15
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1036,7 +1062,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -1048,7 +1074,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -1060,7 +1086,7 @@ LAYER
         END
         STYLE
             WIDTH 13
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1069,7 +1095,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_3 %>"
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1082,7 +1108,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1094,7 +1120,7 @@ LAYER
         END
         STYLE
             WIDTH 12
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1103,7 +1129,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1116,7 +1142,7 @@ LAYER
         END
         STYLE
             WIDTH 11
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1125,7 +1151,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1138,7 +1164,7 @@ LAYER
         END
         STYLE
             WIDTH 8
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1147,7 +1173,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1242,7 +1268,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1268,7 +1294,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -1281,7 +1307,7 @@ LAYER
         END
         STYLE
             WIDTH 10
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1303,7 +1329,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -1315,7 +1341,7 @@ LAYER
         END
         STYLE
             WIDTH 7
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -1327,7 +1353,7 @@ LAYER
         END
         STYLE
             WIDTH 8
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1336,7 +1362,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_3 %>"
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1349,7 +1375,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1361,7 +1387,7 @@ LAYER
         END
         STYLE
             WIDTH 7
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1370,7 +1396,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1383,7 +1409,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1392,7 +1418,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1405,7 +1431,7 @@ LAYER
         END
         STYLE
             WIDTH 4
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1414,7 +1440,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1499,7 +1525,7 @@ LAYER
         END
         STYLE
             WIDTH 8
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1522,7 +1548,7 @@ LAYER
         END
         STYLE
             WIDTH 4
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -1535,7 +1561,7 @@ LAYER
         END
         STYLE
             WIDTH 8
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1557,7 +1583,7 @@ LAYER
         END
         STYLE
             WIDTH 4
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -1569,7 +1595,7 @@ LAYER
         END
         STYLE
             WIDTH 7
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -1581,7 +1607,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1590,7 +1616,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_3 %>"
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1603,7 +1629,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1615,7 +1641,7 @@ LAYER
         END
         STYLE
             WIDTH 5
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1624,7 +1650,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1637,7 +1663,7 @@ LAYER
         END
         STYLE
             WIDTH 4
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1646,7 +1672,7 @@ LAYER
             MINDISTANCE 200
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_4 %>"
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1659,7 +1685,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1742,7 +1768,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1766,7 +1792,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -1779,7 +1805,7 @@ LAYER
         END
         STYLE
             WIDTH 6
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1803,7 +1829,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -1815,7 +1841,7 @@ LAYER
         END
         STYLE
             WIDTH 3
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -1827,7 +1853,7 @@ LAYER
         END
         STYLE
             WIDTH 4
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1837,7 +1863,7 @@ LAYER
             BUFFER 25
             ANGLE FOLLOW
             COLOR 0 0 0
-            OUTLINECOLOR "<%= road_color_3 %>"
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
             #MINFEATURESIZE AUTO
         END
     END
@@ -1850,7 +1876,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1862,7 +1888,7 @@ LAYER
         END
         STYLE
             WIDTH 3
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -1874,14 +1900,14 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_5 %>"
+            COLOR "<%= get_color("road_color_5") %>"
         END
     END
     CLASS
@@ -1934,7 +1960,7 @@ LAYER
         END
         STYLE
             WIDTH 3
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1958,7 +1984,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -1971,7 +1997,7 @@ LAYER
         END
         STYLE
             WIDTH 3
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -1995,7 +2021,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -2007,7 +2033,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -2020,7 +2046,7 @@ LAYER
         END
         STYLE
             WIDTH 2
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2042,7 +2068,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -2054,7 +2080,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -2066,14 +2092,14 @@ LAYER
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.5
-            COLOR "<%= road_color_5 %>"
+            COLOR "<%= get_color("road_color_5") %>"
         END
     END
 END
@@ -2118,7 +2144,7 @@ LAYER
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2142,7 +2168,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -2155,7 +2181,7 @@ LAYER
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2179,7 +2205,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -2191,7 +2217,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -2204,7 +2230,7 @@ LAYER
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2226,7 +2252,7 @@ LAYER
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -2238,7 +2264,7 @@ LAYER
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -2250,14 +2276,14 @@ LAYER
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.3
-            COLOR "<%= road_color_5 %>"
+            COLOR "<%= get_color("road_color_5") %>"
         END
     END
 END
@@ -2302,7 +2328,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2326,7 +2352,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
     END
     CLASS
@@ -2339,7 +2365,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2363,7 +2389,7 @@ LAYER
         END
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
     END
     CLASS
@@ -2375,7 +2401,7 @@ LAYER
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
     CLASS
@@ -2388,7 +2414,7 @@ LAYER
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2410,7 +2436,7 @@ LAYER
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
@@ -2422,14 +2448,14 @@ LAYER
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 0.5
-            COLOR "<%= road_color_4 %>"
+            COLOR "<%= get_color("road_color_4") %>"
         END
     END
 END
@@ -2447,7 +2473,7 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2466,7 +2492,7 @@ LAYER
         EXPRESSION "trunk"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2484,7 +2510,7 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
 END
@@ -2502,7 +2528,7 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2521,7 +2547,7 @@ LAYER
         EXPRESSION "trunk"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2539,7 +2565,7 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 1
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
 END
@@ -2557,7 +2583,7 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_1 %>"
+            COLOR "<%= get_color("road_color_1") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2576,7 +2602,7 @@ LAYER
         EXPRESSION "trunk"
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_2 %>"
+            COLOR "<%= get_color("road_color_2") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2594,7 +2620,7 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 0.8
-            COLOR "<%= road_color_3 %>"
+            COLOR "<%= get_color("road_color_3") %>"
         END
     END
 END
@@ -2665,8 +2691,8 @@ LAYER
     MAXSCALEDENOM 60000
     CLASS
         STYLE
-            COLOR "<%= grass_color %>"
-            OUTLINECOLOR "<%= forest_color %>"
+            COLOR "<%= get_color("grass_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
         END
         LABEL
         TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2709,7 +2735,7 @@ LAYER
         STYLE
             SYMBOL "oneway"
             SIZE 11
-            COLOR "<%= oneway_color %>"
+            COLOR "<%= get_color("oneway_color") %>"
         END
     END
 END
