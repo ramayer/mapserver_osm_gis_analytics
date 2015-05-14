@@ -1,4 +1,5 @@
 MAP
+
 OUTPUTFORMAT
     NAME agg
     DRIVER AGG/PNG
@@ -6,52 +7,75 @@ OUTPUTFORMAT
     FORMATOPTION "INTERLACE=false"
     MIMETYPE "image/png"
 END
-FONTSET "fonts.lst"
+#FONTSET "/opt/mapserver/etc/fonts.lst"
+FONTSET "./fonts.lst"
 IMAGETYPE agg
-MAXSIZE 4000
+MAXSIZE 10000
 SIZE 800 800
 EXTENT 47586 1621243 1197769 2679357
 EXTENT 16805492 -4049385 16857351 -3975830
 UNITS meters
 IMAGECOLOR "#99B3CC"
 WEB
+    LOG '/tmp/mapserver.log'
     METADATA
-        wms_srs "epsg:900913"
+        wms_srs "epsg:3857 epsg:900913 epsg:4326"
         labelcache_map_edge_buffer "-10"
         wms_title "osm france"
+        "ows_enable_request" "*"
     END
 END
 DEBUG 10
-CONFIG "PROJ_LIB" "/var/tmp/mapserver"
+# CONFIG "PROJ_LIB" "/opt/mapserver/etc"
+CONFIG "PROJ_LIB" "/usr/share/proj"
 CONFIG "MS_ERRORFILE" "stderr"
-PROJECTION
-"init=epsg:900913"
+PROJECTION  "init=epsg:3857"  END
+
+#  The land background color.
+#  For nice printable maps, "#FFFFFF" is good
+#  For beige web maps "#F2EFE9" is good
+#
+# wonder if it's the same as http://data.openstreetmapdata.com/coastlines-split-3857.zip
+
+# TODO -- see if this works with a newer different shapefile
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "land"
+    PROJECTION "init=epsg:3857" END
+    DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
+    # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    MINSCALEDENOM 500000
+    CLASS
+        STYLE
+           COLOR "#FFFFFF"
+        END
+    END
 END
 LAYER
     TYPE POLYGON
     STATUS ON
     GROUP "default"
     NAME "land"
-    PROJECTION
-        "init=epsg:900913"
-    END
-    DATA "coastlines/processed_p"
+    PROJECTION "init=epsg:3857" END
+    DATA "coastlines/land-polygons-split-3857/land_polygons"
+    MAXSCALEDENOM 500000
     CLASS
         STYLE
-            COLOR "#F2EFE9"
+           COLOR "#FFFFFF"
             OUTLINECOLOR "#F2EFE9"
         END
     END
 END
+
 
 LAYER
     TYPE POLYGON
     STATUS ON
     GROUP "default"
     NAME "STATES1"
-    PROJECTION
-        "init=epsg:4326"
-    END
+    PROJECTION       "init=epsg:4326"     END
     DATA "states/st99_d00"
     MINSCALEdenom 250000
     CLASS
@@ -65,51 +89,49 @@ SYMBOL
     TYPE TRUETYPE
     FONT sc
     CHARACTER '|'
-    GAP -3
+    #GAP -3
 END
 SYMBOL
     NAME "railfar"
     TYPE SIMPLE
-    PATTERN 5 5 END
+    #PATTERN 5 5 END
 END
 SYMBOL
     NAME "path"
     TYPE SIMPLE
-    PATTERN 1 1 END
+    #PATTERN 1 1 END
 END
 SYMBOL
     NAME "track"
     TYPE SIMPLE
-    PATTERN
-        5 5
-    END
+    # PATTERN        5 5    END
 END
 SYMBOL
     NAME "tunnel"
     TYPE SIMPLE
-    PATTERN 2 2 END
+    # PATTERN 2 2 END
 END
 SYMBOL
     NAME "dash"
     TYPE SIMPLE
-    PATTERN 2 2 END
+    # PATTERN 2 2 END
 END
 SYMBOL
     NAME "butt"
     TYPE SIMPLE
-    LINECAP butt
+    # LINECAP butt
 END
+
+
 LAYER
     TYPE POLYGON
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     NAME "landuse_layer1"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id ,landuse, name from osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,landuse, name from planet_osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
     CLASSITEM "landuse"
@@ -121,7 +143,7 @@ LAYER
             COLOR "#E3E2DF"
         END
         LABEL
-        TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 30000
             SIZE 7
             COLOR 0 0 0
@@ -142,14 +164,12 @@ END
 LAYER
     TYPE POLYGON
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "landuse_layer2"
     CONNECTIONTYPE postgis
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id ,leisure , landuse, name from osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,leisure , landuse, name from planet_osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
     LABELITEM "name"
@@ -160,7 +180,7 @@ LAYER
             COLOR "#E3E2DF"
         END
         LABEL
-        TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 30000
             SIZE 7
             COLOR 0 0 0
@@ -176,7 +196,7 @@ LAYER
             COLOR "#B5D29C"
         END
         LABEL
-        TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 30000
             SIZE 7
             COLOR "#3D6035"
@@ -191,15 +211,13 @@ LAYER
 END
 LAYER
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "landuse_layer3"
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id,amenity,aeroway, name from osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "amenity"
     PROCESSING "LABEL_NO_CLIP=ON"
@@ -211,7 +229,7 @@ LAYER
             COLOR "#E6C8C3"
         END
          LABEL
-          TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
             SIZE 7
             COLOR 0 0 0
@@ -234,7 +252,7 @@ LAYER
             COLOR "#DED1AB"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
             SIZE 7
             COLOR 0 0 0
@@ -249,14 +267,12 @@ END
 LAYER
     TYPE POLYGON
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     NAME "landuse_layer4"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id ,nature,landuse ,highway, name from osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
     CLASSITEM "landuse"
@@ -271,7 +287,7 @@ LAYER
         END
         LABEL
             MAXSCALEDENOM 600000
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             SIZE 7
             COLOR "#3D6035"
             OUTLINECOLOR 255 255 255
@@ -296,7 +312,7 @@ LAYER
             COLOR "#FDFDF9"
         END
         LABEL
-          TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 11000
           SIZE 7
           COLOR 0 0 0
@@ -310,14 +326,12 @@ END
 LAYER
     TYPE POLYGON
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     NAME "landuse_layer5"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id ,nature , name from osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,nature , name from planet_osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 5000010
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -329,7 +343,7 @@ LAYER
             OUTLINECOLOR "#99B3CC"
         END
         LABEL
-          TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 110000
           MINDISTANCE 400
           SIZE 8
@@ -346,8 +360,8 @@ LAYER
     NAME "landuse_layer6"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA 'way from (select way,waterway,osm_id from osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA 'way from (select way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
     CLASSITEM "waterway"
     SIZEUNITS meters
     MAXSCALEDENOM 1500000
@@ -378,10 +392,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 5010 minscaledenom 0
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -397,10 +414,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 5010 minscaledenom 0
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
@@ -534,7 +554,7 @@ LAYER
     END
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
@@ -545,15 +565,15 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 9
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            # BACKGROUNDCOLOR "#998877"
+            # BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -570,7 +590,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 15
             OUTLINECOLOR "#888888"
@@ -581,14 +601,14 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 9
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            # BACKGROUNDCOLOR "#bbaa88"
+            # BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -627,7 +647,7 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 8
             MINDISTANCE 200
@@ -661,7 +681,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 3
             SIZE 8
             MINDISTANCE 200
@@ -683,7 +703,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 2
             SIZE 8
             MINDISTANCE 200
@@ -705,7 +725,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 8
             MINDISTANCE 200
@@ -728,7 +748,7 @@ LAYER
             COLOR "#ffffff"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 7
             MINDISTANCE 200
@@ -753,7 +773,7 @@ LAYER
             COLOR "#FDFDF9"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 7
             MINSIZE 6
@@ -764,10 +784,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 10010 minscaledenom 5010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -783,10 +806,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 10010 minscaledenom 5010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
@@ -920,7 +946,7 @@ LAYER
     END
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
@@ -931,15 +957,15 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 9
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -956,7 +982,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 15
             OUTLINECOLOR "#888888"
@@ -967,14 +993,14 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 9
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -1013,7 +1039,7 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 8
             MINDISTANCE 200
@@ -1047,7 +1073,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 3
             SIZE 8
             MINDISTANCE 200
@@ -1069,7 +1095,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 2
             SIZE 8
             MINDISTANCE 200
@@ -1091,7 +1117,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 8
             MINDISTANCE 200
@@ -1114,7 +1140,7 @@ LAYER
             COLOR "#ffffff"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 7
             MINDISTANCE 200
@@ -1139,7 +1165,7 @@ LAYER
             COLOR "#FDFDF9"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 6
             MINSIZE 6
@@ -1150,10 +1176,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 25010 minscaledenom 10010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1169,15 +1198,19 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 25010 minscaledenom 10010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        # TEXT ([ref])   # --- this worked in an old mapserver, but is treated like an integernow.
+        TEXT '[ref]'
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
@@ -1188,15 +1221,18 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
-            SIZE 9
+            FONT arialbold
+            SIZE 8
             MINDISTANCE 150
             #MAXLENGTH 6
-            COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            # COLOR 255 255 255
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            ANGLE FOLLOW
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -1213,7 +1249,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 10
             OUTLINECOLOR "#888888"
@@ -1224,14 +1260,14 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 9
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -1270,7 +1306,7 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 7
             MINDISTANCE 200
@@ -1304,7 +1340,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 3
             SIZE 7
             MINDISTANCE 200
@@ -1326,7 +1362,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 2
             SIZE 7
             MINDISTANCE 200
@@ -1348,7 +1384,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 6
             MINDISTANCE 200
@@ -1371,7 +1407,7 @@ LAYER
             COLOR "#ffffff"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 6
             MINDISTANCE 200
@@ -1398,10 +1434,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 50010 minscaledenom 25010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1417,15 +1456,18 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 50010 minscaledenom 25010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 8
             OUTLINEWIDTH 1
@@ -1436,15 +1478,15 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 8
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -1461,7 +1503,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 8
             OUTLINECOLOR "#888888"
@@ -1472,14 +1514,14 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 8
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -1518,7 +1560,7 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 7
             MINDISTANCE 200
@@ -1552,7 +1594,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 3
             SIZE 7
             MINDISTANCE 200
@@ -1574,7 +1616,7 @@ LAYER
             COLOR "#ffeecc"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 2
             SIZE 7
             MINDISTANCE 200
@@ -1609,7 +1651,7 @@ LAYER
             COLOR "#ffffff"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
             SIZE 6
             MINDISTANCE 200
@@ -1636,10 +1678,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 100010 minscaledenom 50010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1654,15 +1699,18 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 100010 minscaledenom 50010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 6
             OUTLINEWIDTH 1
@@ -1673,16 +1721,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 8
             MINDISTANCE 200
             #MAXLENGTH 6
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -1699,7 +1747,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 6
             OUTLINECOLOR "#888888"
@@ -1710,16 +1758,16 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             PRIORITY 3
             BUFFER 10
             SIZE 8
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -1758,7 +1806,7 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 7
             MINDISTANCE 200
@@ -1822,10 +1870,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 250010 minscaledenom 100010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 1
@@ -1840,15 +1891,18 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 250010 minscaledenom 100010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 3
             OUTLINEWIDTH 1
@@ -1859,16 +1913,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 200
             #MAXLENGTH 6
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -1885,7 +1939,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 3
             OUTLINECOLOR "#888888"
@@ -1896,16 +1950,16 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             PRIORITY 3
             BUFFER 10
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -1933,7 +1987,7 @@ LAYER
         END
     END
     CLASS
-        TEXT ([ref])
+        TEXT '[ref]'
         EXPRESSION "primary"
         STYLE
             WIDTH 2
@@ -1945,14 +1999,14 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 7
             MINDISTANCE 200
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2000,10 +2054,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 500010 minscaledenom 250010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 1
@@ -2018,15 +2075,18 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 500010 minscaledenom 250010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 1.5
             OUTLINEWIDTH 1
@@ -2037,16 +2097,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 200
             #MAXLENGTH 6
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -2063,7 +2123,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 1.5
             OUTLINECOLOR "#888888"
@@ -2074,16 +2134,16 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             PRIORITY 3
             BUFFER 10
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2111,7 +2171,7 @@ LAYER
         END
     END
     CLASS
-        TEXT ([ref])
+        TEXT '[ref]'
         EXPRESSION "primary"
         STYLE
             WIDTH 1.5
@@ -2123,14 +2183,14 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 7
             MINDISTANCE 200
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2178,10 +2238,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 1000010 minscaledenom 500010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 1
@@ -2196,15 +2259,18 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 1000010 minscaledenom 500010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from osm_line where highway is not null order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
@@ -2215,16 +2281,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 200
             #MAXLENGTH 6
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -2241,7 +2307,7 @@ LAYER
     END
     CLASS
         EXPRESSION "trunk"
-        TEXT ([ref])
+        TEXT '[ref]'
         STYLE
             WIDTH 1
             OUTLINECOLOR "#888888"
@@ -2252,16 +2318,16 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             PRIORITY 3
             BUFFER 10
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2289,7 +2355,7 @@ LAYER
         END
     END
     CLASS
-        TEXT ([ref])
+        TEXT '[ref]'
         EXPRESSION "primary"
         STYLE
             WIDTH 0.8
@@ -2301,14 +2367,14 @@ LAYER
             COLOR "#eeddbb"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 6
             MINDISTANCE 200
             BUFFER 10
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2344,10 +2410,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 2500010 minscaledenom 1000010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from osm_line where highway in ('motorway','trunk','primary') order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2357,16 +2426,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -2376,15 +2445,15 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 6
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2396,10 +2465,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 5000010 minscaledenom 2500010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from osm_line where highway in ('motorway','trunk','primary') order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2409,16 +2481,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -2428,15 +2500,15 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 6
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2448,10 +2520,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 10000010 minscaledenom 5000010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10000010 minscaledenom 5000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from osm_line where highway in ('motorway','trunk','primary') order by priority desc) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2461,16 +2536,16 @@ LAYER
             COLOR "#aa9977"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 1
-            FONT scb
+            FONT arialbold
             SIZE 7
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#998877"
-            BACKGROUNDSHADOWCOLOR "#444444"
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
         END
     END
     CLASS
@@ -2480,15 +2555,15 @@ LAYER
             COLOR "#ddccaa"
         END
         LABEL
-            TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
-            FONT scb
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
             SIZE 6
             MINDISTANCE 150
             #MAXLENGTH 6
             BUFFER 15
             COLOR 255 255 255
-            BACKGROUNDCOLOR "#bbaa88"
-            BACKGROUNDSHADOWCOLOR "#888888"
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
         END
     END
     CLASS
@@ -2501,15 +2576,13 @@ LAYER
 END
 LAYER
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "building"
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id, name from osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id, name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -2524,7 +2597,7 @@ LAYER
             COLOR "#D1D0CD"
         END
         LABEL
-        TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 7000
             SIZE 7
             COLOR 0 0 0
@@ -2557,13 +2630,11 @@ LAYER
     STATUS ON
     GROUP "default"
     NAME "sports"
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way,osm_id, name from osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id, name from planet_osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -2573,7 +2644,7 @@ LAYER
             COLOR "#DADEAD"
         END
         LABEL
-        TYPE TRUETYPE FONT sc PARTIALS FALSE OUTLINEWIDTH 1
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 7000
             SIZE 7
             COLOR 0 0 0
@@ -2594,21 +2665,19 @@ END
 SYMBOL
  NAME "oneway"
  TYPE TRUETYPE
- FONT scb
+ FONT arialbold
  CHARACTER "&#8594;"
- GAP -150
+ # GAP -150
 END
 LAYER
     TYPE LINE
     STATUS ON
-    PROJECTION
-        "init=epsg:900913"
-    END
+    PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "oneways"
     CONNECTIONTYPE postgis
-    CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434"
-    DATA "way from (select way, osm_id from osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way, osm_id from planet_osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
     PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10010
     CLASS
@@ -2620,16 +2689,19 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 25010 minscaledenom 10010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , name from osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
         EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 6
             COLOR 0 0 0
@@ -2645,16 +2717,19 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 50010 minscaledenom 25010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , name from osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
         EXPRESSION ('[place]'='village')
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2672,7 +2747,7 @@ LAYER
     CLASS
         EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -2688,16 +2763,19 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 100010 minscaledenom 50010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , name from osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
         EXPRESSION 'town'
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -2715,7 +2793,7 @@ LAYER
     CLASS
         EXPRESSION ('[place]'='village')
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -2733,7 +2811,7 @@ LAYER
     CLASS
         EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 7
             COLOR 0 0 0
@@ -2749,10 +2827,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 250010 minscaledenom 100010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,capital,place , name from osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -2760,7 +2841,7 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -2769,7 +2850,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2789,11 +2870,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2817,7 +2898,7 @@ LAYER
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -2841,7 +2922,7 @@ LAYER
             SIZE 3
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 7
             COLOR 0 0 0
@@ -2858,10 +2939,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 500010 minscaledenom 250010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,capital,place , name from osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -2869,7 +2953,7 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -2878,7 +2962,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2898,11 +2982,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2926,7 +3010,7 @@ LAYER
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -2943,10 +3027,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 1000010 minscaledenom 500010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place, capital, name from osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -2954,7 +3041,7 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -2963,7 +3050,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -2983,11 +3070,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -3011,7 +3098,7 @@ LAYER
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -3028,10 +3115,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 2500010 minscaledenom 1000010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place ,capital, name from osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place ,capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -3039,7 +3129,7 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -3048,7 +3138,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 10
             COLOR 0 0 0
@@ -3068,11 +3158,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -3096,7 +3186,7 @@ LAYER
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 7
             COLOR 0 0 0
@@ -3113,10 +3203,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 5000010 minscaledenom 2500010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -3124,7 +3217,7 @@ LAYER
         STYLE
             SIZE 7
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -3133,7 +3226,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -3153,11 +3246,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -3174,10 +3267,13 @@ LAYER
     END
 END
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 10000010 minscaledenom 5000010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10000010 minscaledenom 5000010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -3185,7 +3281,7 @@ LAYER
         STYLE
             SIZE 7
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -3194,7 +3290,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 9
             COLOR 0 0 0
@@ -3214,11 +3310,11 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 8
             COLOR 0 0 0
@@ -3234,11 +3330,18 @@ LAYER
         END
     END
 END
+
+
+
+
 LAYER
-    STATUS ON GROUP "default" PROJECTION "init=epsg:900913" END CONNECTIONTYPE postgis CONNECTION "host=localhost dbname=gis user=gis password=www-data port=5434" PROCESSING "CLOSE_CONNECTION=DEFER" maxscaledenom 100000000010 minscaledenom 10000010
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100000000010 minscaledenom 10000010
     TYPE ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -3246,7 +3349,7 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "#FF6767"
+            COLOR "#ddcdcd"
             OUTLINECOLOR 0 0 0
         END
         STYLE
@@ -3255,7 +3358,7 @@ LAYER
             COLOR "#000000"
         END
         LABEL
-            FONT sc
+            FONT arial
             TYPE TRUETYPE
             SIZE 7
             COLOR 0 0 0
@@ -3273,7 +3376,7 @@ LAYER
     CLASS
         EXPRESSION 'country'
         LABEL
-            FONT scb
+            FONT arialbold
             TYPE TRUETYPE
             SIZE 8
             COLOR "#777777"
@@ -3287,4 +3390,10 @@ LAYER
         END
     END
 END
+
+#include './north_richland_hills.layers'
+#include './oakland_pd.layers'
+#include './user_features.layers'
+
 END
+
