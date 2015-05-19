@@ -1,0 +1,3439 @@
+<%
+   # see http://wiki.openstreetmap.org/wiki/Key:highway
+
+   original_colors = {
+       road_color_1:		 '#aa9977',          # major highways
+       road_color_2:		 '#ddccaa',          # oregon expressway, etc
+       road_color_3:		 '#eeddbb',          # el camino, alma, hwy 9, etc.
+       road_color_4:		 '#ffeecc',          # the inside of smaller roads - Stevenson and all smalll roads.
+       road_color_5:		 '#aaaaaa',          # roads zoomed out so they're just 1px wide
+       road_outline_color_3:	 '#eeddbb',          # el camino, alma, hwy 9, etc.
+       oneway_color:		 '#9A9ACA',          # the arrows on one-way roads
+       water_color:		 '#99b3cc',          # water
+       forest_color:		 '#CCDEAD',          # forest
+       grass_color:		 '#DADEAD',          # grass
+       land_color_1:		 '#ffffff',          # basic polygons
+       industrial_color:	 '#E3E2DF', 	     # airport, military, railways, brownfield, commercial, cemetary, parking
+       school_color:		 '#DED1AB',          # school, college, university
+       land_outline_color_1:	 '#aaaaaa',	     # state outline
+       residential_color:	 '#EDEAE2', 	     # 'residential'
+       park_color:               '#B5D29C',          # golf course, park, recreation_ground, cemetary (other zoom)
+       hospital_color:           '#E6C8C3',          # hospital
+
+       rail_color:               '#ffffff',          # 
+       rail_outline_color:       '#A5A5A4',          # 
+       rail_symbol_color:        '#A5A5A4',          # 
+   }
+
+   $colors = $map_options ? original_colors.merge($map_options) :  original_colors
+
+   def get_color(c)
+       $colors[c.to_sym]
+   end
+
+%> 
+MAP
+
+OUTPUTFORMAT
+    NAME agg
+    DRIVER AGG/PNG
+    IMAGEMODE RGB
+    FORMATOPTION "INTERLACE=false"
+    MIMETYPE "image/png"
+END
+#FONTSET "/opt/mapserver/etc/fonts.lst"
+FONTSET "./fonts.lst"
+IMAGETYPE agg
+MAXSIZE 10000
+SIZE 800 800
+#EXTENT 47586 1621243 1197769 2679357
+EXTENT 16805492 -4049385 16857351 -3975830
+UNITS meters
+IMAGECOLOR "<%= get_color("water_color") %>"
+WEB
+    LOG '/tmp/mapserver.log'
+    METADATA
+        wms_srs "epsg:3857 epsg:900913 epsg:4326"
+        labelcache_map_edge_buffer "-10"
+        wms_title "osm france"
+        "ows_enable_request" "*"
+    END
+END
+DEBUG 10
+# CONFIG "PROJ_LIB" "/opt/mapserver/etc"
+CONFIG "PROJ_LIB" "/usr/share/proj"
+CONFIG "MS_ERRORFILE" "stderr"
+PROJECTION  "init=epsg:3857"  END
+
+#  The land background color.
+#  For nice printable maps, "#FFFFFF" is good
+#  For beige web maps "#F2EFE9" is good
+#
+# wonder if it's the same as http://data.openstreetmapdata.com/coastlines-split-3857.zip
+# TODO -- see if this works with a newer different shapefile
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "land"
+    PROJECTION "init=epsg:3857" END
+    DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
+    # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    MINSCALEDENOM 500000
+    CLASS
+        STYLE
+           COLOR "<%= get_color("land_color_1") %>"
+        END
+    END
+END
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "land"
+    PROJECTION "init=epsg:3857" END
+    DATA "coastlines/land-polygons-split-3857/land_polygons"
+    MAXSCALEDENOM 500000
+    CLASS
+        STYLE
+           COLOR "<%= get_color("land_color_1") %>"
+        END
+    END
+END
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "STATES1"
+    PROJECTION       "init=epsg:4326"     END
+    DATA "states/st99_d00"
+    MINSCALEDENOM 250000
+    CLASS
+        STYLE
+            OUTLINECOLOR "<%= get_color("land_outline_color_1") %>"
+        END
+    END
+END
+SYMBOL
+    NAME "rail"
+    TYPE TRUETYPE
+    FONT sc
+    CHARACTER '|'
+    #GAP -3
+END
+SYMBOL
+    NAME "railfar"
+    TYPE SIMPLE
+    #PATTERN 5 5 END
+END
+SYMBOL
+    NAME "path"
+    TYPE SIMPLE
+    #PATTERN 1 1 END
+END
+SYMBOL
+    NAME "track"
+    TYPE SIMPLE
+    # PATTERN        5 5    END
+END
+SYMBOL
+    NAME "tunnel"
+    TYPE SIMPLE
+    # PATTERN 2 2 END
+END
+SYMBOL
+    NAME "dash"
+    TYPE SIMPLE
+    # PATTERN 2 2 END
+END
+SYMBOL
+    NAME "butt"
+    TYPE SIMPLE
+    # LINECAP butt
+END
+
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    NAME "landuse_layer1"
+    GROUP "default"
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,landuse, name from planet_osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    CLASSITEM "landuse"
+    LABELITEM "name"
+    MAXSCALEDENOM 1000010
+    CLASS
+        EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='airport' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
+        STYLE
+            COLOR "<%= get_color("industrial_color") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 30000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 2
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        EXPRESSION ('[landuse]'='residential')
+        STYLE
+            COLOR "<%= get_color('residential_color') %>"
+        END
+    END
+END
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "landuse_layer2"
+    CONNECTIONTYPE postgis
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,leisure , landuse, name from planet_osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    LABELITEM "name"
+    MAXSCALEDENOM 500000
+    CLASS
+        EXPRESSION ('[landuse]'='cemetery')
+        STYLE
+            COLOR "<%= get_color("industrial_color") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 30000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 2
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        STYLE
+            COLOR "<%= get_color("park_color") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 30000
+            SIZE 7
+            COLOR "#3D6035"
+            OUTLINECOLOR 255 255 255
+            PRIORITY 2
+            POSITION cc
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+END
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "landuse_layer3"
+    TYPE POLYGON
+    CONNECTIONTYPE postgis
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "amenity"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 110000
+    CLASS
+        EXPRESSION "hospital"
+        STYLE
+            COLOR "<%= get_color('hospital_color') %>"
+        END
+         LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 15000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        EXPRESSION ("[amenity]"="parking" or "[aeroway]"="apron")
+        STYLE
+            COLOR "<%= get_color('industrial_color') %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
+        STYLE
+            COLOR "<%= get_color('school_color') %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 15000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+END
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    NAME "landuse_layer4"
+    GROUP "default"
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    CLASSITEM "landuse"
+    MAXSCALEDENOM 5000010
+    LABELITEM "name"
+    CLASS
+        EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+        STYLE
+            COLOR "<%= get_color("forest_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
+            OUTLINEWIDTH 0.3
+        END
+        LABEL
+            MAXSCALEDENOM 600000
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            SIZE 7
+            COLOR "#3D6035"
+            OUTLINECOLOR 255 255 255
+            PRIORITY 2
+            WRAP ' '
+            #MINFEATURESIZE AUTO
+            #MAXLENGTH 8
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
+        STYLE
+            COLOR "<%= get_color("grass_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
+            OUTLINEWIDTH 0.3
+        END
+    END
+  CLASS
+        EXPRESSION ('[highway]'='pedestrian')
+        STYLE
+            COLOR "#FDFDF9"
+        END
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 11000
+          SIZE 7
+          COLOR 0 0 0
+          OUTLINECOLOR 255 255 255
+          WRAP ' '
+          #MAXLENGTH 6
+          ALIGN CENTER
+        END
+    END
+END
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    NAME "landuse_layer5"
+    GROUP "default"
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id ,nature , name from planet_osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MAXSCALEDENOM 5000010
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    LABELITEM "name"
+    CLASS
+        STYLE
+            COLOR "<%= get_color("water_color") %>"
+            WIDTH 0.5
+            OUTLINECOLOR "<%= get_color("water_color") %>"
+        END
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 400
+          MINFEATURESIZE 50   # slow, but quite a bit nicer.
+          SIZE 8
+          COLOR "#6B94B0"
+          OUTLINECOLOR 255 255 255
+          WRAP ' '
+          #MAXLENGTH 5
+          ALIGN CENTER
+        END
+    END
+END
+LAYER
+    TYPE LINE
+    NAME "landuse_layer6"
+    GROUP "default"
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA 'way from (select way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
+    CLASSITEM "waterway"
+    SIZEUNITS meters
+    MAXSCALEDENOM 1500000
+    CLASS
+        EXPRESSION "river"
+        STYLE
+            COLOR "<%= get_color("water_color") %>"
+            WIDTH 30
+            MINWIDTH 0.5
+        END
+    END
+    CLASS
+        MAXSCALEDENOM 105000
+        EXPRESSION "stream"
+        STYLE
+            COLOR "<%= get_color("water_color") %>"
+            WIDTH 5
+            MINWIDTH 0.5
+        END
+    END
+    CLASS
+        EXPRESSION "canal"
+        STYLE
+            COLOR "<%= get_color("water_color") %>"
+            WIDTH 10
+            MINWIDTH 0.5
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5010 minscaledenom 0
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#A5A5A4"
+            COLOR "#ffffff"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "#A5A5A4"
+        END
+    END
+END
+
+
+# The most zoomed in road layer
+# See:   http://wiki.openstreetmap.org/wiki/Key:highway
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5010 minscaledenom 0
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION ("[highway]"="motorway" and "[tunnel]"="yes")
+        STYLE
+            WIDTH 15
+            SYMBOL "tunnel"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="motorway_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="trunk" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 15
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="trunk_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="primary_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="primary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 13
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 13
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="secondary_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="secondary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 12
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 12
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="tertiary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 11
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 11
+            COLOR "#FAFAFA"
+        END
+    END
+    CLASS
+        EXPRESSION (('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service') and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "#FAFAFA"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 15
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 9
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            # BACKGROUNDCOLOR "#998877"
+            # BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 15
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 9
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            # BACKGROUNDCOLOR "#bbaa88"
+            # BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 13
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 13
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 12
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 12
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 3
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 11
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 11
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 2
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "track"
+        STYLE
+            WIDTH 3
+            OUTLINEWIDTH 1.5
+            OUTLINECOLOR "#CEC1AD"
+        END
+        STYLE
+            SYMBOL "track"
+            WIDTH 3
+            COLOR "#ffffff"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION 'footway'
+        STYLE
+            SYMBOL "path"
+            WIDTH 2
+            COLOR "#7f7f7f"
+        END
+    END
+    CLASS
+        EXPRESSION 'pedestrian'
+        STYLE
+            WIDTH 8
+            COLOR "#FDFDF9"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINSIZE 6
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10010 minscaledenom 5010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            COLOR "<%= get_color('rail_color') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color('rail_symbol_color') %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10010 minscaledenom 5010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION ("[highway]"="motorway" and "[tunnel]"="yes")
+        STYLE
+            WIDTH 15
+            SYMBOL "tunnel"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="motorway_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="trunk" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 15
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="trunk_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="primary_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="primary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 13
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 13
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="secondary_link" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="secondary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 12
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 12
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ("[highway]"="tertiary" and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 11
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 11
+            COLOR "#FAFAFA"
+        END
+    END
+    CLASS
+        EXPRESSION (('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service') and "[tunnel]"="yes")
+        STYLE
+            SYMBOL "tunnel"
+            WIDTH 8
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 8
+            COLOR "#FAFAFA"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 15
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 9
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 15
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 15
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 9
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 13
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 13
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 12
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 12
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 3
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 11
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 11
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 2
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 8
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "track"
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1.5
+            OUTLINECOLOR "#CEC1AD"
+        END
+        STYLE
+            SYMBOL "track"
+            WIDTH 2
+            COLOR "#ffffff"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION 'footway'
+        STYLE
+            SYMBOL "path"
+            WIDTH 1
+            COLOR "#7f7f7f"
+        END
+    END
+    CLASS
+        EXPRESSION 'pedestrian'
+        STYLE
+            WIDTH 6
+            COLOR "#FDFDF9"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 6
+            MINSIZE 6
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            COLOR "<%= get_color('rail_color') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color('rail_symbol_color') %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        # TEXT ([ref])   # --- this worked in an old mapserver, but is treated like an integernow.
+        TEXT '[ref]'
+        STYLE
+            WIDTH 10
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 8
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            # COLOR 255 255 255
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            ANGLE FOLLOW
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 10
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 10
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 9
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 6
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 7
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 7
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 7
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 7
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 3
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 6
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 2
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 4
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 6
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "track"
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1.5
+            OUTLINECOLOR "#CEC1AD"
+        END
+        STYLE
+            SYMBOL "track"
+            WIDTH 1
+            COLOR "#ffffff"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 6
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION 'footway'
+        STYLE
+            SYMBOL "path"
+            WIDTH 1
+            COLOR "#7f7f7f"
+        END
+    END
+    CLASS
+        EXPRESSION 'pedestrian'
+        STYLE
+            WIDTH 1
+            COLOR "#B7AC9A"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            COLOR "<%= get_color('rail_color') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color('rail_symbol_color') %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 8
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 8
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 4
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 8
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 4
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 7
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 7
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 5
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 5
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 3
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 4
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 2
+            SIZE 7
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_4") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#B7AC9A"
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "track"
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1.5
+            OUTLINECOLOR "#CEC1AD"
+        END
+        STYLE
+            SYMBOL "track"
+            WIDTH 1
+            COLOR "#ffffff"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 6
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION 'footway'
+        STYLE
+            SYMBOL "path"
+            WIDTH 1
+            COLOR "#7f7f7f"
+        END
+    END
+    CLASS
+        EXPRESSION 'pedestrian'
+        STYLE
+            WIDTH 0.5
+            COLOR "#B7AC9A"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#A5A5A4"
+        END
+        STYLE
+            SYMBOL "railfar"
+            WIDTH 2
+            COLOR "#ffffff"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 6
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 8
+            MINDISTANCE 200
+            #MAXLENGTH 6
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 2
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 6
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            PRIORITY 3
+            BUFFER 10
+            SIZE 8
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 3
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 4
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 7
+            MINDISTANCE 200
+            BUFFER 25
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "<%= get_color("road_color_3") %>"
+            #MINFEATURESIZE AUTO
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 2
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 3
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_5") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "track"
+        STYLE
+            SYMBOL "track"
+            WIDTH 1
+            COLOR "#CEC1AD"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#A5A5A4"
+        END
+        STYLE
+            SYMBOL "railfar"
+            WIDTH 1
+            COLOR "#ffffff"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 3
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 200
+            #MAXLENGTH 6
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 3
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            PRIORITY 3
+            BUFFER 10
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 2
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        TEXT '[ref]'
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 2
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 7
+            MINDISTANCE 200
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 0.8
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_color_5") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#A5A5A4"
+        END
+        STYLE
+            SYMBOL "railfar"
+            WIDTH 1
+            COLOR "#ffffff"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 1.5
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 1.5
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 200
+            #MAXLENGTH 6
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 1.5
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1.5
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            PRIORITY 3
+            BUFFER 10
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        TEXT '[ref]'
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 1.5
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1.5
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 7
+            MINDISTANCE 200
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 0.8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 0.8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 0.5
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 0.3
+            COLOR "<%= get_color("road_color_5") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#A5A5A4"
+        END
+        STYLE
+            SYMBOL "railfar"
+            WIDTH 1
+            COLOR "#ffffff"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#444444"
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 200
+            #MAXLENGTH 6
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#444444"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            PRIORITY 3
+            BUFFER 10
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "#888888"
+        END
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 0.8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+    CLASS
+        TEXT '[ref]'
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 0.8
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 6
+            MINDISTANCE 200
+            BUFFER 10
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 0.5
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 0.5
+            OUTLINECOLOR "#888888"
+            OUTLINEWIDTH 1
+        END
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_color_4") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 2500010 minscaledenom 1000010
+    TYPE LINE
+    NAME "roadsfar"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "ref"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 6
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5000010 minscaledenom 2500010
+    TYPE LINE
+    NAME "roadsfar"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "ref"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 6
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10000010 minscaledenom 5000010
+    TYPE LINE
+    NAME "roadsfar"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "ref"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_1") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 1
+            FONT arialbold
+            SIZE 7
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#998877"
+            #BACKGROUNDSHADOWCOLOR "#444444"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_2") %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            FONT arialbold
+            SIZE 6
+            MINDISTANCE 150
+            #MAXLENGTH 6
+            BUFFER 15
+            COLOR 255 255 255
+            #BACKGROUNDCOLOR "#bbaa88"
+            #BACKGROUNDSHADOWCOLOR "#888888"
+        END
+    END
+    CLASS
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_color_3") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "building"
+    TYPE POLYGON
+    CONNECTIONTYPE postgis
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id, name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 60000
+    CLASS
+        MAXSCALEDENOM 7000
+        STYLE
+            COLOR "#8E8D8C"
+            OFFSET 2 2
+        END
+        STYLE
+            COLOR "#D1D0CD"
+        END
+        LABEL
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+        MAXSCALEDENOM 7000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        MAXSCALEDENOM 11000
+        STYLE
+            COLOR "#8E8D8C"
+            OFFSET 1 1
+        END
+        STYLE
+            COLOR "#D1D0CD"
+        END
+    END
+    CLASS
+        STYLE
+            COLOR "#D1D0CD"
+            OUTLINECOLOR "#8E8D8C"
+            WIDTH 0.5
+        END
+    END
+END
+LAYER
+    STATUS ON
+    GROUP "default"
+    NAME "sports"
+    PROJECTION "init=epsg:3857" END
+    TYPE POLYGON
+    CONNECTIONTYPE postgis
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way,osm_id, name from planet_osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 60000
+    CLASS
+        STYLE
+            COLOR "<%= get_color("grass_color") %>"
+            OUTLINECOLOR "<%= get_color("forest_color") %>"
+        END
+        LABEL
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+        MAXSCALEDENOM 7000
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+END
+SYMBOL
+    NAME "citycircle"
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+END
+SYMBOL
+ NAME "oneway"
+ TYPE TRUETYPE
+ FONT arialbold
+ CHARACTER "&#8594;"
+ # GAP -150
+END
+LAYER
+    TYPE LINE
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "oneways"
+    CONNECTIONTYPE postgis
+    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    DATA "way from (select way, osm_id from planet_osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
+    PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10010
+    CLASS
+        STYLE
+            SYMBOL "oneway"
+            SIZE 11
+            COLOR "<%= get_color("oneway_color") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 6
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 4
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ('[place]'='village')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 4
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION 'town'
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='village')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 4
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 100010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR 255 255 255
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='village')
+        STYLE
+            SYMBOL "citycircle"
+            COLOR 255 255 255
+            OUTLINECOLOR 0 0 0
+            SIZE 3
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 500010 minscaledenom 250010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 6
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR 255 255 255
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 1000010 minscaledenom 500010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 6
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR 255 255 255
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 2500010 minscaledenom 1000010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place ,capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 6
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 10
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 3
+            SYMBOL "citycircle"
+            COLOR 255 255 255
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 5000010 minscaledenom 2500010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 7
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 10000010 minscaledenom 5000010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 7
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+END
+
+
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 100000000010 minscaledenom 10000010
+    TYPE ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "#ddcdcd"
+            OUTLINECOLOR 0 0 0
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR 0 0 0
+            OUTLINECOLOR 255 255 255
+            OUTLINEWIDTH 4
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'country'
+        LABEL
+            FONT arialbold
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR "#777777"
+            WRAP ' '
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 1
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+END
+
+#include './north_richland_hills.layers'
+#include './oakland_pd.layers'
+#include './user_features.layers'
+
+END
+
