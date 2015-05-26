@@ -1,1 +1,3 @@
-erb -r `pwd`/templates/styles/example_style.rb  templates/qsgeo.map.erb  > map/qsgeo.map
+erb  templates/qsgeo.map.erb  > map/qsgeo.map
+erb -r `pwd`/templates/styles/greyscale.rb  templates/qsgeo.map.erb  > map/qsgeo.map
+erb -r `pwd`/templates/styles/example_style.rb  templates/qsgeo.map.erb  > map/qsgeo.example_style.map
