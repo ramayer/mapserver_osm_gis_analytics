@@ -2,27 +2,26 @@
    # see http://wiki.openstreetmap.org/wiki/Key:highway
 
    original_colors = {
+       forest_color:		 '#CCDEAD',          # forest
+       grass_color:		 '#DADEAD',          # grass
+       hospital_color:           '#E6C8C3',          # hospital
+       industrial_color:	 '#E3E2DF', 	     # airport, military, railways, brownfield, commercial, cemetary, parking
+       land_color_1:		 '#ffffff',          # basic polygons
+       land_outline_color_1:	 '#aaaaaa',	     # state outline
+       oneway_color:		 '#9A9ACA',          # the arrows on one-way roads
+       park_color:               '#B5D29C',          # golf course, park, recreation_ground, cemetary (other zoom)
+       rail_color:               '#ffffff',          # rail
+       rail_outline_color:       '#A5A5A4',          # rail
+       rail_symbol_color:        '#A5A5A4',          # rail
+       residential_color:	 '#EDEAE2', 	     # 'residential'
        road_color_1:		 '#aa9977',          # major highways
        road_color_2:		 '#ddccaa',          # oregon expressway, etc
        road_color_3:		 '#eeddbb',          # el camino, alma, hwy 9, etc.
        road_color_4:		 '#ffeecc',          # the inside of smaller roads - Stevenson and all smalll roads.
        road_color_5:		 '#aaaaaa',          # roads zoomed out so they're just 1px wide
        road_outline_color_3:	 '#eeddbb',          # el camino, alma, hwy 9, etc.
-       oneway_color:		 '#9A9ACA',          # the arrows on one-way roads
-       water_color:		 '#99b3cc',          # water
-       forest_color:		 '#CCDEAD',          # forest
-       grass_color:		 '#DADEAD',          # grass
-       land_color_1:		 '#ffffff',          # basic polygons
-       industrial_color:	 '#E3E2DF', 	     # airport, military, railways, brownfield, commercial, cemetary, parking
        school_color:		 '#DED1AB',          # school, college, university
-       land_outline_color_1:	 '#aaaaaa',	     # state outline
-       residential_color:	 '#EDEAE2', 	     # 'residential'
-       park_color:               '#B5D29C',          # golf course, park, recreation_ground, cemetary (other zoom)
-       hospital_color:           '#E6C8C3',          # hospital
-
-       rail_color:               '#ffffff',          # 
-       rail_outline_color:       '#A5A5A4',          # 
-       rail_symbol_color:        '#A5A5A4',          # 
+       water_color:		 '#99b3cc',          # water
    }
 
    $colors = $map_options ? original_colors.merge($map_options) :  original_colors
@@ -30,6 +29,22 @@
    def get_color(c)
        $colors[c.to_sym]
    end
+
+   def road_label(color,outline_color,size,priority)
+      %Q{        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 8
+            MINDISTANCE 200
+            ANGLE FOLLOW
+            COLOR 0 0 0
+            OUTLINECOLOR "#{get_color(outline_color)}"
+            #MINFEATURESIZE AUTO
+        END}
+
+   end
+
+
 
 %> 
 MAP
@@ -425,6 +440,15 @@ LAYER
         END
     END
 END
+
+
+################################################################################
+## Road layers
+## See:   http://wiki.openstreetmap.org/wiki/Key:highway
+################################################################################
+
+# The most zoomed in road and rail layers - scaledenom 0 to 5010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -447,11 +471,6 @@ LAYER
         END
     END
 END
-
-
-# The most zoomed in road layer
-# See:   http://wiki.openstreetmap.org/wiki/Key:highway
-
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -597,7 +616,7 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 15
@@ -619,7 +638,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -822,6 +841,10 @@ LAYER
         END
     END
 END
+
+
+# The second most zoomed in road and rail layers - scaledenom 5010 to 10010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -860,7 +883,7 @@ LAYER
             WIDTH 15
             SYMBOL "tunnel"
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 15
@@ -872,7 +895,7 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -989,7 +1012,7 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 15
@@ -1011,7 +1034,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -1214,6 +1237,9 @@ LAYER
         END
     END
 END
+
+# The third most zoomed in road and rail layers - scaledenom 10010 to 25010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1253,7 +1279,7 @@ LAYER
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 10
@@ -1278,7 +1304,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 6
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -1472,6 +1498,10 @@ LAYER
         END
     END
 END
+
+
+# The fourth most zoomed in road and rail layers - scaledenom 25010 to 50010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1510,7 +1540,7 @@ LAYER
         STYLE
             WIDTH 8
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 8
@@ -1532,7 +1562,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 4
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -1716,6 +1746,9 @@ LAYER
         END
     END
 END
+
+# The fifth most zoomed in road and rail layers - scaledenom 50010 to 100010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1753,7 +1786,7 @@ LAYER
         STYLE
             WIDTH 6
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 6
@@ -1776,7 +1809,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 2
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -1908,6 +1941,9 @@ LAYER
         END
     END
 END
+
+# The sixth most zoomed in road and rail layers - scaledenom 100010 to 250010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1945,7 +1981,7 @@ LAYER
         STYLE
             WIDTH 3
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 3
@@ -1968,7 +2004,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -2092,6 +2128,10 @@ LAYER
         END
     END
 END
+
+
+# The seventh most zoomed in road and rail layers - scaledenom 250010 to 500010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2129,7 +2169,7 @@ LAYER
         STYLE
             WIDTH 1.5
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 1.5
@@ -2152,7 +2192,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -2276,6 +2316,9 @@ LAYER
         END
     END
 END
+
+# The eight most zoomed in road and rail layers - scaledenom 500010 to 1000010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2313,7 +2356,7 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
         END
         STYLE
             WIDTH 1
@@ -2336,7 +2379,7 @@ LAYER
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "#444444"
+            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
             OUTLINEWIDTH 1
         END
         STYLE
@@ -2448,6 +2491,10 @@ LAYER
         END
     END
 END
+
+
+# The nineth most zoomed in road and rail layers - scaledenom 1000010 to 2500010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2503,6 +2550,10 @@ LAYER
         END
     END
 END
+
+
+# The tenth most zoomed in road and rail layers - scaledenom 2500010 to 5000010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2558,6 +2609,9 @@ LAYER
         END
     END
 END
+
+# The 11th most zoomed in road and rail layers - scaledenom 5000010 to 10000010
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2613,6 +2667,15 @@ LAYER
         END
     END
 END
+
+################################################################################
+# End of road layers
+################################################################################
+
+################################################################################
+# Polygon layers
+################################################################################
+
 LAYER
     STATUS ON
     PROJECTION "init=epsg:3857" END
@@ -2629,11 +2692,11 @@ LAYER
     CLASS
         MAXSCALEDENOM 7000
         STYLE
-            COLOR "#8E8D8C"
+            COLOR "<%= get_color("building_offset_color") %>"
             OFFSET 2 2
         END
         STYLE
-            COLOR "#D1D0CD"
+            COLOR "<%= get_color("building_color") %>"
         END
         LABEL
         TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -2650,21 +2713,21 @@ LAYER
     CLASS
         MAXSCALEDENOM 11000
         STYLE
-            COLOR "#8E8D8C"
+            COLOR "<%= get_color("building_offset_color") %>"
             OFFSET 1 1
         END
         STYLE
-            COLOR "#D1D0CD"
+            COLOR "<%= get_color("building_color") %>"
         END
     END
     CLASS
         STYLE
-            COLOR "#D1D0CD"
-            OUTLINECOLOR "#8E8D8C"
+            COLOR "<%= get_color("building_color") %>"
             WIDTH 0.5
         END
     END
 END
+
 LAYER
     STATUS ON
     GROUP "default"
