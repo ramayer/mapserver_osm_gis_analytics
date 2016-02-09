@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
+
+
 <!--
 http://mapserver.org/mapcache/config.html
 YEY!
@@ -22,6 +25,24 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
   <!--
       WMS Sources (note mod-mapcache only supports wms sources for now)
   -->
+  
+
+  <source name="example_style" type="wms">
+    <getmap>
+      <params>
+        <FORMAT>image/png</FORMAT>
+        <LAYERS>default</LAYERS>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_example_style.map</map>
+      </params>
+    </getmap>
+    <http>
+      <url>http://localhost/cgi-bin/mapserv/</url>
+      <connection_timeout>30</connection_timeout>
+    </http>
+  </source>
+
+  
+
   <source name="subtlecolor" type="wms">
     <getmap>
       <params>
@@ -35,6 +56,9 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
       <connection_timeout>30</connection_timeout>
     </http>
   </source>
+
+  
+
   <source name="black_on_white" type="wms">
     <getmap>
       <params>
@@ -48,12 +72,15 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
       <connection_timeout>30</connection_timeout>
     </http>
   </source>
-  <source name="white_on_black" type="wms">
+
+  
+
+  <source name="greyscale" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_white_on_black.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_greyscale.map</map>
       </params>
     </getmap>
     <http>
@@ -61,6 +88,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
       <connection_timeout>30</connection_timeout>
     </http>
   </source>
+
+  
 
   <!--
       Ouch - old versions of our mapserver used very sliglty different grid.
@@ -100,6 +129,22 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
   </grid>
 
 
+  
+
+  <tileset name="example_style">
+    <source>example_style</source>
+    <cache>disk</cache>
+    <grid>fli</grid>
+    <grid>g</grid>
+    <grid>g2</grid>
+    <format>PNG</format>
+    <metatile>5 5</metatile>
+    <metabuffer>10</metabuffer>
+    <expires>3600</expires>
+  </tileset>
+
+  
+
   <tileset name="subtlecolor">
     <source>subtlecolor</source>
     <cache>disk</cache>
@@ -111,6 +156,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
     <metabuffer>10</metabuffer>
     <expires>3600</expires>
   </tileset>
+
+  
 
   <tileset name="black_on_white">
     <source>black_on_white</source>
@@ -124,8 +171,10 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
     <expires>3600</expires>
   </tileset>
 
-  <tileset name="white_on_black">
-    <source>white_on_black</source>
+  
+
+  <tileset name="greyscale">
+    <source>greyscale</source>
     <cache>disk</cache>
     <grid>fli</grid>
     <grid>g</grid>
@@ -135,6 +184,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
     <metabuffer>10</metabuffer>
     <expires>3600</expires>
   </tileset>
+
+  
 
   <default_format>PNG</default_format>
 
