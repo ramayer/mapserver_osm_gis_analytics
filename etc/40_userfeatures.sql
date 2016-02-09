@@ -3,44 +3,7 @@
 drop schema userfeatures cascade;
 create schema userfeatures;
 
-CREATE TABLE userfeatures.users (
-    userid serial NOT NULL,
-    username text,
-    organization text,
-    md5password text,
-    fname text,
-    lname text,
-    org text,
-    title text,
-    phone text,
-    email text,
-    addr_str text,
-    addr_cit text,
-    addr_sta text,
-    addr_zip text,
-    addr_cou text,
-    created  timestamp default current_timestamp
-);
-create unique index users__unique on userfeatures.users(username,org);
-
-
-CREATE TABLE userfeatures.sessions (
-    userid       int,
-    sessionid    serial,
-    sessionname  text
-);
-CREATE TABLE userfeatures.icons (
-    iconid    serial,
-    iconfile  text,
-    iconcode  text
-);
-CREATE TABLE userfeatures.colors (
-    colorid   serial,
-    colorname text
-);
-
 -------------------------------------------------------------------------
-
 
 CREATE TABLE userfeatures.legend (
     userid       int,
