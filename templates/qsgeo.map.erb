@@ -35,11 +35,12 @@
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             PRIORITY 4
             SIZE 8
-            MINDISTANCE 200
+            MINDISTANCE 250
             ANGLE FOLLOW
-            COLOR 0 0 0
+            COLOR "#{get_color(color)}"
             OUTLINECOLOR "#{get_color(outline_color)}"
             #MINFEATURESIZE AUTO
+            #MINFEATURESIZE 50
         END}
 
    end
@@ -622,17 +623,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 9
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            # BACKGROUNDCOLOR "#998877"
-            # BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -658,16 +649,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 9
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            # BACKGROUNDCOLOR "#bbaa88"
-            # BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -704,16 +686,7 @@ LAYER
             WIDTH 13
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -738,16 +711,7 @@ LAYER
             WIDTH 12
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 3
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -760,16 +724,7 @@ LAYER
             WIDTH 11
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 2
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
@@ -782,16 +737,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
     END
     CLASS
         EXPRESSION "track"
@@ -805,16 +751,7 @@ LAYER
             WIDTH 3
             COLOR "#ffffff"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR 255 255 255
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
@@ -830,15 +767,7 @@ LAYER
             WIDTH 8
             COLOR "#FDFDF9"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 7
-            MINSIZE 6
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
 END
 
@@ -1018,17 +947,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 9
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1054,16 +973,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 9
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1100,16 +1010,7 @@ LAYER
             WIDTH 13
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_3") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1134,16 +1035,7 @@ LAYER
             WIDTH 12
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 3
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1156,16 +1048,7 @@ LAYER
             WIDTH 11
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 2
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
@@ -1178,16 +1061,7 @@ LAYER
             WIDTH 8
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 8
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
     END
     CLASS
         EXPRESSION "track"
@@ -1201,16 +1075,7 @@ LAYER
             WIDTH 2
             COLOR "#ffffff"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR 255 255 255
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
@@ -1226,15 +1091,7 @@ LAYER
             WIDTH 6
             COLOR "#FDFDF9"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 6
-            MINSIZE 6
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
 END
 
@@ -1285,20 +1142,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 8
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            # COLOR 255 255 255
-            COLOR 0 0 0
-            OUTLINECOLOR 255 255 255
-            ANGLE FOLLOW
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1324,16 +1168,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 9
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1370,16 +1205,7 @@ LAYER
             WIDTH 8
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_3") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1404,16 +1230,7 @@ LAYER
             WIDTH 7
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 3
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1426,16 +1243,7 @@ LAYER
             WIDTH 6
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 2
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
@@ -1448,16 +1256,7 @@ LAYER
             WIDTH 4
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 6
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION "track"
@@ -1471,16 +1270,7 @@ LAYER
             WIDTH 1
             COLOR "#ffffff"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 6
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR 255 255 255
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
@@ -1546,17 +1336,7 @@ LAYER
             WIDTH 8
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 8
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1582,16 +1362,7 @@ LAYER
             WIDTH 8
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 8
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1628,16 +1399,7 @@ LAYER
             WIDTH 6
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_3") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1662,16 +1424,7 @@ LAYER
             WIDTH 5
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 3
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1684,16 +1437,7 @@ LAYER
             WIDTH 4
             COLOR "<%= get_color("road_color_4") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 2
-            SIZE 7
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_4") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
@@ -1719,16 +1463,7 @@ LAYER
             WIDTH 1
             COLOR "#ffffff"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            SIZE 6
-            MINDISTANCE 200
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR 255 255 255
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
@@ -1792,18 +1527,7 @@ LAYER
             WIDTH 6
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 8
-            MINDISTANCE 200
-            #MAXLENGTH 6
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1829,18 +1553,7 @@ LAYER
             WIDTH 6
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            PRIORITY 3
-            BUFFER 10
-            SIZE 8
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1877,17 +1590,7 @@ LAYER
             WIDTH 4
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 7
-            MINDISTANCE 200
-            BUFFER 25
-            ANGLE FOLLOW
-            COLOR 0 0 0
-            OUTLINECOLOR "<%= get_color("road_color_3") %>"
-            #MINFEATURESIZE AUTO
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1987,18 +1690,7 @@ LAYER
             WIDTH 3
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 200
-            #MAXLENGTH 6
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2024,18 +1716,7 @@ LAYER
             WIDTH 3
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            PRIORITY 3
-            BUFFER 10
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2073,16 +1754,7 @@ LAYER
             WIDTH 2
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 7
-            MINDISTANCE 200
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -2175,18 +1847,7 @@ LAYER
             WIDTH 1.5
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 200
-            #MAXLENGTH 6
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2212,18 +1873,7 @@ LAYER
             WIDTH 1.5
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            PRIORITY 3
-            BUFFER 10
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2261,16 +1911,7 @@ LAYER
             WIDTH 1.5
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 7
-            MINDISTANCE 200
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -2362,18 +2003,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 200
-            #MAXLENGTH 6
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2399,18 +2029,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            PRIORITY 3
-            BUFFER 10
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2448,16 +2067,7 @@ LAYER
             WIDTH 0.8
             COLOR "<%= get_color("road_color_3") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 4
-            SIZE 6
-            MINDISTANCE 200
-            BUFFER 10
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -2511,18 +2121,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2530,17 +2129,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 6
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
@@ -2570,18 +2159,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2589,17 +2167,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 6
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
@@ -2628,18 +2196,7 @@ LAYER
             WIDTH 0.8
             COLOR "<%= get_color("road_color_1") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            PRIORITY 1
-            FONT arialbold
-            SIZE 7
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#998877"
-            #BACKGROUNDSHADOWCOLOR "#444444"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2647,17 +2204,7 @@ LAYER
             WIDTH 0.8
             COLOR "<%= get_color("road_color_2") %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            FONT arialbold
-            SIZE 6
-            MINDISTANCE 150
-            #MAXLENGTH 6
-            BUFFER 15
-            COLOR 255 255 255
-            #BACKGROUNDCOLOR "#bbaa88"
-            #BACKGROUNDSHADOWCOLOR "#888888"
-        END
+        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
