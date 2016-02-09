@@ -1,1 +1,5 @@
 Clean mapserver templates for maps.
+
+./bin/rebuild_map_files
+sudo rm -rf /var/tmp/cache/mapcache/
+
