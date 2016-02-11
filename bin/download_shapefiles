@@ -1,7 +1,23 @@
 
+pwd=`pwd`
+mkdir -p src
+mkdir -p map/coastlines
+mkdir -p map/states/cb_2014_us_state_20m
 
-cd map/coastlines
-wget http://data.openstreetmapdata.com/land-polygons-split-3857.zip
-unzip land-polygons-split-3857.zip
-wget http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip
-unzip simplified-land-polygons-complete-3857.zip
+cd src
+
+wget -N -x http://data.openstreetmapdata.com/land-polygons-split-3857.zip
+wget -N -x http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip
+wget -N -x http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip
+
+cd $pwd/map/coastlines
+unzip -o $pwd/src/data.openstreetmapdata.com/land-polygons-split-3857.zip
+unzip -o $pwd/src/data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip
+
+cd $pwd/map/states/cb_2014_us_state_20m
+unzip -o $pwd/src/www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip
+
+
+
+
+
