@@ -121,11 +121,12 @@ END
 
 LAYER
     TYPE POLYGON
-    STATUS ON
-    GROUP "default"
+    STATUS OFF #  FIGURE OUT HOW TO GET THIS SHAPEFILE !!! WAS: ON
+    GROUP "xdefault"
     NAME "STATES1"
     PROJECTION       "init=epsg:4326"     END
-    DATA "states/st99_d00"
+    # DATA "states/st99_d00"
+    DATA "states/cb_2014_us_state_20m/cb_2014_us_state_20m"
     MINSCALEDENOM 250000
     CLASS
         STYLE
@@ -2343,7 +2344,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 25010 minscaledenom 10010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2371,7 +2372,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 50010 minscaledenom 25010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2417,7 +2418,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100010 minscaledenom 50010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2481,7 +2482,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 250010 minscaledenom 100010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2593,7 +2594,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 500010 minscaledenom 250010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2681,7 +2682,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 1000010 minscaledenom 500010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2769,7 +2770,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 2500010 minscaledenom 1000010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place ,capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2857,7 +2858,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 5000010 minscaledenom 2500010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2921,7 +2922,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10000010 minscaledenom 5000010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
@@ -2989,7 +2990,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100000000010 minscaledenom 10000010
-    TYPE ANNOTATION
+    TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
