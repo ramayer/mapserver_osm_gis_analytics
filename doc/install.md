@@ -18,7 +18,8 @@ instructions
     sudo apt-get install git ansible
     git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
     cd mapserver_osm_gis_analytics
-    ansible-playbook -i ./ansible/hosts/hosts.minimal ./ansible/playbooks/mapserver_osm_gis_analytics.yaml
+    ansible-playbook -i ~/mapserver_osm_gis_analytics/ansible/hosts.minimal ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml 
+
 
 ### Less quick start (3-tiered architecture)
 
@@ -37,6 +38,6 @@ instructions
        for the machines 
     ]
 
-    ansible-playbook -s --vault-password-file ~/.vault_pass.txt --forks=8 -i ./ansible/hosts/hosts.3-tier ./ansible/playbooks/mapserver_osm_gis_analytics.yaml
+    ansible-playbook -i ~/mapserver_osm_gis_analytics/ansible/hosts.3-tier ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml 
 
 
