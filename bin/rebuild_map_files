@@ -1,3 +1,4 @@
 erb -r `pwd`/templates/styles/subtlecolor.rb     templates/qsgeo.map.erb > map/qsgeo_subtlecolor.map
 erb -r `pwd`/templates/styles/black_on_white.rb  templates/qsgeo.map.erb > map/qsgeo_black_on_white.map
+erb    templates/qsgeo.map.erb > map/qsgeo.map
 erb templates/mapcache.xml.erb > etc/mapcache/mapcache.xml

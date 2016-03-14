@@ -27,12 +27,12 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
   -->
   
 
-  <source name="example_style" type="wms">
+  <source name="greyscale" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_example_style.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_greyscale.map</map>
       </params>
     </getmap>
     <http>
@@ -59,12 +59,12 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <source name="black_on_white" type="wms">
+  <source name="example_style" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_black_on_white.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_example_style.map</map>
       </params>
     </getmap>
     <http>
@@ -75,12 +75,12 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <source name="greyscale" type="wms">
+  <source name="black_on_white" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_greyscale.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_black_on_white.map</map>
       </params>
     </getmap>
     <http>
@@ -131,8 +131,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <tileset name="example_style">
-    <source>example_style</source>
+  <tileset name="greyscale">
+    <source>greyscale</source>
     <cache>disk</cache>
     <grid>fli</grid>
     <grid>g</grid>
@@ -159,8 +159,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <tileset name="black_on_white">
-    <source>black_on_white</source>
+  <tileset name="example_style">
+    <source>example_style</source>
     <cache>disk</cache>
     <grid>fli</grid>
     <grid>g</grid>
@@ -173,8 +173,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <tileset name="greyscale">
-    <source>greyscale</source>
+  <tileset name="black_on_white">
+    <source>black_on_white</source>
     <cache>disk</cache>
     <grid>fli</grid>
     <grid>g</grid>
