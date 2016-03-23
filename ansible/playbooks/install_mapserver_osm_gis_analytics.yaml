@@ -1,0 +1,41 @@
+---
+- name: Common for all machines
+  hosts: all
+  become: yes
+  roles:
+    - ansible_managed
+
+- name: MapCache hosts (apache, mod-tilecache, mod-proxy, etc)
+  hosts: mapcache
+  become: yes
+  roles:
+    - mapcache
+
+- name: Set up mapserver application servers
+  hosts: mapserver
+  become: yes
+  roles:
+    - mapserver
+
+- name: Install current postgres from the postgres repositories
+  hosts: postgis-master
+  become: yes
+  vars:
+     database_password: "changeme"
+  roles:
+    - postgres
+
+
+#    - postgis-master
+#
+#- name: Install current postgres from the postgres repositories
+#  hosts: postgis-slave
+#  become: yes
+#  roles:
+#    - postgres
+#    - postgis-slave
+
+# At this point this should work: 
+#  sudo -u postgres psql
+
+
