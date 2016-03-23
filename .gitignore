@@ -1,3 +1,11 @@
+
+## emacs backups, lock files, etc
+.~/
+.#*
+*~
+\#*#
+
+
 *.rbc
 capybara-*.html
 .rspec
