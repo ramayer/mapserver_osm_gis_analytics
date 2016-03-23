@@ -1,0 +1,136 @@
+---
+
+- name: Install the postgres signing key
+  apt_key: id=ACCC4CF8  url='https://www.postgresql.org/media/keys/ACCC4CF8.asc' state=present
+
+- name: Add the postgres apt repository 
+  apt_repository: repo='deb http://apt.postgresql.org/pub/repos/apt/ {{ item }}-pgdg main' state=present
+  with_lines:
+    - lsb_release -cs
+
+- name: Install spatial database dev prereqs, for compiling modules against postgres, and compiling newewr postgres if needed
+  apt: pkg={{ item }} state=latest install_recommends=no
+  with_items:
+    - autoconf
+    - build-essential
+    - ca-certificates
+    - cgi-mapserver
+    - docbook-mathml
+    - docbook-xsl
+    - flex
+    - graphicsmagick-imagemagick-compat
+    - libapache2-mod-mapcache
+    - libbz2-dev
+    - libboost-all-dev
+    - lua5.2
+    - liblua5.2-dev
+    - libcunit1-dev
+    - libcurl4-openssl-dev
+    - libjson-c-dev
+    - libperl-dev
+    - libprotobuf-c-dev
+    - libprotobuf-dev
+    - libprotoc-dev
+    - libpython3-dev
+    - libreadline6-dev
+    - libtool
+    - libwww-perl
+    - libxml2-dev
+    - libxml2-utils
+    - protobuf-c-compiler
+    - protobuf-compiler
+    - python-dev
+    - repmgr
+    - subversion
+    - swig
+    - tilecache
+    - wget
+    - xsltproc
+    - zlib1g-dev
+
+- name: Install spatial database packages from the Postgres project
+  apt: pkg={{ item }} state=latest install_recommends=no
+  with_items:
+    - postgresql-9.5
+    - postgresql-9.5-dbg
+    - postgresql-9.5-postgis-2.2
+    - postgresql-plperl-9.5
+    - postgresql-plpython3-9.5 
+    - postgresql-9.5-mysql-fdw
+    - postgresql-9.5-pgrouting
+    - postgresql-9.5-pgtap
+    - postgresql-9.5-plproxy
+    - postgresql-9.5-plr
+    - postgresql-9.5-postgis-2.2
+    - postgresql-9.5-postgis-scripts
+    - postgresql-9.5-powa
+    - postgresql-9.5-prefix
+    - postgresql-9.5-repmgr
+    - postgresql-client-9.5
+    - postgresql-contrib-9.5
+    - postgresql-plperl-9.5
+    - postgresql-plpython3-9.5
+    - postgresql-server-dev-9.5
+
+# ALSO CONSIDER:
+#    - postgresql-9.5-mimeo
+#    - postgresql-9.5-partman
+#    - postgresql-9.5-pgq3
+#    - postgresql-9.5-slony1-2
+
+
+# The ansible playbook to install the spatial database now outputs this message
+# msg: the python psycopg2 module is required
+
+- name: TODO - track down why the installer now requires these additional packages
+  apt: pkg={{ item }} state=latest install_recommends=no
+  with_items:
+    - python3-psycopg2
+    - python-psycopg2
+
+- name: Gis tools
+  apt: pkg={{ item }} state=latest install_recommends=yes
+  with_items:
+    - osm2pgsql
+
+- name: Allow replication user to connect from the database tier
+  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+replication"      line="host    replication     postgres        127.0.0.1/32            md5"
+  notify:
+    - restart postgres
+
+- name: Allow our other servers to connect using passwords as the firewall allows.
+  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+all\s+all\s+10\." line="host    all     all        10.0.0.0/8            md5"
+  notify:
+    - restart postgres
+
+- name: Allow our other servers to connect using passwords as the firewall allows.
+  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+all\s+all\s+192\." line="host    all     all        192.168.0.0/16            md5"
+  notify:
+    - restart postgres
+
+- name: Allow our other servers to connect using passwords as the firewall allows.
+  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^local\s+all\s+all\s+md5" line="local    all     all        md5"
+  notify:
+    - restart postgres
+
+- name: create privileged gisadmin user 
+  become: yes
+  become_user: postgres
+  postgresql_user: name=gisadmin password=secret role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password | default(changeme) }} 
+
+- name: create unprivileged gis user
+  become: yes
+  become_user: postgres
+  postgresql_user: name=gis      password=secret role_attr_flags=CREATEDB,NOSUPERUSER  password={{ database_password | default(changeme) }} 
+
+- name: create gis database
+  become: yes
+  become_user: postgres
+  postgresql_db: name=gis
+
+  
+
+
+# See also: 
+# https://www.commandprompt.com/blogs/ivan_lezhnjov/2013/11/managing_pg_hbaconf_with_ansible/
+# sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
