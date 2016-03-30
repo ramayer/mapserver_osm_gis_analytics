@@ -131,7 +131,7 @@ LAYER
     NAME "landuse_layer1"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id ,landuse, name from planet_osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -169,7 +169,7 @@ LAYER
     GROUP "default"
     NAME "landuse_layer2"
     CONNECTIONTYPE postgis
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id ,leisure , landuse, name from planet_osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -217,7 +217,7 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "amenity"
@@ -272,7 +272,7 @@ LAYER
     NAME "landuse_layer4"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
@@ -331,7 +331,7 @@ LAYER
     NAME "landuse_layer5"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id ,nature , name from planet_osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 5000010
@@ -362,7 +362,7 @@ LAYER
     NAME "landuse_layer6"
     GROUP "default"
     CONNECTIONTYPE POSTGIS
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA 'way from (select way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
     CLASSITEM "waterway"
     SIZEUNITS meters
@@ -405,7 +405,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "railways"
@@ -427,7 +427,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "roadsclose"
@@ -809,7 +809,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "railways"
@@ -831,7 +831,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "roadsclose"
@@ -1212,7 +1212,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "railways"
@@ -1234,7 +1234,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "roadsclose"
@@ -1477,7 +1477,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "railways"
@@ -1499,7 +1499,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "roadsclose"
@@ -1729,7 +1729,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "railways"
@@ -1750,7 +1750,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "roadsclose"
@@ -1922,7 +1922,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "railways"
@@ -1943,7 +1943,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "roadsclose"
@@ -2109,7 +2109,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "railways"
@@ -2130,7 +2130,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "roadsclose"
@@ -2295,7 +2295,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "railways"
@@ -2316,7 +2316,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "roadsclose"
@@ -2470,7 +2470,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roadsfar"
@@ -2528,7 +2528,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roadsfar"
@@ -2585,7 +2585,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10000010 minscaledenom 5000010
     TYPE LINE
     NAME "roadsfar"
@@ -2652,7 +2652,7 @@ LAYER
     NAME "building"
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id, name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
@@ -2704,7 +2704,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     TYPE POLYGON
     CONNECTIONTYPE postgis
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way,osm_id, name from planet_osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
@@ -2748,7 +2748,7 @@ LAYER
     GROUP "default"
     NAME "oneways"
     CONNECTIONTYPE postgis
-    CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432"
+    CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432"
     DATA "way from (select way, osm_id from planet_osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
     PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10010
@@ -2763,7 +2763,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2791,7 +2791,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2837,7 +2837,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2901,7 +2901,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3013,7 +3013,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3101,7 +3101,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3189,7 +3189,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3277,7 +3277,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3341,7 +3341,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10000010 minscaledenom 5000010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3409,7 +3409,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=geodb.fli dbname=gis user=maps password=4maps port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    CONNECTIONTYPE postgis CONNECTION "host=geodb dbname=gis user=gis password=changeme port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 100000000010 minscaledenom 10000010
     TYPE POINT # was ANNOTATION
     NAME "places"
