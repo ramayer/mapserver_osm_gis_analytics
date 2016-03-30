@@ -1,7 +1,10 @@
 
-
 wget https://github.com/aaronlidman/Toner-for-Tilemill/blob/master/toner4tilemill/fonts/Arial-Unicode-Bold.ttf?raw=true
+ln 'Arial-Unicode-Bold.ttf?raw=true' 'Arial-Unicode-Bold.ttf'
 
-sudo apt-get install ttf-dejavu-extra
+sudo apt-get -y install ttf-dejavu-extra
 cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* .
 
+# See also: 
+# https://en.wikipedia.org/wiki/Arial_Unicode_MS
+# https://en.wikipedia.org/wiki/Unicode_typefaces
