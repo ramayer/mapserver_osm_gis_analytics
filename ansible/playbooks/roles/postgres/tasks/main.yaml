@@ -128,6 +128,16 @@
   become_user: postgres
   postgresql_db: name=gis
 
+- name: add postgis extension
+  become: yes
+  become_user: postgres
+  postgresql_ext: name=postgis db=gis login_host=
+  
+- name: add hstore extension
+  become: yes
+  become_user: postgres
+  postgresql_ext: name=hstore db=gis login_host=
+  
   
 
 
