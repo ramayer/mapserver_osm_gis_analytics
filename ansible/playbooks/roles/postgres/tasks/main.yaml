@@ -126,7 +126,7 @@
 - name: create gis database
   become: yes
   become_user: postgres
-  postgresql_db: name=gis
+  postgresql_db: name=gis owner=gis
 
 - name: add postgis extension
   become: yes
@@ -138,6 +138,17 @@
   become_user: postgres
   postgresql_ext: name=hstore db=gis login_host=
   
+- name: grant gis user read-only access to gis database
+  become: yes
+  become_user: postgres
+  postgresql_privs: >
+    db=gis
+    state=present
+    type=table
+    privs=SELECT
+    objs=ALL_IN_SCHEMA
+    role=gis
+
   
 
 
