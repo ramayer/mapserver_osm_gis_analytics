@@ -56,7 +56,9 @@
     synchronize: src={{ lookup('env','HOME') }}/mapserver_osm_templates/. dest=/etc/mapserver/mapserver_osm_templates/.
 
   - name: "add geodb.fli to hosts file"
-    lineinfile: dest=/etc/hosts regexp='.*geodb.fli' line="10.1.3.4 geodb.fli" state=present
+    lineinfile: dest=/etc/hosts regexp='.*geodb' line="127.0.0.1 geodb" state=present
+    ## TODO - Don't hard code this to localhost - get ansible to find the real value
+
 
 
 # After this role completes, the following should create a map tile
