@@ -26,6 +26,14 @@
     - postgres
 
 
+# 
+# At this point, the following script seems to work.
+# 
+#  env PGHOST=localhost bash install_spatial_db  --map-data=tiny
+
+#  http://192.168.0.119:10080/cgi-bin/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=default&map=%2Fetc%2Fmapserver%2Fmapserver_osm_templates%2Fmap%2Fqsgeo_subtlecolor.map&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&STYLES=&BBOX=-13775786.985667605%2C5009377.085697312%2C-13149614.849955441%2C5635549.221409475
+
+
 #    - postgis-master
 #
 #- name: Install current postgres from the postgres repositories
