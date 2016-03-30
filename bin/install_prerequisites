@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# get Ansible >= 2.0 (not bundled with Ubuntu 15.10)
+# see http://docs.ansible.com/ansible/intro_installation.html
+
+
+sudo apt-get install -y software-properties-common
+sudo apt-add-repository -y ppa:ansible/ansible 
+sudo apt-get update
+sudo apt-get install -y ansible
+
+sudo apt-get install -y git 
+
+cd
+git clone https://github.com/ramayer/mapserver_osm_templates
+cd mapserver_osm_templates
+bin/download_shapefiles
+bin/rebuild_map_files
+
+
+grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
+grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
+

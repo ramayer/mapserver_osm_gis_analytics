@@ -1,0 +1,26 @@
+# This minimal development hosts file assumes all software will be
+# installed on a single server.
+
+######################################################################
+# hosts
+######################################################################
+
+single-dev-machine  ansible_ssh_host=127.0.0.1
+
+######################################################################
+# groups
+######################################################################
+
+[mapcache]
+single-dev-machine
+
+[mapserver]
+single-dev-machine
+
+[postgis-master]
+single-dev-machine
+
+[postgis-slave]
+
+# none
+# single-dev-machine
