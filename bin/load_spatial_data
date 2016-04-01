@@ -1,0 +1,620 @@
+#!/bin/bash
+
+function usage {
+       echo "usage: "
+       echo "  bash $0 --create-database=[dbname]"
+       echo "  "
+       echo "assumes:"
+       echo "  port = environment varible PGPORT or 5432"
+       echo "  host = environment varible PGHOST or localhost"
+       echo "  user = environment variable PGUSER or gis"
+       echo "  db   = environment variable PGUDATABASE or gis"
+       echo "  pass = in ~/.pgpass for the host/port/username/database"
+       echo "  "
+       echo "options: "
+       echo "  --set-pgpass=[password]" # convenience function to add a row in ~/.pgpass
+       echo "  --create-default-users"  # creates a 'gisadmin' superuser, and a 'gis' read-only user
+       echo "  --create-db"
+       echo "  --load_osm_data=(tiny|smaller|small|planet)"
+       echo " "
+       echo "examples: "
+       echo ""
+       echo sudo -u postgres $0 --clear-all
+       echo sudo -u postgres $0 --create-default-users
+       echo sudo -u postgres $0 --create-default-database
+       echo ""
+       echo env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --configure-database
+       echo env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --load-osm-data=tiny
+       exit
+}
+
+echo "starting $0  at" `date`
+export PGPORT=${PGPORT-5432}
+export PGHOST=${PGHOST-localhost}
+export PGUSER=${PGUSER-gis}
+export PGDATABASE=${PGDATABASE-gis}
+
+parallel_jobs=`cat /proc/cpuinfo | grep processor | wc -l`
+postgis_legacy_path=/usr/share/postgresql/9.5/contrib/postgis-2.2/legacy.sql
+tmpdir=$HOME/tmp
+gis_data_dir=$tmpdir/gisdata
+osm_data=none
+create_db=false
+
+if [ -r "$HOME/.pgpass" ] ; then
+   password=`grep $PGHOST:$PGPORT:.:$PGUSER ~/.pgpass | perl -pe 's/.*://'`
+fi
+
+function set_pgpass {
+       password=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+       now=`/bin/date +'%Y-%m-%d.%T.%a'`
+       cp $HOME/.pgpass $HOME/.pgpass.bak.$now
+       grep -v "^"$PGHOST":"$PGPORT":".*:$PGUSER $HOME/.pgpass.bak.$now > $HOME/.pgpass
+       echo $PGHOST:$PGPORT:*:$PGUSER:$password >> $HOME/.pgpass
+       chmod og-rwx $HOME/.pgpass
+}
+
+
+function clear_all {
+  unset PGPORT
+  unset PGHOST
+  unset PGUSER
+  unset PGDATABASE
+  psql -c "DROP DATABASE IF EXISTS gis"
+  psql -c "DROP ROLE IF EXISTS admins"
+  psql -c "DROP ROLE IF EXISTS readonly"
+  psql -c "DROP ROLE IF EXISTS gis"
+  psql -c "DROP ROLE IF EXISTS mapserver"
+}
+
+function create_default_users {
+  unset PGPORT
+  unset PGHOST
+  unset PGUSER
+  unset PGDATABASE
+  psql -c "CREATE ROLE admins   SUPERUSER NOLOGIN CREATEDB CREATEROLE"
+  psql -c "CREATE ROLE readonly"
+  psql -c "CREATE USER gis       SUPERUSER CREATEDB INHERIT IN ROLE admins   ENCRYPTED PASSWORD 'changeme'"
+  psql -c "CREATE USER mapserver INHERIT IN ROLE readonly ENCRYPTED PASSWORD 'mapserver'" postgres
+  echo "the default username for the gis user is 'changeme' and should be changed"
+}
+
+function create_default_database {
+   createdb $PGDATABASE --owner=gis
+}
+
+function configure_database {
+   extensions=(plperl btree_gist hstore fuzzystrmatch pg_trgm postgis)
+   for extension in ${extensions[*]}; do
+        psql -c "CREATE EXTENSION $extension;"
+   done
+
+   foo=$(psql <<EOF
+       INSERT into spatial_ref_sys (srid, auth_name, auth_srid, proj4text, srtext) values ( 102643, 'esri', 102643, '+proj=lcc +lat_1=37.06666666666667 +lat_2=38.43333333333333 +lat_0=36.5 +lon_0=-120.5 +x_0=2000000 +y_0=500000.0000000002 +ellps=GRS80 +datum=NAD83 +to_meter=0.3048006096012192 +no_defs ', 'PROJCS["NAD_1983_StatePlane_California_III_FIPS_0403_Feet",GEOGCS["GCS_North_American_1983",DATUM["North_American_Datum_1983",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["False_Easting",6561666.666666666],PARAMETER["False_Northing",1640416.666666667],PARAMETER["Central_Meridian",-120.5],PARAMETER["Standard_Parallel_1",37.06666666666667],PARAMETER["Standard_Parallel_2",38.43333333333333],PARAMETER["Latitude_Of_Origin",36.5],UNIT["Foot_US",0.30480060960121924],AUTHORITY["EPSG","102643"]]');
+EOF
+    )
+}
+
+
+function load_osm_data {
+
+   renice 19 $$
+
+  # cd /tmp
+  # wget http://download.bbbike.org/osm/bbbike/SanFrancisco/SanFrancisco.osm.pbf
+  # osm2pgsql SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
+  # for states and continents see http://download.geofabrik.de/osm/north-america/
+  # 
+  # 
+  # wget -nc http://download.geofabrik.de/north-america/canada-latest.osm.pbf
+  # 
+  # for metro areas excerpts see http://metro.teczno.com/
+  #
+  # Note that the current OpenStreetMap wiki increased the recommened cache size to from 12000 to 22000.
+  # This will make all except our largest ASA servers to raise OOM exceptions
+  # so before running on a larger data set, we need to
+  #      sudo fallocate -l 64G /data/64G.swap
+  #      sudo mkswap /data/64G.swap
+  #      sudo swapon /data/64G.swap
+  # this will probably be painfully slow on our smaller servers, but at least
+  # should work.
+
+  mkdir -p $gis_data_dir
+  cd $gis_data_dir
+
+  # view needs to be dropped before running osm2pgsql
+  echo 'DROP VIEW planet_osm_polygon_view' | psql gis
+
+  if [ "$map_data" == "planet" ]; then 
+     wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
+     # Warning - you need a huge machine to build the whole planet.
+     osm2pgsql --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
+  fi
+
+  if [ "$map_data" == "california" ]; then 
+     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
+  fi
+
+  if [ "$map_data" == "states" ]; then 
+     wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/texas-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/florida-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
+     # note that you can not use the "--slim" mode with states that touch each other.
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
+  fi
+
+  if [ "$map_data" == "small" ]; then 
+     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/dallas.osm.pbf
+     arr=(
+         chicago_illinois.osm.pbf
+         dallas_texas.osm.pbf
+         miami_florida.osm.pbf
+         las-vegas_nevada.osm.pbf
+         reno_nevada.osm.pbf
+         dc-baltimore_maryland.osm.pbf
+         san-francisco-bay_california.osm.pbf
+         san-juan_puerto-rico.osm.pbf
+         
+         singapore.osm.pbf
+         yerevan_armenia.osm.pbf
+         reykjavik_iceland.osm.pbf
+         ankara_turkey.osm.pbf
+         
+         bogota_colombia.osm.pbf
+         guatemala-city_guatemala.osm.pbf
+         lima_peru.osm.pbf
+         medellin_colombia.osm.pbf
+         mexico-city_mexico.osm.pbf
+         quito_ecuador.osm.pbf
+         rio-de-janeiro_brazil.osm.pbf
+         san-jose_costa-rica.osm.pbf
+         santiago_chile.osm.pbf
+         trinidad-tobago.osm.pbf
+         trondheim_norway.osm.pbf
+         rome_italy.osm.pbf
+         stockholm_sweden.osm.pbf
+         moscow_russia.osm.pbf
+         
+         albany_new-york.osm.pbf
+         atlanta_georgia.osm.pbf
+         austin_texas.osm.pbf
+         boise_idaho.osm.pbf
+         boston_massachusetts.osm.pbf
+         columbus_ohio.osm.pbf
+         denver-boulder_colorado.osm.pbf
+         des-moines_iowa.osm.pbf
+         honolulu_hawaii.osm.pbf
+         indianapolis_indiana.osm.pbf
+         kansas-city-lawrence-topeka_kansas.osm.pbf
+         lincoln_nebraska.osm.pbf
+         madison_wisconsin.osm.pbf
+         minneapolis-saint-paul_minnesota.osm.pbf
+         nashville_tennessee.osm.pbf
+         oklahoma-city_oklahoma.osm.pbf
+         phoenix_arizona.osm.pbf
+         providence_rhode-island.osm.pbf
+         raleigh_north-carolina.osm.pbf
+         richmond_virginia.osm.pbf
+         salt-lake-city_utah.osm.pbf
+         santa-fe_new-mexico.osm.pbf
+         
+         vancouver_canada.osm.pbf 
+         
+         berlin_germany.osm.pbf
+         munich_germany.osm.pbf
+         london_england.osm.pbf
+         moscow_russia.osm.pbf
+         
+         lagos_nigeria.osm.pbf
+         dhaka_bangladesh.osm.pbf
+         dubai_abu-dhabi.osm.pbf
+         baghdad_iraq.osm.pbf
+         bangkok_thailand.osm.pbf
+         mexico-city_mexico.osm.pbf
+         beijing_china.osm.pbf
+         taipei_taiwan.osm.pbf
+         hong-kong_china.osm.pbf
+         ulaanbaatar_mongolia.osm.pbf
+         taichung_taiwan.osm.pbf
+         seoul_south-korea.osm.pbf
+         thessaloniki_greece.osm.pbf
+         tokyo_japan.osm.pbf
+     )
+     mkdir -p tmp
+     for item in ${arr[*]}; do
+         wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/$item
+         if [ ! -f tmp/$item.o5m ]; then
+             osmconvert  $item -o=tmp/$item.o5m
+         fi
+     done
+     echo combining tmp/*.o5m
+
+
+     # warning -- on Azure's vms, the following command gets killed by the OOM-killer"
+     # [3627992.636610] Out of memory: Kill process 14391 (osmconvert) score 643 or sacrifice child
+     # [3627992.653675] Killed process 14391 (osmconvert) total-vm:12158980kB, anon-rss:2262076kB, file-rss:4kB
+     #
+     # Docs suggest this might make it work --- but it still doesn't.
+     #  osmconvert --hash-memory=400 tmp/*.o5m -o=/tmp/new.o5m
+     # 
+     # Workaround is to add 10GB of swap space like this:
+     #
+     # sudo mkdir /mnt/swap
+     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+     # sudo chown root:root /mnt/swap/10GB
+     # sudo chmod 0600 /mnt/swap/10GB
+     # sudo mkswap /mnt/swap/10GB
+     # sudo swapon /mnt/swap/10GB
+     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
+
+     # Even though osm2pgsql supports multiple files we can not use it like this
+     #    osm2pgsql --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
+     # because some of these extracts have redundant data, and with the option it gives the following error
+     #
+     # osm2pgsql failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
+     # 
+     # However we can also not use it without the option due to this issue:
+     #    https://github.com/openstreetmap/osm2pgsql/issues/151
+     # that requires that nodes (apparently even across files) need to be ordered
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
+
+
+    # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
+    # Processing: Node(154550k 76.7k/s) Way(0k 0.00k/s) Relation(0 0.00/s)COPY_END for COPY planet_osm_nodes FROM STDIN;
+    # failed: ERROR:  could not extend file "base/59648/71418.12": wrote only 4096 of 8192 bytes at block 1674031
+    # HINT:  Check free disk space.
+  fi
+
+  if [ "$map_data" == "smaller" ]; then 
+     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+     osm2pgsql --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
+  fi
+
+  if [ "$map_data" == "tiny" ]; then 
+     # Note the bbox flag here:
+     # http://wiki.openstreetmap.org/wiki/Mapnik
+     # to debug the missing lakes in oakland
+     #    37.81079 -122.26463,-122.24828 37.79822
+     # or the missing roads in NRH
+     #    32.85531 -97.25333 -97.24225 32.84897
+     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
+     osm2pgsql --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
+  fi
+
+  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
+  echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
+  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
+  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
+
+  # TODO: consider if those should be partial indexes instead.
+  #   (yes, they should, but mapfile will need rewrite)
+
+  psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO mapserver"
+
+}
+
+for i in "$@"
+do
+case $i in
+    --debug)
+      set -x 
+    ;;
+    --password=*)
+       password=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
+    --set-pgpass=*)
+       set_pgpass $i
+    ;;
+    --create-default-users)
+        create_default_users
+    ;;
+    --create-default-database)
+        create_default_database
+    ;;
+    --configure-database)
+        configure_database
+    ;;
+    --clear-all)
+        clear_all
+    ;;
+    --load-osm-data=*)
+       map_data=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+       load_osm_data map_data
+    ;;
+    *)
+      usage
+    ;;
+esac
+done
+
+exit
+
+if test $# -lt 1 ; then
+  usage
+fi
+
+################################################################################
+## Clean everything except downloaded source and data
+################################################################################
+if [ "$clear_all" == "true" ]; then 
+    echo clearing old install
+    rm -rf $installdir/{bin,lib,lib64,tmp,doc,var,share,include}
+fi
+
+if [ "$setup_directories" == "true" ]; then
+    mkdir -p $installdir/{bin,lib,tmp,doc,var/log,tmp}
+fi
+
+################################################################################
+################################################################################
+################################################################################
+if [ "$create_db" == "true" ]; then 
+
+
+    psql -d $dbname --user=$pg_admin_user -c "CREATE SCHEMA extensions";
+    psql -d $dbname --user=$pg_admin_user -c "CREATE EXTENSION plperl;"  # can't be in schema extensions
+    for extension in ${extensions[*]}; do
+        psql -d $dbname --user=$pg_admin_user -c "CREATE EXTENSION $extension WITH SCHEMA extensions;"
+    done
+    psql -d $dbname --user=$pg_admin_user -c "ALTER DATABASE $dbname SET search_path=public,tiger,extensions;" 
+
+    psql -d $dbname --user=$pg_admin_user -f $postgis_legacy_path
+    psql -d $dbname --user=$pg_admin_user -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admins"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA public TO readonly"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA extensions TO admins"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT SELECT ON ALL TABLES IN SCHEMA extensions TO readonly"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT SELECT,USAGE ON ALL SEQUENCES IN SCHEMA extensions TO readonly"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT USAGE ON SCHEMA extensions TO readonly;"
+    psql -d $dbname --user=$pg_admin_user -c "GRANT USAGE ON SCHEMA public TO readonly;"
+
+
+    # echo 'create extension plpgsql' | psql $dbname fli   # already installed in template
+    # echo 'create extension intagg' | psql $dbname fli
+    # echo 'create extension intarray' | psql $dbname fli
+    #    While required for earlier versions of osm2pgsql, intarray 
+    #    is now unnecessary and will interfere with osm2pgsql's array
+    #    handling. Please use a database without intarray.
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/postgis.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/spatial_ref_sys.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/rtpostgis.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/topology/topology.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/doc/topology_comments.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/raster_comments.sql
+    # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/postgis_comments.sql
+  done
+
+  echo now perhaps try:  https://github.com/migurski/HighRoad
+fi
+
+if [ "$map_data" != "none" ]; then 
+  # cd /tmp
+  # wget http://download.bbbike.org/osm/bbbike/SanFrancisco/SanFrancisco.osm.pbf
+  # osm2pgsql SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
+  # for states and continents see http://download.geofabrik.de/osm/north-america/
+  # 
+  # wget -nc http://download.geofabrik.de/north-america/canada-latest.osm.pbf
+  # 
+  # for metro areas excerpts see http://metro.teczno.com/
+  #
+  # Note that the current OpenStreetMap wiki increased the recommened cache size to from 12000 to 22000.
+  # This will make all except our largest ASA servers to raise OOM exceptions
+  # so before running on a larger data set, we need to
+  #      sudo fallocate -l 64G /data/64G.swap
+  #      sudo mkswap /data/64G.swap
+  #      sudo swapon /data/64G.swap
+  # this will probably be painfully slow on our smaller servers, but at least
+  # should work.
+
+  startpg
+
+  mkdir -p $gis_data_dir
+  cd $gis_data_dir
+
+  # view needs to be dropped before running osm2pgsql
+  echo 'DROP VIEW planet_osm_polygon_view' | psql
+
+  if [ "$map_data" == "planet" ]; then 
+     # Warning - you need a large machine and many days to build the whole planet.
+     wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
+     osm2pgsql --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
+  fi
+  if [ "$map_data" == "california" ]; then 
+     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
+  fi
+  if [ "$map_data" == "states" ]; then 
+     wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/texas-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/north-america/us/florida-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
+     wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
+     # note that you can not use the "--slim" mode with states that touch each other.
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
+  fi
+  if [ "$map_data" == "small" ]; then 
+     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/dallas.osm.pbf
+     arr=(
+          chicago_illinois.osm.pbf
+          dallas_texas.osm.pbf
+          miami_florida.osm.pbf
+          las-vegas_nevada.osm.pbf
+          reno_nevada.osm.pbf
+          dc-baltimore_maryland.osm.pbf
+          san-francisco-bay_california.osm.pbf
+          san-juan_puerto-rico.osm.pbf
+          
+          singapore.osm.pbf
+          yerevan_armenia.osm.pbf
+          reykjavik_iceland.osm.pbf
+          ankara_turkey.osm.pbf
+          
+          bogota_colombia.osm.pbf
+          guatemala-city_guatemala.osm.pbf
+          lima_peru.osm.pbf
+          medellin_colombia.osm.pbf
+          mexico-city_mexico.osm.pbf
+          quito_ecuador.osm.pbf
+          rio-de-janeiro_brazil.osm.pbf
+          san-jose_costa-rica.osm.pbf
+          santiago_chile.osm.pbf
+          trinidad-tobago.osm.pbf
+          trondheim_norway.osm.pbf
+          rome_italy.osm.pbf
+          stockholm_sweden.osm.pbf
+          moscow_russia.osm.pbf
+          
+          albany_new-york.osm.pbf
+          atlanta_georgia.osm.pbf
+          austin_texas.osm.pbf
+          boise_idaho.osm.pbf
+          boston_massachusetts.osm.pbf
+          columbus_ohio.osm.pbf
+          denver-boulder_colorado.osm.pbf
+          des-moines_iowa.osm.pbf
+          honolulu_hawaii.osm.pbf
+          indianapolis_indiana.osm.pbf
+          kansas-city-lawrence-topeka_kansas.osm.pbf
+          lincoln_nebraska.osm.pbf
+          madison_wisconsin.osm.pbf
+          minneapolis-saint-paul_minnesota.osm.pbf
+          nashville_tennessee.osm.pbf
+          oklahoma-city_oklahoma.osm.pbf
+          phoenix_arizona.osm.pbf
+          providence_rhode-island.osm.pbf
+          raleigh_north-carolina.osm.pbf
+          richmond_virginia.osm.pbf
+          salt-lake-city_utah.osm.pbf
+          santa-fe_new-mexico.osm.pbf
+          
+          vancouver_canada.osm.pbf 
+          
+          berlin_germany.osm.pbf
+          munich_germany.osm.pbf
+          london_england.osm.pbf
+          moscow_russia.osm.pbf
+          
+          lagos_nigeria.osm.pbf
+          dhaka_bangladesh.osm.pbf
+          dubai_abu-dhabi.osm.pbf
+          baghdad_iraq.osm.pbf
+          bangkok_thailand.osm.pbf
+          mexico-city_mexico.osm.pbf
+          beijing_china.osm.pbf
+          taipei_taiwan.osm.pbf
+          hong-kong_china.osm.pbf
+          ulaanbaatar_mongolia.osm.pbf
+          taichung_taiwan.osm.pbf
+          seoul_south-korea.osm.pbf
+          thessaloniki_greece.osm.pbf
+          tokyo_japan.osm.pbf
+     )
+     mkdir -p tmp
+     for item in ${arr[*]}; do
+         wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/$item
+         if [ ! -f tmp/$item.o5m ]; then
+             osmconvert  $item -o=tmp/$item.o5m
+         fi
+     done
+     echo combining tmp/*.o5m
+
+     # warning -- on Azure's vms, the following command gets killed by the OOM-killer"
+     # [3627992.636610] Out of memory: Kill process 14391 (osmconvert) score 643 or sacrifice child
+     # [3627992.653675] Killed process 14391 (osmconvert) total-vm:12158980kB, anon-rss:2262076kB, file-rss:4kB
+     #
+     # Docs suggest this might make it work --- but it still doesn't.
+     #  osmconvert --hash-memory=400 tmp/*.o5m -o=/tmp/new.o5m
+     # 
+     # Workaround is to add 10GB of swap space like this:
+     #
+     # sudo mkdir /mnt/swap
+     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+     # sudo chown root:root /mnt/swap/10GB
+     # sudo chmod 0600 /mnt/swap/10GB
+     # sudo mkswap /mnt/swap/10GB
+     # sudo swapon /mnt/swap/10GB
+     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
+
+     # Even though osm2pgsql supports multiple files we can not use it like this
+     #    osm2pgsql --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
+     # because some of these extracts have redundant data, and with the option it gives the following error
+     #
+     # Osm2pgsql failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
+     # 
+     # However we can also not use it without the option due to this issue:
+     #    https://github.com/openstreetmap/osm2pgsql/issues/151
+     # that requires that nodes (apparently even across files) need to be ordered
+     osm2pgsql --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
+
+
+    # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
+    # Processing: Node(154550k 76.7k/s) Way(0k 0.00k/s) Relation(0 0.00/s)COPY_END for COPY planet_osm_nodes FROM STDIN;
+    # failed: ERROR:  could not extend file "base/59648/71418.12": wrote only 4096 of 8192 bytes at block 1674031
+    # HINT:  Check free disk space.
+
+
+  fi
+
+  if [ "$map_data" == "smaller" ]; then 
+     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+     osm2pgsql --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
+  fi
+  if [ "$map_data" == "tiny" ]; then 
+     # Note the bbox flag here:
+     # http://wiki.openstreetmap.org/wiki/Mapnik
+     # to debug the missing lakes in oakland
+     #    37.81079 -122.26463,-122.24828 37.79822
+     # or the missing roads in NRH
+     #    32.85531 -97.25333 -97.24225 32.84897
+     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
+     osm2pgsql --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
+  fi
+
+  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql 
+  echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql 
+  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql 
+  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql 
+
+  # TODO: consider if those should be partial indexes instead.
+  #   (yes, they should, but mapfile will need rewrite)
+
+
+  psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO gis"
+
+fi
+
+if [ "$install_munin_plugins" == "true" ]; then 
+    plugins_with_db=`(cd /usr/share/munin/plugins/; ls postgres_*) | grep _$`
+    plugins_without_db=`ls /usr/share/munin/plugins/postgres_* | grep -v _$`
+    sudo echo 'this needs root'
+    dbs=(qs cirs fl gis)
+    for f in $plugins_without_db; do echo $f; sudo ln -s $f /etc/munin/plugins ; done;
+
+    for f in $plugins_with_db; do
+        echo $f
+        sudo ln -s /usr/share/munin/plugins/$f /etc/munin/plugins/${f}gis
+        sudo ln -s /usr/share/munin/plugins/$f /etc/munin/plugins/${f}qs
+    done
+
+    cat > /tmp/postgres_munin_conf <<- _EOF_
+[postgres_*]
+user fli_pg92
+  env.PGUSER fli_pg92
+  env.PGPORT 5492
+_EOF_
+    sudo cp /tmp/postgres_munin_conf /etc/munin/plugin-conf.d/postgres
+
+fi
+
+echo "done spatial db install at" `date`
+
+
