@@ -25,13 +25,13 @@
   - name: write the apache config files
     template: src={{ item }} dest=/etc/apache2/sites-available/{{ item }}
     with_items:
-#      - 010-mapcache-http.conf
+      - 010-mapcache-http.conf
       - 020-mapcache-https.conf
 
   - name: Enable sites
     command: a2ensite {{ item }} creates=/etc/apache2/sites-enabled/{{ item }}
     with_items:
-#      - 010-mapcache-http.conf
+      - 010-mapcache-http.conf
       - 020-mapcache-https.conf
     notify:
       - restart apache
@@ -53,7 +53,12 @@
     template: src=index.html dest=/var/www/mapcache/index.html mode=755
 
   - name: copy test pages for maps
-    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
+    synchronize: src={{ lookup('pipe','pwd') }}/roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
+
+    # Seems an ansible bug -- if I use 
+    #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
+    # the destination acts like /var/www/mapcache/test_maps/test_maps/.
+
 
   - name: Creates mapcache directory
     file: path=/etc/mapcache state=directory
