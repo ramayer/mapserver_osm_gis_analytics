@@ -113,20 +113,20 @@
   notify:
     - restart postgres
 
-- name: create privileged gisadmin user 
+- name: create privileged gis user 
   become: yes
   become_user: postgres
-  postgresql_user: name=gisadmin password=secret role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password | default(changeme) }} 
+  postgresql_user: name=gis role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password | default(changeme) }} 
 
-- name: create unprivileged gis user
+- name: create unprivileged mapserver user
   become: yes
   become_user: postgres
-  postgresql_user: name=gis      password=secret role_attr_flags=CREATEDB,NOSUPERUSER  password={{ database_password | default(changeme) }} 
+  postgresql_user: name=mapserver role_attr_flags=NOSUPERUSER  password={{ database_password | default(mapserver) }} 
 
 - name: create gis database
   become: yes
   become_user: postgres
-  postgresql_db: name=gis
+  postgresql_db: name=gis owner=gis
 
 - name: add postgis extension
   become: yes
@@ -138,6 +138,17 @@
   become_user: postgres
   postgresql_ext: name=hstore db=gis login_host=
   
+- name: grant gis user read-only access to gis database
+  become: yes
+  become_user: postgres
+  postgresql_privs: >
+    db=gis
+    state=present
+    type=table
+    privs=SELECT
+    objs=ALL_IN_SCHEMA
+    role=gis
+
   
 
 
