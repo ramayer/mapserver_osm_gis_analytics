@@ -3,6 +3,7 @@
   apt: pkg={{ item }} state=latest
   with_items:
     - unzip
+    - sysstat
 
 - name: add ansible user
   user: name=ansible
