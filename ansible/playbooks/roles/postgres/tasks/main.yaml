@@ -37,6 +37,7 @@
     - libwww-perl
     - libxml2-dev
     - libxml2-utils
+    - osmctools
     - protobuf-c-compiler
     - protobuf-compiler
     - python-dev
