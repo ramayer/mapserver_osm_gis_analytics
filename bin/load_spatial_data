@@ -127,7 +127,7 @@ function load_osm_data {
 
   mkdir -p $gis_data_dir
   cd $gis_data_dir
-  flat_node_file = $flat_node_file.$PGDATABASE
+  flat_node_file=$flat_node_file.$PGDATABASE
 
   # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file
   echo 'DROP VIEW planet_osm_polygon_view' | psql gis
