@@ -41,6 +41,11 @@ gis_data_dir=$tmpdir/gisdata
 osm_data=none
 create_db=false
 
+if [ -d "/mnt/gisdata" ] ; then
+   tmpdir=/mnt/gisdata/tmp
+   gis_data_dir=/mnt/gisdata/tmp
+fi
+
 if [ -r "$HOME/.pgpass" ] ; then
    password=`grep $PGHOST:$PGPORT:.:$PGUSER ~/.pgpass | perl -pe 's/.*://'`
 fi
