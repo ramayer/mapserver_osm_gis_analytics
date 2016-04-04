@@ -114,6 +114,13 @@
   notify:
     - restart postgres
 
+- name: set postgres to listen on all IP addresses
+  become: yes
+  become_user: postgres
+  command: psql -U postgres postgres -c "ALTER SYSTEM SET listen_addresses = '*';"
+  notify:
+    - restart postgres
+
 - name: create privileged gis user 
   become: yes
   become_user: postgres
