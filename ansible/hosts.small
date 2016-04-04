@@ -1,0 +1,26 @@
+# A small hosts file for a minimal 3-tiered architecture
+
+
+######################################################################
+# hosts
+######################################################################
+
+mapcache-01  ansible_ssh_host=10.1.1.4
+mapserver-01 ansible_ssh_host=10.1.2.4
+postgis-01   ansible_ssh_host=10.1.3.4
+
+######################################################################
+# groups
+######################################################################
+
+[mapcache]
+mapcache-01
+
+[mapserver]
+mapserver-01
+
+[postgis-master]
+postgis-01
+
+[postgis-slave]
+# none

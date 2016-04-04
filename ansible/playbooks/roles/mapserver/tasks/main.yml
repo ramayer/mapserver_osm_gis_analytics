@@ -56,12 +56,6 @@
   - name: Install mapserver config files and shapefiles
     synchronize: src={{ lookup('env','HOME') }}/mapserver_osm_templates/. dest=/etc/mapserver/mapserver_osm_templates/.
 
-  - name: "add geodb.fli to hosts file"
-    lineinfile: dest=/etc/hosts regexp='.*geodb' line="127.0.0.1 geodb" state=present
-    ## TODO - Don't hard code this to localhost - get ansible to find the real value
-
-
-
 # After this role completes, the following should create a map tile
 #  http://localhost/cgi-bin/mapserv
 #  http://localhost/cgi-bin/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=default&map=%2Fetc%2Fmapserver%2Fmapserver_osm_templates%2Fmap%2Fqsgeo.map&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&STYLES=&BBOX=-13775786.985667605%2C5009377.085697312%2C-13149614.849955441%2C5635549.221409475

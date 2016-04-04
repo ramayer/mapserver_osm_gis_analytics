@@ -62,15 +62,6 @@
   - name: Creates mapcache directory
     file: path=/etc/mapcache state=directory
 
-  - name: "add mapserver-01 to hosts file"
-    lineinfile: dest=/etc/hosts regexp='.*mapserver-01' line="127.0.0.1 mapserver-01" state=present
-    # TODO - get this from the ansible hosts files
-
-  - name: "Build hosts file"
-    lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
-    when: hostvars[item].ansible_default_ipv4.address is defined
-    with_items: groups['all'] 
-
   - name: write the mapcache config file
     template: src=mapcache.xml dest=/etc/mapcache/mapcache.xml mode=755
     notify:
