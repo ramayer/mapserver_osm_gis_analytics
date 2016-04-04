@@ -47,7 +47,7 @@ LAYER
     PROJECTION "init=epsg:3857" END
     DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
     # DATA "coastlines/land-polygons-split-3857/land_polygons"
-    MINSCALEDENOM 500000
+    MINSCALEDENOM 500000   # size of the bay area or bigger
     CLASS
         STYLE
            COLOR "#ffffff"
@@ -62,7 +62,7 @@ LAYER
     NAME "land"
     PROJECTION "init=epsg:3857" END
     DATA "coastlines/land-polygons-split-3857/land_polygons"
-    MAXSCALEDENOM 500000
+    MAXSCALEDENOM 500000 # size of the oakland or smaller
     CLASS
         STYLE
            COLOR "#ffffff"
@@ -70,14 +70,19 @@ LAYER
     END
 END
 
+
+# http://www.mercatorgeosystems.com/blog-articles/2008/05/30/using-ogr2ogr-to-re-project-a-shape-file/
+
 LAYER
     TYPE POLYGON
-    STATUS OFF #  FIGURE OUT HOW TO GET THIS SHAPEFILE !!! WAS: ON
-    GROUP "xdefault"
+    STATUS ON #  FIGURE OUT HOW TO FIX THIS SHAPEFILE !!! WAS: ON
+    GROUP "default"
     NAME "STATES1"
     PROJECTION       "init=epsg:4326"     END
     # DATA "states/st99_d00"
-    DATA "states/cb_2014_us_state_20m/cb_2014_us_state_20m"
+    # Even though it's the same shapefile, mapserver won't load it.  File length?
+    # DATA "cb_2014_us_state_20m/cb_2014_us_state_20m"
+    DATA "states/states.shp"
     MINSCALEDENOM 250000
     CLASS
         STYLE
