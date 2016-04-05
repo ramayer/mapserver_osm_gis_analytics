@@ -1,8 +1,9 @@
 #!/bin/bash
 
+cd ~/mapserver_osm_templates
 
-~/mapserver_osm_templates/bin/download_shapefiles
-~/mapserver_osm_templates/bin/rebuild_map_files
-~/mapserver_osm_templates/bin/install_fonts
+bin/download_shapefiles
+bin/rebuild_map_files
+bin/install_fonts
 
 
