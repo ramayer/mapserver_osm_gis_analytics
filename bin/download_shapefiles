@@ -12,12 +12,44 @@ wget -N -x http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zi
 
 
 cd $pwd/map/coastlines
-unzip -o $pwd/src/data.openstreetmapdata.com/land-polygons-split-3857.zip
-unzip -o $pwd/src/data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip
+
+
+if [ -f ./land-polygons-split-3857/land_polygons.shp ];
+then
+   echo "land_polygons.shp already existed"
+else
+   unzip -o $pwd/src/data.openstreetmapdata.com/land-polygons-split-3857.zip
+fi
+
+if [ -f ./simplified-land-polygons-complete-3857/simplified_land_polygons.shp ];
+then
+   echo "simplified_land_polygons.shp already existed"
+else
+   unzip -o $pwd/src/data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip
+fi
+
+
+
 
 cd $pwd/map/states/cb_2014_us_state_20m
-unzip -o $pwd/src/www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip
+
+if [ -f ./cb_2014_us_state_20m.shp ];
+then
+   echo "cb_2014_us_state_20m.shp"
+else
+   unzip -o $pwd/src/www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip
+fi
+
 cd $pwd/map/states/
-# Note - mapserver refuses to load the shapefile with the long name
-ogr2ogr -f "ESRI Shapefile"  states.shp  cb_2014_us_state_20m/cb_2014_us_state_20m.shp
+
+if [ -f ./states.shp ];
+then
+   echo "states.shp  already existed"
+else
+   # Note - mapserver refuses to load the shapefile with the long name
+   # converting it to a shapefile with a short name makes the layer appear
+   ogr2ogr -f "ESRI Shapefile"  states.shp  cb_2014_us_state_20m/cb_2014_us_state_20m.shp
+fi
+
+
 
