@@ -2,7 +2,7 @@
 
 cd ~/mapserver_osm_templates/map/fonts/
 
-wget https://github.com/aaronlidman/Toner-for-Tilemill/blob/master/toner4tilemill/fonts/Arial-Unicode-Bold.ttf?raw=true
+wget -N https://github.com/aaronlidman/Toner-for-Tilemill/blob/master/toner4tilemill/fonts/Arial-Unicode-Bold.ttf?raw=true
 ln 'Arial-Unicode-Bold.ttf?raw=true' 'Arial-Unicode-Bold.ttf'
 
 sudo apt-get -y install ttf-dejavu-extra
