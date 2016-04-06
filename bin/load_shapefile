@@ -83,7 +83,7 @@ cmd = "ogr2ogr -s_srs 'ESRI::#{projection}' -t_srs 'EPSG:3857' #{tmpdir}/reproje
 puts cmd
 system(cmd)
 
-$stderr.puts "loading into a temproary table"
+$stderr.puts "loading into a temporary table"
 cmd = "shp2pgsql -s 3857 #{tmpdir}/reprojected.shp  | psql"  # assumes environment variables for PGDATABASE, PGUSER, etc
 system(cmd)
 
@@ -91,7 +91,9 @@ system(cmd)
 
 #    select name,delete(hstore(t),'geom') as values_from_shapefile,geom from reprojected as t;
 
-####  create table layers_from_shapefiles  (id serial,layername text,featurename text, values_from_shapefile hstore, geom geometry(MultiPolygon,3857));
-#### insert into layers_from_shapefiles (layername,featurename,values_from_shapefile, geom) (select 'OPD Beats',name,delete(hstore(t),'geom') as values_from_shapefile,geom from reprojected as t);
+# create table layers_from_shapefiles  (id serial,layername text,featurename text, color text, values_from_shapefile hstore, geom geometry(MultiPolygon,3857));
+# insert into layers_from_shapefiles (layername,featurename,values_from_shapefile, geom) (select 'OPD Beats',name,delete(hstore(t),'geom') as values_from_shapefile,geom from reprojected as t);
+
+(0..15).each{|x| puts "update layers_from_shapefiles set color = '#%x%x%x%x00' where id %% 16 = #{x};"%[x,x,15-x,15-x]}
 
 system("rm -r #{tmpdir}")
