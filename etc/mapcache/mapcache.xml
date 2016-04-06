@@ -43,12 +43,44 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
+  <source name="another_try" type="wms">
+    <getmap>
+      <params>
+        <FORMAT>image/png</FORMAT>
+        <LAYERS>default</LAYERS>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_another_try.map</map>
+      </params>
+    </getmap>
+    <http>
+      <url>http://localhost/cgi-bin/mapserv/</url>
+      <connection_timeout>30</connection_timeout>
+    </http>
+  </source>
+
+  
+
   <source name="subtlecolor" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
         <map>/home/ron/work/fli/maps_clean/map/qsgeo_subtlecolor.map</map>
+      </params>
+    </getmap>
+    <http>
+      <url>http://localhost/cgi-bin/mapserv/</url>
+      <connection_timeout>30</connection_timeout>
+    </http>
+  </source>
+
+  
+
+  <source name="higher_contrast" type="wms">
+    <getmap>
+      <params>
+        <FORMAT>image/png</FORMAT>
+        <LAYERS>default</LAYERS>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_higher_contrast.map</map>
       </params>
     </getmap>
     <http>
@@ -145,8 +177,36 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
+  <tileset name="another_try">
+    <source>another_try</source>
+    <cache>disk</cache>
+    <grid>fli</grid>
+    <grid>g</grid>
+    <grid>g2</grid>
+    <format>PNG</format>
+    <metatile>5 5</metatile>
+    <metabuffer>10</metabuffer>
+    <expires>3600</expires>
+  </tileset>
+
+  
+
   <tileset name="subtlecolor">
     <source>subtlecolor</source>
+    <cache>disk</cache>
+    <grid>fli</grid>
+    <grid>g</grid>
+    <grid>g2</grid>
+    <format>PNG</format>
+    <metatile>5 5</metatile>
+    <metabuffer>10</metabuffer>
+    <expires>3600</expires>
+  </tileset>
+
+  
+
+  <tileset name="higher_contrast">
+    <source>higher_contrast</source>
     <cache>disk</cache>
     <grid>fli</grid>
     <grid>g</grid>
