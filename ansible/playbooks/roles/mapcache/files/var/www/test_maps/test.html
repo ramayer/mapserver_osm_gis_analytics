@@ -2,7 +2,6 @@
   <head>
     <link rel="stylesheet" href="http://openlayers.org/en/v3.14.2/css/ol.css" type="text/css">
     <script src="http://openlayers.org/en/v3.14.2/build/ol.js" type="text/javascript"></script>
-    /* git clone https://github.com/walkermatt/ol3-layerswitcher */
     <link rel="stylesheet" href="ol3-layerswitcher/src/ol3-layerswitcher.css" />
     <script src="ol3-layerswitcher/src/ol3-layerswitcher.js"></script>
 
@@ -26,19 +25,77 @@
             source: new ol.source.MapQuest({layer: 'sat'})
         });
 
-	var osm_layer = new ol.layer.Tile({
+	var osm_layer1 = new ol.layer.Tile({
 	       preload: Infinity,
-	       opacity: 0.80,
+	       // opacity: 0.80,
+	       type: 'base',
 	       // extent: projectionExtent,
-	       title: 'Open StreetMap Subtle Color',
+	       title: 'OSM With Oakland Beats',
+               visible: true,
 	       source: new ol.source.XYZ({
 		       url: '/mapcache/tms/1.0.0/subtlecolor@g2/{z}/{x}/{-y}.png',
 
 	       }),
 	});
-	
+
+	var osm_layer2 = new ol.layer.Tile({
+	       preload: Infinity,
+	       // opacity: 0.80,
+	       type: 'base',
+	       // extent: projectionExtent,
+	       title: 'Higher Contrast',
+               visible: false,
+	       source: new ol.source.XYZ({
+		       url: '/mapcache/tms/1.0.0/another_try@g2/{z}/{x}/{-y}.png',
+
+	       }),
+	});
+
+
+        var layers = [
+            new ol.layer.Group({
+                'title': 'Base maps',
+                layers: [
+                    osm_layer1,osm_layer2,
+                    new ol.layer.Tile({
+                        title: 'Water color',
+                        type: 'base',
+                        visible: false,
+                        source: new ol.source.Stamen({
+                            layer: 'watercolor'
+                        })
+                    }),
+                    new ol.layer.Tile({
+                        title: 'OSM',
+                        type: 'base',
+                        visible: false,
+                        source: new ol.source.OSM()
+                    }),
+                    new ol.layer.Tile({
+                        title: 'Satellite',
+                        type: 'base',
+                        visible: false,
+                        source: new ol.source.MapQuest({layer: 'sat'})
+                    })
+                ]
+            }),
+            new ol.layer.Group({
+                title: 'Overlays',
+                layers: [
+                    new ol.layer.Tile({
+                        title: 'Countries',
+                        source: new ol.source.TileWMS({
+                            url: 'http://demo.opengeo.org/geoserver/wms',
+                            params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
+                            serverType: 'geoserver'
+                        })
+                    })
+                ]
+            })
+        ];
+        
         var map = new ol.Map({
-          layers: [osm_layer],
+          layers: layers,
           target: 'map',
           view: new ol.View({
 	    center: [-13606244, 4548015],
@@ -46,5 +103,9 @@
           })
         });
 
+    var layerSwitcher = new ol.control.LayerSwitcher({
+        tipLabel: 'Légende' // Optional label for button
+    });
+    map.addControl(layerSwitcher);
       </script>
 </html>
