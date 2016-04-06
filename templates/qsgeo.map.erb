@@ -41,7 +41,12 @@
    end
 
    def get_color(c)
-       $colors[c.to_sym]
+       clr = $colors[c.to_sym]
+       unless clr
+           $stderr.puts("CAN'T FIND COLOR FOR #{c}")
+           clr='#FF0000'
+       end 
+       clr
    end
 
    def road_label(color,outline_color,size,priority)
@@ -3058,6 +3063,56 @@ LAYER
         END
     END
 END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    TYPE POLYGON
+    NAME "poly_body"
+    DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
+    LABELITEM 'featurename'
+    CLASS
+        STYLE
+            COLOR [color]
+            OPACITY 20
+        END
+    END
+END
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    TYPE POLYGON
+    NAME "polys_outlines"
+    DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
+    LABELITEM 'featurename'
+    CLASS
+        STYLE
+            OUTLINECOLOR "#0000ff"
+            OUTLINEWIDTH 15   # this seems to be ignored
+        END
+       LABEL
+        ANGLE auto
+        TYPE truetype
+        ANTIALIAS TRUE
+        COLOR 0 0 192
+        OUTLINECOLOR 255 255 200
+        FONT arial
+        SIZE 12
+        WRAP ' '
+        MINFEATURESIZE 30
+        MINDISTANCE 255
+        POSITION CC
+        PARTIALS FALSE
+        BUFFER 3
+      END
+    END
+END
+
+
 
 #include './north_richland_hills.layers'
 #include './oakland_pd.layers'
