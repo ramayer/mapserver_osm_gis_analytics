@@ -306,6 +306,14 @@ function load_osm_data {
 
 }
 
+
+
+function load_shapefile {
+   shapefile=$1
+   shp2pgsql /tmp/beats/PoliceBeats.shp | psql gis gis -h localhost
+}
+
+
 for i in "$@"
 do
 case $i in
@@ -314,6 +322,10 @@ case $i in
     ;;
     --password=*)
        password=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
+    --load-shapefile=*)
+       shapefile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+       load_shapefile $shapefile
     ;;
     --set-pgpass=*)
        set_pgpass $i
