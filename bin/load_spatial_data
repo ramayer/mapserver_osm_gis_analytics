@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# TODO -- consider if we need to set
+#    vm.overcommit_memory=1
+# as described here: https://switch2osm.org/loading-osm-data/
+# 
 
 function usage {
        echo "usage: "
