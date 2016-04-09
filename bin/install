@@ -1,9 +1,24 @@
 #!/bin/bash
+#
+# creates
+#
+#    $INSTALLDIR/etc/mapcache/mapcache.xml
+#
+#    $INSTALLDIR/etc/mapserver/[layer].map
+#    $INSTALLDIR/etc/mapserver/fonts/[font].ttf
+#    $INSTALLDIR/etc/mapserver/shapefiles/[shapefile].{shp,prj,etc}
+#
+#    $INSTALLDIR/var/www/test_[layer].html
+#    $INSTALLDIR/var/www/test_maps.html
 
-cd ~/mapserver_osm_templates
 
-bin/download_shapefiles
-bin/rebuild_map_files
-bin/install_fonts
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environmnent.sh
 
+mkdir -p $INSTALLDIR/var/www
+mkdir -p $INSTALLDIR/etc/mapcache
+mkdir -p $INSTALLDIR/etc/mapserver/{shapefiles,fonts}
 
+$DIR/download_shapefiles
+$DIR/rebuild_map_files
+$DIR/install_fonts
