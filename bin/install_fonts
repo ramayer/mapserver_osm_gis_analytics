@@ -1,10 +1,14 @@
 #!/bin/bash
 
-cd ~/mapserver_osm_templates/map/fonts/
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
 
-[ -f 'Arial-Unicode-Bold.ttf?raw=true' ] || wget -nc https://github.com/aaronlidman/Toner-for-Tilemill/blob/master/toner4tilemill/fonts/Arial-Unicode-Bold.ttf?raw=true
+fontdir=$INSTALLDIR/etc/mapserver/fonts
 
-[ -f 'Arial-Unicode-Bold.ttf' ] || ln 'Arial-Unicode-Bold.ttf?raw=true' 'Arial-Unicode-Bold.ttf'
+mkdir -p $fontdir
+
 sudo apt-get -y install ttf-dejavu-extra
-cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* .
 
+
+[ -f 'Arial-Unicode-Bold.ttf' ] || cp $DIR/../map/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
+[ -f 'DejaVuSansCondensed.ttf' ] || cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* $fontdir
