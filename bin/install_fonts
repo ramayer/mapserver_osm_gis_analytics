@@ -3,12 +3,11 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/default_environment.sh
 
-fontdir=$INSTALLDIR/etc/mapserver/fonts
+fontdir=$INSTALLDIR/etc/mapserver/map/fonts
 
 mkdir -p $fontdir
 
 sudo apt-get -y install ttf-dejavu-extra
 
-
-[ -f 'Arial-Unicode-Bold.ttf' ] || cp $DIR/../map/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
+[ -f 'Arial-Unicode-Bold.ttf' ] || cp $DIR/../etc/mapserver/map/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
 [ -f 'DejaVuSansCondensed.ttf' ] || cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* $fontdir
