@@ -2,11 +2,17 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/default_environment.sh
+cd $PROJECT_DIR
 
-mapdir=$INSTALLDIR/etc/mapserver/map
+mapdir=$INSTALL_DIR/etc/mapserver
+mapcachedir=$INSTALL_DIR/etc/mapcache
 
-erb -r `pwd`/templates/styles/subtlecolor.rb     templates/qsgeo.map.erb > $mapdir/qsgeo_subtlecolor.map
-erb -r `pwd`/templates/styles/black_on_white.rb  templates/qsgeo.map.erb > $mapdir/qsgeo_black_on_white.map
-erb -r `pwd`/templates/styles/another_try.rb     templates/qsgeo.map.erb > $mapdir/qsgeo_another_try.map
+mkdir -p $mapdir/map
+mkdir -p $mapcachedir
 
-erb templates/mapcache.xml.erb > etc/mapcache/mapcache.xml
+erb -r $PROJECT_DIR/templates/styles/subtlecolor.rb     templates/qsgeo.map.erb > $mapdir/subtlecolor.map
+erb -r $PROJECT_DIR/templates/styles/black_on_white.rb  templates/qsgeo.map.erb > $mapdir/black_on_white.map
+erb -r $PROJECT_DIR/templates/styles/another_try.rb     templates/qsgeo.map.erb > $mapdir/another_try.map
+
+erb templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
+

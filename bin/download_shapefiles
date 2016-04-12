@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/default_environment.sh
 
-shapefiledir=$INSTALLDIR/etc/mapserver/shapefiles
+shapefiledir=$INSTALL_DIR/etc/mapserver/shapefiles
 
 function load_shapefile {
    url=$1
@@ -35,3 +35,4 @@ load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip  l
 load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip simplified_land_polygons.shp
 load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip cb_2014_us_state_20m.shp
 
+ogr2ogr -f "ESRI Shapefile"  $shapefiledir/states.shp  $shapefiledir/cb_2014_us_state_20m.shp

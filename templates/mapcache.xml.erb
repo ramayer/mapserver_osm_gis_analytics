@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <% 
-    styles = Dir.entries('templates/styles').select{|x| x=~/.rb$/}.map{|x| x.gsub(/\.rb$/,"")}
+   layers=%W{ subtlecolor black_on_white another_try}
 %>
 
 <!--
-http://mapserver.org/mapcache/config.html
-YEY!
-http://127.0.0.1/mapcache/wmts?service=wmts&request=GetCapabilities
-http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
+  http://mapserver.org/mapcache/config.html
+  YEY!
+  http://127.0.0.1/mapcache/wmts?service=wmts&request=GetCapabilities
+  http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 --> 
 
 <mapcache>
@@ -63,29 +63,25 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
   <!--
       WMS Sources (note mod-mapcache only supports wms sources for now)
   -->
-  <% styles.each{|style| %>
+  <% layers.each{|style| %>
 
   <source name="<%= style %>" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_<%= style %>.map</map>
+        <map><%= ENV['INSTALL_DIR'] %>/etc/mapserver/<%= style %>.map</map>
       </params>
     </getmap>
     <http>
-      <url>http://localhost/cgi-bin/mapserv/</url>
+      <url>http://mapserver-01/cgi-bin/mapserv/</url>
       <connection_timeout>30</connection_timeout>
     </http>
   </source>
 
-  <% } %>
-
-
   <!--
-      WMS Sources (note mod-mapcache only supports wms sources for now)
+      Grids for this style
   -->
-  <% styles.each{|style| %>
 
   <tileset name="<%= style %>">
     <source><%= style %></source>

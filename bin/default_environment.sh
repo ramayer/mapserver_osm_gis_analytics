@@ -1,8 +1,8 @@
 #!/bin/sh
 
 if [ ! -v INSTALL_DIR ]; then
-   export INSTALLDIR=$HOME/tmp/installdir
-   echo "INSTALL_DIR was not set. Defaulting to: $INSTALLDIR"
+   export INSTALL_DIR=$HOME/tmp/installdir
+   echo "INSTALL_DIR was not set. Defaulting to: $INSTALL_DIR"
 fi  
 
 if [ ! -v GIS_DATA_DIR ]; then
@@ -13,6 +13,8 @@ if [ ! -v GIS_DATA_DIR ]; then
    fi
    echo "GIS_DATA_DIR was not set.  Defaulting to: $GIS_DATA_DIR"
 fi  
+
+export PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/.. && pwd )"
 
 export PGPORT=${PGPORT-5432}
 export PGHOST=${PGHOST-localhost}

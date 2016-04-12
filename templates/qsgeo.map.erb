@@ -111,8 +111,9 @@ LAYER
     GROUP "default"
     NAME "land"
     PROJECTION "init=epsg:3857" END
-    DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
+    # DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
     # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    DATA "shapefiles/simplified_land_polygons"
     MINSCALEDENOM 500000   # size of the bay area or bigger
     CLASS
         STYLE
@@ -127,7 +128,8 @@ LAYER
     GROUP "default"
     NAME "land"
     PROJECTION "init=epsg:3857" END
-    DATA "coastlines/land-polygons-split-3857/land_polygons"
+    # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    DATA "shapefiles/land_polygons"
     MAXSCALEDENOM 500000 # size of the oakland or smaller
     CLASS
         STYLE
@@ -148,7 +150,8 @@ LAYER
     # DATA "states/st99_d00"
     # Even though it's the same shapefile, mapserver won't load it.  File length?
     # DATA "cb_2014_us_state_20m/cb_2014_us_state_20m"
-    DATA "states/states.shp"
+    # DATA "shapefiles/cb_2014_us_state_20m"
+    DATA "shapefiles/states"
     MINSCALEDENOM 250000
     CLASS
         STYLE
