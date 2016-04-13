@@ -18,3 +18,9 @@ source $DIR/default_environment.sh
 $DIR/download_shapefiles
 $DIR/install_fonts
 $DIR/rebuild_map_files
+
+
+echo "consider either:"
+echo "sudo rsync -aP -e ssh ~/tmp/installdir/etc/. /etc/."
+echo "sudo rm -rf /var/tmp/cache/"
+echo "or deploying using ansible"
