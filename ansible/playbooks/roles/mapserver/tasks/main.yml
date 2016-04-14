@@ -44,7 +44,7 @@
     service: name=apache2 state=started
 
   - name: Make sure mapserver config directory exists
-    file: dest=/etc/mapserver/mapserver_osm_templates mode=755 state=directory
+    file: dest=/etc/mapserver mode=755 state=directory
 
    # WARNING - WITH SOME VERSIONS OF ANSIBLE, THE "/." AT THE END OF THE LINE
    # IS LOST IF YOU USE THE "~".
@@ -54,7 +54,7 @@
    # which behaves very differently!!!!
 
   - name: Install mapserver config files and shapefiles
-    synchronize: src={{ lookup('env','HOME') }}/mapserver_osm_templates/. dest=/etc/mapserver/mapserver_osm_templates/.
+    synchronize: src={{ lookup('env','INSTALL_DIR') }}/etc/mapserver/. dest=/etc/mapserver/.
 
 # After this role completes, the following should create a map tile
 #  http://localhost/cgi-bin/mapserv

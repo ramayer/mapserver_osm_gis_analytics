@@ -52,20 +52,21 @@
   - name: Make maps template
     template: src=index.html dest=/var/www/mapcache/index.html mode=755
 
-  - name: copy test pages for maps
-    synchronize: src={{ lookup('pipe','pwd') }}/roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
+  # Seems an ansible bug -- if I use 
+  #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
+  # the destination acts like /var/www/mapcache/test_maps/test_maps/.
+  # 
+  # - name: copy test pages for maps
+  #   synchronize: src={{ lookup('pipe','pwd') }}/roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
 
-    # Seems an ansible bug -- if I use 
-    #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
-    # the destination acts like /var/www/mapcache/test_maps/test_maps/.
+  - name: Copy test pages for maps
+    synchronize: src={{ lookup('env','INSTALL_DIR') }}/var/www/mapcache/. dest=/var/www/mapcache/.
 
-  - name: Creates mapcache directory
+  - name: Creates mapcache config directory
     file: path=/etc/mapcache state=directory
 
-  - name: write the mapcache config file
-    template: src=mapcache.xml dest=/etc/mapcache/mapcache.xml mode=755
-    notify:
-      - restart apache
+  - name: Install mapcache config files
+    synchronize: src={{ lookup('env','INSTALL_DIR') }}/etc/mapcache/. dest=/etc/mapcache/.
 
   - name: Make sure a mapcache directory exists
     file: path=/var/tmp/cache/mapcache state=directory owner=www-data

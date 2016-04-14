@@ -14,5 +14,17 @@ erb -r $PROJECT_DIR/templates/styles/subtlecolor.rb     templates/qsgeo.map.erb 
 erb -r $PROJECT_DIR/templates/styles/black_on_white.rb  templates/qsgeo.map.erb > $mapdir/black_on_white.map
 erb -r $PROJECT_DIR/templates/styles/another_try.rb     templates/qsgeo.map.erb > $mapdir/another_try.map
 
-erb templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
+erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
+
+
+mkdir -p $INSTALL_DIR/var/www/mapcache
+if [ -d $INSTALL_DIR/var/www/mapcache/ol3-layerswitcher ];
+then
+    echo "already had openlayers layerswitcher"
+else
+    echo "need openlayers layerswitcher"
+    (cd $INSTALL_DIR/var/www/mapcache ; git clone https://github.com/walkermatt/ol3-layerswitcher)
+fi
+
+erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
 
