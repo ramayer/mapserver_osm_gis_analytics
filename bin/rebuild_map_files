@@ -10,9 +10,12 @@ mapcachedir=$INSTALL_DIR/etc/mapcache
 mkdir -p $mapdir/map
 mkdir -p $mapcachedir
 
-erb -r $PROJECT_DIR/templates/styles/subtlecolor.rb     templates/qsgeo.map.erb > $mapdir/subtlecolor.map
-erb -r $PROJECT_DIR/templates/styles/black_on_white.rb  templates/qsgeo.map.erb > $mapdir/black_on_white.map
-erb -r $PROJECT_DIR/templates/styles/another_try.rb     templates/qsgeo.map.erb > $mapdir/another_try.map
+for style in $(jq -r ".[] | .name" $PROJECT_DIR/templates/layers.json)
+do
+ echo trying $style
+ erb -r $PROJECT_DIR/templates/styles/$style.rb     templates/qsgeo.map.erb > $mapdir/$style.map
+done
+
 
 erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
 

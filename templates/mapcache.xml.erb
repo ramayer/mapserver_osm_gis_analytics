@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <% 
-   layers=%W{ subtlecolor black_on_white another_try}
+   require 'json'
+   layers = JSON.parse(File.read("#{ENV['PROJECT_DIR']}/templates/layers.json")).map{|x| x['name']}
 %>
 
 <!--

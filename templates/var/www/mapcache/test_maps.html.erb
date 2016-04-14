@@ -25,10 +25,7 @@
             source: new ol.source.MapQuest({layer: 'sat'})
         });
 
-       var layer_json = [
-           {desc:'Higher Contrast'       , name:'another_try'},
-           {desc:'OSM With Oakland Beats', name:'subtlecolor'}
-       ];
+       var layer_json = <%= File.read("#{ENV['PROJECT_DIR']}/templates/layers.json") %>
 
 	var local_base_layers = layer_json.map( function(item,index){
 	    return new ol.layer.Tile({
