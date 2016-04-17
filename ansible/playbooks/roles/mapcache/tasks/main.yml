@@ -78,6 +78,9 @@
   - name: Remove old map cache tiles
     file: name=/var/tmp/cache/mapcache/{{ item }} state=absent
     with_items: '{{cache_contents.stdout_lines}}'
+    notify:
+      - restart apache
+
 
 
 #  - name: Make sure static html directories exist
