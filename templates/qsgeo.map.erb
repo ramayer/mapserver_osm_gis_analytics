@@ -40,16 +40,22 @@
        ENV["PGPASSWORD"] || 'changeme'
    end
 
-   def get_color(c)
-       clr = $colors[c.to_sym]
+   def get_color(f,c='color')
+       feature = $map_colors[f.to_sym]
+       unless feature
+           $stderr.puts("CAN'T FIND COLOR FOR #{f}")
+           return '#FF0000'
+       end 
+       
+       clr = feature[c.to_sym]
        unless clr
-           $stderr.puts("CAN'T FIND COLOR FOR #{c}")
+           $stderr.puts("CAN'T FIND COLOR FOR #{f} #{c}")
            clr='#FF0000'
        end 
        clr
    end
 
-   def road_label(color,outline_color,size,priority)
+   def road_label(color,size,priority)
       %Q{        LABEL
             TYPE TRUETYPE
             FONT arial
@@ -60,7 +66,7 @@
             MINDISTANCE 250
             ANGLE FOLLOW
             COLOR "#{get_color(color)}"
-            OUTLINECOLOR "#{get_color(outline_color)}"
+            OUTLINECOLOR "#{get_color(color,"outline")}"
             #MINFEATURESIZE AUTO
             #MINFEATURESIZE 50
         END}
@@ -85,7 +91,7 @@ SIZE 800 800
 #EXTENT 47586 1621243 1197769 2679357
 EXTENT 16805492 -4049385 16857351 -3975830
 UNITS meters
-IMAGECOLOR "<%= get_color("water_color") %>"
+IMAGECOLOR "<%= get_color("water") %>"
 WEB
     LOG '/tmp/mapserver.log'
     METADATA
@@ -120,7 +126,7 @@ LAYER
     MINSCALEDENOM 500000   # size of the bay area or bigger
     CLASS
         STYLE
-           COLOR "<%= get_color("land_color_1") %>"
+           COLOR "<%= get_color("land") %>"
         END
     END
 END
@@ -148,7 +154,7 @@ LAYER
     MAXSCALEDENOM 500000 # size of the oakland or smaller
     CLASS
         STYLE
-           COLOR "<%= get_color("land_color_1") %>"
+           COLOR "<%= get_color("land") %>"
         END
     END
 END
@@ -174,7 +180,7 @@ LAYER
     MINSCALEDENOM 250000
     CLASS
         STYLE
-            OUTLINECOLOR "<%= get_color("land_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("land","outline") %>"
         END
     END
 END
@@ -238,14 +244,14 @@ LAYER
     CLASS
         EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='airport' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
         STYLE
-            COLOR "<%= get_color("industrial_color") %>"
+            COLOR "<%= get_color("industrial") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 30000
             SIZE 7
-            COLOR "<%= get_color("land_label_color") %>"
-            OUTLINECOLOR  "<%= get_color("land_label_outline_color") %>"
+            COLOR "<%= get_color("land_label") %>"
+            OUTLINECOLOR  "<%= get_color("land_label", "outline") %>"
             PRIORITY 2
             WRAP ' '
             #MAXLENGTH 6
@@ -255,7 +261,7 @@ LAYER
     CLASS
         EXPRESSION ('[landuse]'='residential')
         STYLE
-            COLOR "<%= get_color('residential_color') %>"
+            COLOR "<%= get_color('residential') %>"
         END
     END
 END
@@ -275,14 +281,14 @@ LAYER
     CLASS
         EXPRESSION ('[landuse]'='cemetery')
         STYLE
-            COLOR "<%= get_color("industrial_color") %>"
+            COLOR "<%= get_color("industrial") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 30000
             SIZE 7
-            COLOR "<%= get_color("land_label_color") %>"
-            OUTLINECOLOR "<%= get_color("land_label_outline_color") %>"
+            COLOR "<%= get_color("land_label") %>"
+            OUTLINECOLOR "<%= get_color("land_label", "outline") %>"
             PRIORITY 2
             WRAP ' '
             #MAXLENGTH 6
@@ -291,14 +297,14 @@ LAYER
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("park_color") %>"
+            COLOR "<%= get_color("park") %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 30000
             SIZE 7
-            COLOR "<%= get_color("park_label_color") %>"
-            OUTLINECOLOR  "<%= get_color("land_label_outline_color") %>"
+            COLOR "<%= get_color("forest_label") %>"
+            OUTLINECOLOR  "<%= get_color("forest_label", "outline") %>"
             PRIORITY 2
             POSITION cc
             WRAP ' '
@@ -324,14 +330,14 @@ LAYER
     CLASS
         EXPRESSION "hospital"
         STYLE
-            COLOR "<%= get_color('hospital_color') %>"
+            COLOR "<%= get_color('hospital') %>"
         END
          LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
             SIZE 7
-            COLOR "<%= get_color('hospital_label_color') %>"
-            OUTLINECOLOR "<%= get_color('hospital_label_outline_color') %>"
+            COLOR "<%= get_color('place_label') %>"
+            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
             PRIORITY 1
             WRAP ' '
             #MAXLENGTH 6
@@ -341,20 +347,20 @@ LAYER
     CLASS
         EXPRESSION ("[amenity]"="parking" or "[aeroway]"="apron")
         STYLE
-            COLOR "<%= get_color('industrial_color') %>"
+            COLOR "<%= get_color('industrial') %>"
         END
     END
     CLASS
         EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
         STYLE
-            COLOR "<%= get_color('school_color') %>"
+            COLOR "<%= get_color('school') %>"
         END
         LABEL
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
             SIZE 7
-            COLOR "<%= get_color('school_label_color') %>"
-            OUTLINECOLOR "<%= get_color('school_label_outline_color') %>"
+            COLOR "<%= get_color('place_label') %>"
+            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
             PRIORITY 1
             WRAP ' '
             ALIGN CENTER
@@ -378,16 +384,16 @@ LAYER
     CLASS
         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
         STYLE
-            COLOR "<%= get_color("forest_color") %>"
-            OUTLINECOLOR "<%= get_color("forest_color") %>"
+            COLOR "<%= get_color("forest") %>"
+            OUTLINECOLOR "<%= get_color("forest") %>"
             OUTLINEWIDTH 0.3
         END
         LABEL
             MAXSCALEDENOM 600000
             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             SIZE 7
-            COLOR "<%= get_color("forest_label_color") %>"
-            OUTLINECOLOR "<%= get_color("forest_label_outline_color") %>"
+            COLOR "<%= get_color("forest_label") %>"
+            OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
             PRIORITY 2
             WRAP ' '
             MINFEATURESIZE 20
@@ -399,8 +405,8 @@ LAYER
     CLASS
         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
         STYLE
-            COLOR "<%= get_color("grass_color") %>"
-            OUTLINECOLOR "<%= get_color("forest_color") %>"
+            COLOR "<%= get_color("grass") %>"
+            OUTLINECOLOR "<%= get_color("forest") %>"
             OUTLINEWIDTH 0.3
         END
     END
@@ -409,14 +415,14 @@ LAYER
   CLASS
         EXPRESSION ('[highway]'='pedestrian')
         STYLE
-            COLOR "<%= get_color("pedestrian_color") %>"
+            COLOR "<%= get_color("pedestrian") %>"
         END
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 11000
           SIZE 7
-          COLOR  "<%= get_color("pedestrian_label_color") %>"
-          OUTLINECOLOR "<%= get_color("pedestrian_label_outline_color") %>"
+          COLOR  "<%= get_color("road_label") %>"
+          OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
           WRAP ' '
           #MAXLENGTH 6
           ALIGN CENTER
@@ -438,9 +444,9 @@ LAYER
     LABELITEM "name"
     CLASS
         STYLE
-            COLOR "<%= get_color("water_color") %>"
+            COLOR "<%= get_color("water") %>"
             WIDTH 0.5
-            OUTLINECOLOR "<%= get_color("water_color") %>"
+            OUTLINECOLOR "<%= get_color("water") %>"
         END
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
@@ -448,8 +454,8 @@ LAYER
           MINDISTANCE 400
           MINFEATURESIZE 50   # slow, but quite a bit nicer.
           SIZE 8
-          COLOR "<%= get_color("water_label_color") %>"
-          OUTLINECOLOR "<%= get_color("water_label_outline_color") %>"
+          COLOR "<%= get_color("water_label") %>"
+          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
           WRAP ' '
           #MAXLENGTH 5
           ALIGN CENTER
@@ -469,7 +475,7 @@ LAYER
     CLASS
         EXPRESSION "river"
         STYLE
-            COLOR "<%= get_color("water_color") %>"
+            COLOR "<%= get_color("water") %>"
             WIDTH 30
             MINWIDTH 0.5
         END
@@ -478,7 +484,7 @@ LAYER
         MAXSCALEDENOM 105000
         EXPRESSION "stream"
         STYLE
-            COLOR "<%= get_color("water_color") %>"
+            COLOR "<%= get_color("water") %>"
             WIDTH 5
             MINWIDTH 0.5
         END
@@ -486,7 +492,7 @@ LAYER
     CLASS
         EXPRESSION "canal"
         STYLE
-            COLOR "<%= get_color("water_color") %>"
+            COLOR "<%= get_color("water") %>"
             WIDTH 10
             MINWIDTH 0.5
         END
@@ -514,13 +520,13 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("rail_outline_color") %>"
-            COLOR  "<%= get_color("rail_color") %>"
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR  "<%= get_color("rail") %>"
         END
         STYLE
             SYMBOL rail
             SIZE 5
-            COLOR  "<%= get_color("rail_symbol_color") %>"
+            COLOR  "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -540,11 +546,11 @@ LAYER
             WIDTH 15
             SYMBOL "tunnel"
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -552,12 +558,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -565,12 +571,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 15
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
@@ -579,11 +585,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
@@ -591,12 +597,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -604,12 +610,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 13
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 13
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -617,12 +623,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -630,11 +636,11 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 12
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 12
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -643,11 +649,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 11
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 11
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -656,11 +662,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
 
@@ -672,24 +678,24 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -697,132 +703,132 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 15
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 13
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 13
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,4) %>
+        <%= road_label("road_label",8,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 12
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 12
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
+        <%= road_label("road_label",8,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 11
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 11
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,2) %>
+        <%= road_label("road_label",8,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "track"
         STYLE
             WIDTH 3
             OUTLINEWIDTH 1.5
-            OUTLINECOLOR "<%= get_color('track_outline_color') %>"
+            OUTLINECOLOR "<%= get_color("track","outline") %>"
         END
         STYLE
             SYMBOL "track"
             WIDTH 3
-            COLOR "<%= get_color('track_symbol_color') %>"
+            COLOR "<%= get_color("track","symbol") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
             SYMBOL "path"
             WIDTH 2
-            COLOR "<%= get_color('footway_color') %>"
+            COLOR "<%= get_color('footway') %>"
         END
     END
     CLASS
         EXPRESSION 'pedestrian'
         STYLE
             WIDTH 8
-            COLOR "<%= get_color('footway_color') %>"
+            COLOR "<%= get_color('footway') %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
 END
 
@@ -841,13 +847,13 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
-            COLOR "<%= get_color('rail_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
         END
         STYLE
             SYMBOL rail
             SIZE 5
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -867,11 +873,11 @@ LAYER
             WIDTH 15
             SYMBOL "tunnel"
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -879,12 +885,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -892,12 +898,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 15
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
@@ -906,11 +912,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
@@ -918,12 +924,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -931,12 +937,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 13
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 13
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -944,12 +950,12 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -957,11 +963,11 @@ LAYER
         STYLE
             SYMBOL "tunnel"
             WIDTH 12
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 12
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -970,11 +976,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 11
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 11
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -983,11 +989,11 @@ LAYER
             SYMBOL "tunnel"
             WIDTH 8
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
         END
         STYLE
             WIDTH 8
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
 
@@ -999,24 +1005,24 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1024,132 +1030,132 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_outline_color_2") %>"
+            COLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 15
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
-            COLOR "<%= get_color("road_outline_color_2") %>"
+            COLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_outline_color_3") %>"
+            COLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 13
-            COLOR "<%= get_color("road_outline_color_3") %>"
+            COLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 13
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,4) %>
+        <%= road_label("road_label",8,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_outline_color_4") %>"
+            COLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 12
-            COLOR "<%= get_color("road_outline_color_4") %>"
+            COLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 12
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
+        <%= road_label("road_label",8,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 11
             OUTLINEWIDTH 1
-            COLOR "<%= get_color("road_outline_color_4") %>"
+            COLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 11
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,2) %>
+        <%= road_label("road_label",8,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 8
             OUTLINEWIDTH 1
-            COLOR "<%= get_color("road_outline_color_4") %>"
+            COLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 8
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "track"
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1.5
-            OUTLINECOLOR "<%= get_color("track_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("track","outline") %>"
         END
         STYLE
             SYMBOL "track"
             WIDTH 2
-            COLOR "<%= get_color("track_symbol_color") %>"
+            COLOR "<%= get_color("track","symbol") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
             SYMBOL "path"
             WIDTH 1
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
     END
     CLASS
         EXPRESSION 'pedestrian'
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
 END
 
@@ -1167,13 +1173,13 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
-            COLOR "<%= get_color('rail_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
         END
         STYLE
             SYMBOL rail
             SIZE 5
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1194,24 +1200,24 @@ LAYER
         STYLE
             WIDTH 10
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 6
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1219,130 +1225,130 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 10
-            OUTLINECOLOR  "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR  "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 10
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",9,1) %>
+        <%= road_label("road_label",9,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 6
             OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR  "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 7
-            OUTLINECOLOR  "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR  "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 7
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 8
-            OUTLINECOLOR  "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR  "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 8
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 6
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 7
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 7
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 6
             OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,2) %>
+        <%= road_label("road_label",7,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 4
             OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 4
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION "track"
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1.5
-            OUTLINECOLOR "<%= get_color("track_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("track","outline") %>"
         END
         STYLE
             SYMBOL "track"
             WIDTH 1
-            COLOR "<%= get_color("track_symbol_color") %>"
+            COLOR "<%= get_color("track","symbol") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
             SYMBOL "path"
             WIDTH 1
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
     END
     CLASS
         EXPRESSION 'pedestrian'
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
     END
 END
@@ -1362,13 +1368,13 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
-            COLOR "<%= get_color('rail_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
         END
         STYLE
             SYMBOL rail
             SIZE 5
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1388,24 +1394,24 @@ LAYER
         STYLE
             WIDTH 8
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 8
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 4
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 4
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1413,100 +1419,100 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 8
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 8
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 4
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 4
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 7
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 7
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 6
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 6
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 5
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 5
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 4
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 4
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,2) %>
+        <%= road_label("road_label",7,2) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -1514,28 +1520,28 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1.5
-            OUTLINECOLOR "<%= get_color("track_outline_color") %>"
+            OUTLINECOLOR "<%= get_color("track","outline") %>"
         END
         STYLE
             SYMBOL "track"
             WIDTH 1
-            COLOR "<%= get_color("track_symbol_color") %>"
+            COLOR "<%= get_color("track","symbol") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
             SYMBOL "path"
             WIDTH 1
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
     END
     CLASS
         EXPRESSION 'pedestrian'
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("footway_color") %>"
+            COLOR "<%= get_color("footway") %>"
         END
     END
 END
@@ -1554,12 +1560,12 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
         END
         STYLE
             SYMBOL "railfar"
             WIDTH 2
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1579,24 +1585,24 @@ LAYER
         STYLE
             WIDTH 6
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 2
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1604,74 +1610,74 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 6
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 6
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",8,3) %>
+        <%= road_label("road_label",8,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 3
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 3
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 4
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 4
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 2
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 3
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 3
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -1679,18 +1685,18 @@ LAYER
         STYLE
             WIDTH 2
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_5") %>"
+            COLOR "<%= get_color("road_5") %>"
         END
     END
     CLASS
@@ -1698,7 +1704,7 @@ LAYER
         STYLE
             SYMBOL "track"
             WIDTH 1
-            COLOR "<%= get_color('track_symbol_color') %>"
+            COLOR "<%= get_color("track","symbol") %>"
         END
     END
 END
@@ -1717,12 +1723,12 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
         END
         STYLE
             SYMBOL "railfar"
             WIDTH 1
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1742,24 +1748,24 @@ LAYER
         STYLE
             WIDTH 3
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 3
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1767,37 +1773,37 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 3
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 3
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 2
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -1805,37 +1811,37 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 2
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 2
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -1843,18 +1849,18 @@ LAYER
         STYLE
             WIDTH 0.8
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_color_5") %>"
+            COLOR "<%= get_color("road_5") %>"
         END
     END
 END
@@ -1874,12 +1880,12 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
         END
         STYLE
             SYMBOL "railfar"
             WIDTH 1
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1899,24 +1905,24 @@ LAYER
         STYLE
             WIDTH 1.5
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -1924,37 +1930,37 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 1.5
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -1962,37 +1968,37 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 1.5
-            OUTLINECOLOR "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1.5
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,4) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 0.8
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 0.8
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
@@ -2000,18 +2006,18 @@ LAYER
         STYLE
             WIDTH 0.5
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 0.3
-            COLOR "<%= get_color("road_color_5") %>"
+            COLOR "<%= get_color("road_5") %>"
         END
     END
 END
@@ -2030,12 +2036,12 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color('rail_outline_color') %>"
+            OUTLINECOLOR "<%= get_color('rail','outline') %>"
         END
         STYLE
             SYMBOL "railfar"
             WIDTH 1
-            COLOR "<%= get_color('rail_symbol_color') %>"
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -2055,24 +2061,24 @@ LAYER
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
             WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_outline_color_1") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
     END
     CLASS
@@ -2080,37 +2086,37 @@ LAYER
         TEXT '[ref]'
         STYLE
             WIDTH 1
-            OUTLINECOLOR  "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR  "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,3) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "trunk_link"
         STYLE
             WIDTH 1
             OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("road_outline_color_2") %>"
+            OUTLINECOLOR  "<%= get_color("road_2","outline") %>"
         END
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
             WIDTH 0.8
-            OUTLINECOLOR  "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR  "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -2118,44 +2124,44 @@ LAYER
         EXPRESSION "primary"
         STYLE
             WIDTH 0.8
-            OUTLINECOLOR  "<%= get_color("road_outline_color_3") %>"
+            OUTLINECOLOR  "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,4) %>
+        <%= road_label("road_label",6,4) %>
     END
     CLASS
         EXPRESSION "secondary_link"
         STYLE
             WIDTH 0.5
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "secondary"
         STYLE
             WIDTH 0.5
-            OUTLINECOLOR  "<%= get_color("road_outline_color_4") %>"
+            OUTLINECOLOR  "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
         END
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
         EXPRESSION "tertiary"
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_color_4") %>"
+            COLOR "<%= get_color("road_4") %>"
         END
     END
 END
@@ -2177,23 +2183,23 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
 END
@@ -2215,23 +2221,23 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 1
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
 END
@@ -2242,7 +2248,8 @@ LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
-    MAXSCALEDENOM 10000010 minscaledenom 5000010
+    # MAXSCALEDENOM 10000010
+    MINSCALEDENOM 5000010
     TYPE LINE
     NAME "roadsfar"
     DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
@@ -2252,23 +2259,23 @@ LAYER
         EXPRESSION "motorway"
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_1") %>"
+            COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",7,1) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION "trunk"
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_2") %>"
+            COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label_color","road_label_outline_color",6,1) %>
+        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION "primary"
         STYLE
             WIDTH 0.8
-            COLOR "<%= get_color("road_color_3") %>"
+            COLOR "<%= get_color("road_3") %>"
         END
     END
 END
@@ -2297,18 +2304,18 @@ LAYER
     CLASS
         MAXSCALEDENOM 7000
         STYLE
-            COLOR "<%= get_color("building_offset_color") %>"
+            COLOR "<%= get_color("building","offset") %>"
             OFFSET 2 2
         END
         STYLE
-            COLOR "<%= get_color("building_color") %>"
+            COLOR "<%= get_color("building") %>"
         END
         LABEL
         TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 7000
             SIZE 7
-            COLOR "<%= get_color("building_label_color") %>"
-            OUTLINECOLOR "<%= get_color("building_label_outline_color") %>"
+            COLOR "<%= get_color("building_label") %>"
+            OUTLINECOLOR "<%= get_color("building_label", "outline") %>"
             PRIORITY 1
             WRAP ' '
             #MAXLENGTH 6
@@ -2318,16 +2325,16 @@ LAYER
     CLASS
         MAXSCALEDENOM 11000
         STYLE
-            COLOR "<%= get_color("building_offset_color") %>"
+            COLOR "<%= get_color("building","offset") %>"
             OFFSET 1 1
         END
         STYLE
-            COLOR "<%= get_color("building_color") %>"
+            COLOR "<%= get_color("building") %>"
         END
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("building_color") %>"
+            COLOR "<%= get_color("building") %>"
             WIDTH 0.5
         END
     END
@@ -2348,15 +2355,15 @@ LAYER
     MAXSCALEDENOM 60000
     CLASS
         STYLE
-            COLOR "<%= get_color("grass_color") %>"
-            OUTLINECOLOR "<%= get_color("forest_color") %>"
+            COLOR "<%= get_color("grass") %>"
+            OUTLINECOLOR "<%= get_color("forest") %>"
         END
         LABEL
         TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
         MAXSCALEDENOM 7000
             SIZE 7
-            COLOR "<%= get_color("forest_label_color") %>"
-            OUTLINECOLOR "<%= get_color("forest_label_outline_color") %>"
+            COLOR "<%= get_color("forest_label") %>"
+            OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
             PRIORITY 1
             WRAP ' '
             #MAXLENGTH 6
@@ -2392,7 +2399,7 @@ LAYER
         STYLE
             SYMBOL "oneway"
             SIZE 11
-            COLOR "<%= get_color("oneway_color") %>"
+            COLOR "<%= get_color("oneway") %>"
         END
     END
 END
@@ -2412,8 +2419,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 6
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 4
@@ -2440,8 +2447,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2458,8 +2465,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 4
@@ -2486,8 +2493,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2504,8 +2511,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2522,8 +2529,8 @@ LAYER
             FONT arial
             TYPE TRUETYPE
             SIZE 7
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 4
@@ -2549,20 +2556,20 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2578,15 +2585,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2602,15 +2609,15 @@ LAYER
         STYLE
             SIZE 4
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2625,16 +2632,16 @@ LAYER
         EXPRESSION ('[place]'='village')
         STYLE
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
             SIZE 3
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 7
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2661,20 +2668,20 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2690,15 +2697,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2714,15 +2721,15 @@ LAYER
         STYLE
             SIZE 4
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2749,20 +2756,20 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2778,15 +2785,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2802,15 +2809,15 @@ LAYER
         STYLE
             SIZE 4
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2837,20 +2844,20 @@ LAYER
         STYLE
             SIZE 6
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 10
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2866,15 +2873,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2890,15 +2897,15 @@ LAYER
         STYLE
             SIZE 3
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 7
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
             WRAP ' '
             BUFFER 10
@@ -2925,20 +2932,20 @@ LAYER
         STYLE
             SIZE 7
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2954,15 +2961,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -2989,20 +2996,20 @@ LAYER
         STYLE
             SIZE 7
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 9
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -3018,15 +3025,15 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -3057,20 +3064,20 @@ LAYER
         STYLE
             SIZE 5
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_color') %>"
-            OUTLINECOLOR "<%= get_color("citycircle_outline_color") %>"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
         END
         STYLE
             SIZE 2
             SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle_inner_color') %>"
+            COLOR "<%= get_color("citycircle","inner") %>"
         END
         LABEL
             FONT arial
             TYPE TRUETYPE
             SIZE 7
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 4
             WRAP ' '
             #MAXLENGTH 8
@@ -3087,8 +3094,8 @@ LAYER
             FONT arialbold
             TYPE TRUETYPE
             SIZE 8
-            COLOR "<%= get_color("place_label_color") %>"
-            OUTLINECOLOR "<%= get_color("place_label_outline_color") %>"
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             WRAP ' '
             #MAXLENGTH 8
             ALIGN CENTER

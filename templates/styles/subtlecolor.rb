@@ -1,66 +1,45 @@
-# defaults are subtlecolor
+# Notes:
+#    industrial =  airport, military, railways, brownfield, commercial, cemetary, parking
+#    residential = some counties seem to use it, some don't so better to leave as the same as land
+#    park = golf course, park, recreation_ground, some cemetaries
+#    forest = redundant with some parks in some counties
+#    oneway = arrows on one-way roads
+#    pedestrian === note that there are some polygons tagged as pedestrian highways
+#       road_1	# major highways
+#       road_2	# oregon expressway, etc
+#       road_3	# el camino, alma, hwy 9, etc.
+#       road_4	# the inside of smaller roads - Stevenson and all smalll roads.
+#       road_5	# roads zoomed out so they're just 1px wide
 
-$map_options = {
-       building_color:           '#aaaaaa',          # building
-       building_label_color:        '#000000',          # building
-       building_label_outline_color:'#ffffff',          # building
-       building_offset_color:    '#444444',          # building offset
-       footway_color:              '#7f7f7f',
-       forest_color:		 '#CCDEAD',          # forest
-       forest_label_color:       "#3D6035",
-       forest_label_outline_color: "#ffffff",        # redundant with some parks
-       grass_color:		 '#DADEAD',          # grass
-       hospital_color:           '#E6C8C3',          # hospital
-       hospital_label_color:      '#000000',
-       hospital_label_outline_color: '#ffffff',
-       industrial_color:	 '#f0f0f0', 	     # airport, military, railways, brownfield, commercial, cemetary, parking
-       land_color_1:		 '#f8f8f8',          # basic polygons
-       land_label_color:         '#000000',
-       land_label_outline_color: '#ffffff',
-       land_outline_color_1:	 '#aaaaaa',	     # state outline
-       oneway_color:		 '#9A9ACA',          # the arrows on one-way roads
-       park_color:               '#B5D29C',          # golf course, park, recreation_ground, cemetary (other zoom)
-       park_label_color:         '#3D6035',          # park labels
-       pedestrian_color:          '#FDFDF9',        # includes polygons too
-       pedestrian_label_color:    '#000000',
-       pedestrian_label_outline_color: '#ffffff',
-       rail_color:               '#ffffff',          # rail
-       rail_outline_color:       '#A5A5A4',          # rail
-       rail_symbol_color:        '#A5A5A4',          # rail
-       residential_color:	 '#f8f8f8', 	     # 'residential'    # make this the same as land because some communities don't distinguish
-       road_color_1:		 '#aa9977',          # major highways
-       road_color_2:		 '#ddccaa',          # oregon expressway, etc
-       road_color_3:		 '#eeddbb',          # el camino, alma, hwy 9, etc.
-       road_color_4:		 '#ffeecc',          # the inside of smaller roads - Stevenson and all smalll roads.
-       road_color_5:		 '#aaaaaa',          # roads zoomed out so they're just 1px wide
-       road_label_color:         '#000000',
-       road_label_outline_color: '#ffffff',
-       road_outline_color_1:	 '#444444',          # road outlines
-       road_outline_color_2:	 '#888888',          # road outlines
-       road_outline_color_3:	 '#eeddbb',          # road outlines
-       road_outline_color_4:	 "#B7AC9A",          # road outlines
-       school_color:		 '#ffffaa',          # school, college, university
-       school_label_color:        '#000000',
-       school_label_outline_color: '#ffffff',
-       track_outline_color:       '#cec1ad',
-       track_symbol_color:        '#ffffff',
-       tunnel_outline_color:       '#444444',
-       water_color:		 '#99b3cc',          # water
-       water_label_color:	 '#6B94B0',
-       water_label_outline_color: '#ffffff',
-       place_label_color:         '#000000',
-       place_label_outline_color: '#ffffff',
-       citycircle_color:          '#ddcdcd',
-       citycircle_outline_color:  '#000000',
-       citycircle_inner_color:    '#000000',
-   }
+$map_colors = {
 
-#TODO:
-# consider this as a cleaner approach:
-#
-# features = {
-#   building: {color:'#aaaaaa', offset:'#444444', label:['#000000','#ffffff']},
-#   footway:  {color:'#7f7f7f'},
-#   forest:   {color:'#ccdead', label:['#3d6035','#ffffff']},
-#   
-# }  
+  road_label:  {color:'#000000',outline:'#ffffff'},
+  land_label:  {color:'#000000',outline:'#ffffff'},
+  building_label:  {color:'#000000',outline:'#ffffff'},
+  place_label: {color:'#000000',outline:'#ffffff'},
+  water_label: {color:'#6B94B0',outline:'#ffffff'},
+  forest_label:{color:'#3d6035',outline:'#ffffff'},
+  building:    {color:'#aaaaaa', offset:'#444444'},
+  footway:     {color:'#7f7f7f'},
+  forest:      {color:'#ccdead'},
+  grass:       {color:'#dadead'},
+  hospital:    {color:'#E6C8C3'},
+  industrial:  {color:'#f0f0f0'},
+  land:        {color:'#f8f8f8', outline:'#aaaaaa'},
+  oneway:      {color:'#9A9ACA'},
+  park:        {color:'#B5D29C'},
+  pedestrian:  {color:'#FDFDF9'},
+  rail:        {color:'#ffffff', outline:'#A5A5A4',symbol:'#A5A5A4'},
+  residential: {color:'#f8f8f8'},
+  road_1:      {color:'#aa9977', outline:'#444444'},
+  road_2:      {color:'#ddccaa', outline:'#888888'},
+  road_3:      {color:'#eeddbb', outline:'#eeddbb'},
+  road_4:      {color:'#ffeecc', outline:'#b7ac9a'},
+  road_5:      {color:'#aaaaaa'},
+  school:      {color:'#ffffaa'},
+  track:       {outline:'#cec1ad',symbol:'#ffffff'},
+  tunnel:      {outline:'#444444'},
+  water:       {color:'#99b3cc'},
+  citycircle:  {color:'#ddcdcd', outline:'#000000', inner:'#000000'},
+  
+}
