@@ -122,14 +122,26 @@ LAYER
     END
 END
 
+
+# Note that we could render it directly from the shapefile as shown in
+# the alternative DATA satements, but this requires about 600MB for
+# each mapserver instance.  Loading the shapefile into the database
+# and rendering it from there is much faster.
+
 LAYER
     TYPE POLYGON
     STATUS ON
     GROUP "default"
     NAME "land"
     PROJECTION "init=epsg:3857" END
+
     # DATA "coastlines/land-polygons-split-3857/land_polygons"
-    DATA "shapefiles/land_polygons"
+    # DATA "shapefiles/land_polygons"
+
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    DATA "geom from land_polygons using unique gid using srid=3857"
+
     MAXSCALEDENOM 500000 # size of the oakland or smaller
     CLASS
         STYLE
@@ -137,6 +149,7 @@ LAYER
         END
     END
 END
+
 
 
 # http://www.mercatorgeosystems.com/blog-articles/2008/05/30/using-ogr2ogr-to-re-project-a-shape-file/
