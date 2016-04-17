@@ -2296,7 +2296,7 @@ LAYER
     TYPE POLYGON
     CONNECTIONTYPE postgis
     CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
-    DATA "way from (select way,osm_id, name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id, coalesce(name,\"addr:housenumber\") as name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     PROCESSING "CLOSE_CONNECTION=DEFER"
