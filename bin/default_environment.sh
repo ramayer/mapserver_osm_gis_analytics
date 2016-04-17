@@ -18,7 +18,7 @@ if [ ! -v GIS_DATA_DIR ]; then
 fi  
 
 export PGPORT=${PGPORT-5432}
-export PGHOST=${PGHOST-localhost}
+export PGHOST=${PGHOST-'postgis-01'}
 export PGUSER=${PGUSER-gis}
 export PGDATABASE=${PGDATABASE-gis}
 
