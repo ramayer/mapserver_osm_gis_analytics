@@ -67,6 +67,8 @@
             ANGLE FOLLOW
             COLOR "#{get_color(color)}"
             OUTLINECOLOR "#{get_color(color,"outline")}"
+            # minfeaturesize doesn't work well on roads, because
+	    # some are made up of such tiny segments
             #MINFEATURESIZE AUTO
             #MINFEATURESIZE 50
         END}

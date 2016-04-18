@@ -1,6 +1,4 @@
 [
-           { "desc":"Higher Contrast"       , "name":"another_try"},
-           { "desc":"OSM With Oakland Beats", "name":"subtlecolor"},
-           { "desc":"Black on White"        , "name":"black_on_white"},
-           { "desc":"Greyscale"             , "name":"greyscale"}
+           { "desc":"White on Black"        , "name":"white_on_black"},
+           { "desc":"Higher Contrast"       , "name":"higher_contrast"}
 ]
