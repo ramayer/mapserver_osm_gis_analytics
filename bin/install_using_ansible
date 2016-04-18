@@ -1,3 +1,18 @@
 #!/bin/bash
 
-ansible-playbook -i ~/mapserver_osm_gis_analytics/ansible/hosts.minimal ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
+ansible_hosts_file=$HOME/mapserver_osm_gis_analytics/ansible/hosts.minimal
+
+
+# consider
+# ln -s ~/mapserver_osm_gis_analytics/ansible/hosts.nonredundant ~/.ansible/hosts
+
+
+if [ -r "$HOME/.ansible/hosts" ] ; then
+   ansible_hosts_file=$HOME/.ansible/hosts
+else
+   echo "using default ansible hosts file"
+   echo " if you're not installing locally,  consider a symbolic link to creating ~/.ansible/hosts"
+fi
+
+
+ansible-playbook -i $ansible_hosts_file ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
