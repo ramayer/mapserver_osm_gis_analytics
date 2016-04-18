@@ -65,8 +65,10 @@
   - name: Creates mapcache config directory
     file: path=/etc/mapcache state=directory
 
-  - name: Install mapcache config files
+  - name: Install mapcache config files to /etc/mapcache
     synchronize: src={{ lookup('env','INSTALL_DIR') }}/etc/mapcache/. dest=/etc/mapcache/.
+    notify:
+      - restart apache
 
   - name: Make sure a mapcache directory exists
     file: path=/var/tmp/cache/mapcache state=directory owner=www-data
