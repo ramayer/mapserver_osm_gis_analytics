@@ -18,8 +18,8 @@ function load_shapefile {
        echo "already had $zipfile"
    else
        echo "need $zipfile"
-       cd $GIS_DATA_DIR/shapefiles
-       wget -N -x $url
+       mkdir -p $GIS_DATA_DIR/shapefiles/
+       (cd $GIS_DATA_DIR/shapefiles; wget -N -x $url)
    fi
 
    shapefile=$shapefiledir/$shapefilename
@@ -32,7 +32,7 @@ function load_shapefile {
        unzip -n -j $zipfile -d $shapefiledir
    fi
 
-   if ( psql -h localhost gis gis -q -c "COPY (select table_catalog,table_name from information_schema.tables where table_name='$tablename') to stdout csv header"  | grep -qw $tablename ); 
+   if ( psql -q -c "COPY (select table_catalog,table_name from information_schema.tables where table_name='$tablename') to stdout csv header"  | grep -qw $tablename ); 
    then
       echo "Already had table $tablename"
    else
