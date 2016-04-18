@@ -13,6 +13,12 @@ postgis-01   ansible_ssh_host=10.1.3.4
 # groups
 ######################################################################
 
+[ansible_managed]
+mapcache-01
+mapserver-01
+postgis-01
+127.0.0.1
+
 [mapcache]
 mapcache-01
 
