@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no, width=device-width">
+    <meta charset="utf-8" />
+    <title>mod-mapcache demo service</title>
+    <link rel="stylesheet" href="./ol/v3.3.0/css/ol.css">
+    <link rel="stylesheet" href="ol3-layerswitcher/src/ol3-layerswitcher.css" />
+    <style type="text/css">
+    html, body {
+	    height: 100%;
+	    width: 100%;
+	    border: 0px;
+	    margin: 0px;
+	    padding: 0px;
+	}
+	#map {
+	    width: calc(100% - 2px);
+	    height: calc(100% - 2px);
+	    border: 1px solid black;
+	    margin: 0px;
+	    padding: 0px;
+	}
+	#map .ol-zoom .ol-zoom-out {
+	  margin-top: 204px;
+	}
+	#map .ol-zoomslider {
+	  background-color: transparent;
+	  top: 2.3em;
+	}
+	#map .ol-touch .ol-zoom .ol-zoom-out { 
+	    margin-top: 212px;
+	}
+	#map .ol-scale-line {
+	    bottom: 28px;
+	}
+	#map .ol-touch .ol-zoomslider {
+	    top: 2.75em;
+	}
+	#map .ol-mouse-position {
+	    left: 2px;
+	    bottom: 8px;
+	    right: auto;
+	    top: auto;
+	    padding: 2px;
+	    background: none repeat scroll 0 0 rgba(0, 60, 136, 0.3);
+	    border-radius: 4px;
+	    color: #eee;
+	    font-size: 10px;
+	    margin: 1px;
+	}
+
+    </style>
+  </head>
+  <body>
+
+  <div id="map" class="map"></div>
+
+  <script src="ol/v3.3.0/build/ol.js" type="text/javascript"></script>
+  <script src="ol3-layerswitcher/src/ol3-layerswitcher.js"></script>
+
+  <script type="text/javascript">
+        var max_resolutions = 18;
+        var projection = ol.proj.get('EPSG:3857');
+        var projectionExtent = projection.getExtent();
+        var size = ol.extent.getWidth(projectionExtent) / 256;
+        var resolutions = new Array(max_resolutions);
+        var matrixIds = new Array(max_resolutions);
+
+        for (var z = 0; z < max_resolutions; ++z) {
+                resolutions[z] = size / Math.pow(2, z);
+                matrixIds[z] = z;
+        }
+
+        var ariel_layer = new ol.layer.Tile({
+                preload: Infinity,
+                title: 'Map Quest Aerials',
+                visible: false,
+                source: new ol.source.MapQuest({layer: 'sat'})
+        });
+
+// https://groups.google.com/forum/#!topic/ol3-dev/RhaJl_nYVsU
+// https://github.com/openlayers/ol3/issues/3337
+//        var osm_layer = new ol.layer.Tile({
+//                preload: Infinity,
+//                opacity: 0.80,
+//                title: 'Open StreetMap Subtle Color',
+//                extent: projectionExtent,
+//                source: new ol.source.WMTS({
+//                        url: '/mapcache/wmts',
+//                        layer: 'subtlecolor',
+//                        matrixSet: 'g2',
+//                        format: 'image/png',
+//                        projection: projection,
+//                        style: 'default',
+//                        tileGrid: new ol.tilegrid.WMTS({
+//                                origin: ol.extent.getTopLeft(projectionExtent),
+//                                resolutions: resolutions,
+//                                matrixIds: matrixIds
+//                        })
+//                })
+//        });
+
+var osm_layer = new ol.layer.Tile({
+       preload: Infinity,
+       opacity: 0.80,
+       // extent: projectionExtent,
+       title: 'Open StreetMap Subtle Color',
+       source: new ol.source.XYZ({
+               url: 'https://maps-qa.leapportal.us/mapcache/tms/1.0.0/subtlecolor@g2/{z}/{x}/{-y}.png',
+
+       }),
+});
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Heatmap
+////////////////////////////////////////////////////////////////////////////////
+var heatmap = new ol.layer.Heatmap({
+  title: 'Heat Map',
+  visible: false,
+  source: new ol.source.KML({
+    extractStyles: false,
+    projection: 'EPSG:3857',
+    // url: './ol/examples/data/kml/2012_Earthquakes_Mag5.kml'
+    url: './data/data.kml'
+  }),
+  radius: 5
+});
+
+heatmap.getSource().on('addfeature', function(event) {
+  // 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
+  // standards-violating <magnitude> tag in each Placemark.  We extract it from
+  // the Placemark's name instead.
+
+//  var name = event.feature.get('name');
+//  var magnitude = parseFloat(name.substr(2));
+//  event.feature.set('weight', magnitude - 5);
+  event.feature.set('weight', 1);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Clusters
+////////////////////////////////////////////////////////////////////////////////
+
+var earthquakeFill = new ol.style.Fill({
+  color: 'rgba(255, 255, 0, 0.8)'
+});
+var earthquakeStroke = new ol.style.Stroke({
+  color: 'rgba(255, 0, 0, 0.9)',
+  width: 1
+});
+var textFill = new ol.style.Fill({
+  color: '#000'
+});
+var textStroke = new ol.style.Stroke({
+  color: 'rgba(255, 255, 255, 0.6)',
+  width: 2
+});
+var invisibleFill = new ol.style.Fill({
+  color: 'rgba(255, 0, 0, 1.00)'
+});
+
+function createEarthquakeStyle(feature) {
+  var name = feature.get('name');
+  return new ol.style.Style({
+    geometry: feature.getGeometry(),
+    image: new ol.style.RegularShape({
+      radius1: 7,
+      radius2: 3,
+      points: 5,
+      angle: Math.PI,
+      fill: earthquakeFill,
+      stroke: earthquakeStroke
+    })
+  });
+}
+
+function nicecolor(num,maxFeatureCount) {
+	var opacity = 0.8;
+
+	if (num >= maxFeatureCount / 2) {
+		var brightness = 1 - (2.0 * num / maxFeatureCount - 1.0);
+		return [127 + 127 * brightness, 0,  0,opacity];
+	} else {
+		var brightness = 1 - (num / maxFeatureCount * 2);
+		return [255, 255*brightness,  0,opacity];
+	}
+
+	// their demo had:
+	// [255, 153, 0, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
+	if      (num < 3.3)  {return [255,255,  0,opacity];}   // "#ffff00"
+	else if (num < 10)   {return [255,191,  0,opacity];}   // "#ffcc00"
+	else if (num < 33)   {return [255,127,  0,opacity];}   // "#ff8800"
+	else if (num < 100)  {return [255, 63,  0,opacity];}   // "#ff4400"
+	else if (num < 333)  {return [255,  0,  0,opacity];}   // "#ff0000"
+	else if (num < 1000) {return [191,  0,  0,opacity];}   // "#cc0000"
+	else if (num < 3333) {return [ 63,  0,  0,opacity];}   // "#880000"
+	else                 {return [255,255,255,opacity];} // "#880000"
+}
+
+function clustersize(num) {
+    if (num < 2) {return 2;}
+    return Math.log(num)/Math.log(2) + 5;
+}
+
+
+var maxFeatureCount;
+function calculateClusterInfo(resolution) {
+  maxFeatureCount = 0;
+  var features = vector.getSource().getFeatures();
+  var feature, radius, color;
+  for (var i = features.length - 1; i >= 0; --i) {
+    var feature = features[i];
+    var origFeatures = feature.get('features');
+    maxFeatureCount = Math.max(maxFeatureCount, origFeatures.length)
+  }
+  for (var i = features.length - 1; i >= 0; --i) {
+    feature = features[i];
+    var originalFeatures = feature.get('features');
+    var extent = ol.extent.createEmpty();
+    for (var j = 0, jj = originalFeatures.length; j < jj; ++j) {
+      ol.extent.extend(extent, originalFeatures[j].getGeometry().getExtent());
+    }
+    radius = clustersize(originalFeatures.length);
+    feature.set('radius', radius);
+    color = nicecolor(originalFeatures.length,maxFeatureCount);
+    feature.set('color', color);
+  }
+}
+
+var currentResolution;
+function styleFunction(feature, resolution) {
+  if (resolution != currentResolution) {
+    calculateClusterInfo(resolution);
+    currentResolution = resolution;
+  }
+  var style;
+  var size = feature.get('features').length;
+  if (size > 1) {
+    style = [new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: feature.get('radius'),
+        fill: new ol.style.Fill({
+          color: feature.get('color')
+        }),
+        stroke: earthquakeStroke
+      }),
+      text: new ol.style.Text({
+        text: size.toString(),
+        fill: textFill,
+        textAlign: 'center', 
+        textBaseline: 'middle',
+        offsetY: 1,
+        font: 'bold 12px Arial',
+        //stroke: textStroke
+      })
+    })];
+  } else {
+    var originalFeature = feature.get('features')[0];
+    style = [createEarthquakeStyle(originalFeature)];
+  }
+  return style;
+}
+
+function selectStyleFunction(feature, resolution) {
+  var styles = [new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: feature.get('radius'),
+      fill: invisibleFill
+    })
+  })];
+  var originalFeatures = feature.get('features');
+  var originalFeature;
+  for (var i = originalFeatures.length - 1; i >= 0; --i) {
+    originalFeature = originalFeatures[i];
+    styles.push(createEarthquakeStyle(originalFeature));
+  }
+  return styles;
+}
+
+var vector = new ol.layer.Vector({
+  title: 'Clusters',
+  visible: false,
+  source: new ol.source.Cluster({
+    distance: 14,
+    source: new ol.source.KML({
+      extractStyles: false,
+      projection: 'EPSG:3857',
+      url: './data/data.kml'
+    })
+  }),
+  style: styleFunction
+});
+////////////////////////////////////////////////////////////////////////////////
+
+
+	var layers = [ariel_layer,osm_layer,heatmap,vector];
+//	var layers = [ariel_layer,osm_layer,vector];
+//	var layers = [ariel_layer,osm_layer,heatmap];
+
+	var layers = [
+		new ol.layer.Group({
+		   'title': 'Base Maps',
+		   layers: [ariel_layer,osm_layer]
+                }),
+		new ol.layer.Group({
+		   'title': 'Visualizations',
+		   layers: [heatmap,vector]
+                })
+	];
+
+
+	var map = new ol.Map({
+//		controls: ol.control.defaults().extend([
+//			new ol.control.FullScreen(),
+//		]),
+		layers: layers,
+		target: 'map',
+		view: new ol.View({
+			center: [-13606244, 4548015],
+			zoom: 12,
+			minZoom: 2,
+			maxZoom: 22
+		})
+	});
+
+
+	zoomslider = new ol.control.ZoomSlider();
+	map.addControl(zoomslider);
+
+        var fullscreen = new ol.control.FullScreen();
+	map.addControl(fullscreen);
+
+        var mouseposition = new ol.control.MousePosition({
+            projection: ol.proj.get('EPSG:4326')
+        });
+        debug = '';
+        mouseposition.setCoordinateFormat(function(c){
+		var coord = c;
+		var template = '{y}, {x}';
+		var out = ol.coordinate.format(coord, template, 4);
+		return out;
+        });
+	map.addControl(mouseposition);
+
+	var scaleline = new ol.control.ScaleLine();
+	map.addControl(scaleline);
+
+	var layerSwitcher = new ol.control.LayerSwitcher({
+		tipLabel: 'Légende' // Optional label for button
+	});
+	map.addControl(layerSwitcher);
+
+	// var overview = new ol.control.OverviewMap();
+	// overview.setMap(map);
+  </script>
+
+  <style>
+            #text {
+                position: absolute;
+                bottom: 2em;
+                right: 1em;
+                width: 480px;
+                z-index: 20000;
+                background-color: white;
+                padding: 0 0.5em 0.5em 0.5em;
+                font-size: 7pt;                
+                border: 2px solid black;
+            }
+
+  </style>
+  <div id="text">
+      hi
+  </div>
+    
+</body>
+</html>

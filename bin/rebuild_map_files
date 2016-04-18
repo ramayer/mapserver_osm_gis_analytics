@@ -1,0 +1,33 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+cd $PROJECT_DIR
+
+mapdir=$INSTALL_DIR/etc/mapserver
+mapcachedir=$INSTALL_DIR/etc/mapcache
+
+mkdir -p $mapdir/map
+mkdir -p $mapcachedir
+
+for style in $(jq -r ".[] | .name" $PROJECT_DIR/templates/layers.json)
+do
+ echo trying $style
+ erb -r $PROJECT_DIR/templates/styles/$style.rb     templates/qsgeo.map.erb > $mapdir/$style.map
+done
+
+
+erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
+
+
+mkdir -p $INSTALL_DIR/var/www/mapcache
+if [ -d $INSTALL_DIR/var/www/mapcache/ol3-layerswitcher ];
+then
+    echo "already had openlayers layerswitcher"
+else
+    echo "need openlayers layerswitcher"
+    (cd $INSTALL_DIR/var/www/mapcache ; git clone https://github.com/walkermatt/ol3-layerswitcher)
+fi
+
+erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
+

@@ -1,4 +1,9 @@
 #!/bin/bash
+#
+# TODO -- consider if we need to set
+#    vm.overcommit_memory=1
+# as described here: https://switch2osm.org/loading-osm-data/
+# 
 
 function usage {
        echo "usage: "
@@ -306,6 +311,14 @@ function load_osm_data {
 
 }
 
+
+
+function load_shapefile {
+   shapefile=$1
+   shp2pgsql /tmp/beats/PoliceBeats.shp | psql gis gis -h localhost
+}
+
+
 for i in "$@"
 do
 case $i in
@@ -314,6 +327,10 @@ case $i in
     ;;
     --password=*)
        password=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
+    --load-shapefile=*)
+       shapefile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+       load_shapefile $shapefile
     ;;
     --set-pgpass=*)
        set_pgpass $i
@@ -340,11 +357,12 @@ case $i in
 esac
 done
 
-exit
-
 if test $# -lt 1 ; then
   usage
 fi
+
+exit
+
 
 ################################################################################
 ## Clean everything except downloaded source and data
@@ -400,204 +418,6 @@ if [ "$create_db" == "true" ]; then
   echo now perhaps try:  https://github.com/migurski/HighRoad
 fi
 
-if [ "$map_data" != "none" ]; then 
-  # cd /tmp
-  # wget http://download.bbbike.org/osm/bbbike/SanFrancisco/SanFrancisco.osm.pbf
-  # osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
-  # for states and continents see http://download.geofabrik.de/osm/north-america/
-  # 
-  # wget -nc http://download.geofabrik.de/north-america/canada-latest.osm.pbf
-  # 
-  # for metro areas excerpts see http://metro.teczno.com/
-  #
-  # Note that the current OpenStreetMap wiki increased the recommened cache size to from 12000 to 22000.
-  # This will make all except our largest ASA servers to raise OOM exceptions
-  # so before running on a larger data set, we need to
-  #      sudo fallocate -l 64G /data/64G.swap
-  #      sudo mkswap /data/64G.swap
-  #      sudo swapon /data/64G.swap
-  # this will probably be painfully slow on our smaller servers, but at least
-  # should work.
-
-  startpg
-
-  mkdir -p $gis_data_dir
-  cd $gis_data_dir
-
-  # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST
-  echo 'DROP VIEW planet_osm_polygon_view' | psql
-
-  if [ "$map_data" == "planet" ]; then 
-     # Warning - you need a large machine and many days to build the whole planet.
-     wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
-  fi
-  if [ "$map_data" == "california" ]; then 
-     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
-  fi
-  if [ "$map_data" == "states" ]; then 
-     wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/texas-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/florida-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
-     # note that you can not use the "--slim" mode with states that touch each other.
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
-  fi
-  if [ "$map_data" == "small" ]; then 
-     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/dallas.osm.pbf
-     arr=(
-          chicago_illinois.osm.pbf
-          dallas_texas.osm.pbf
-          miami_florida.osm.pbf
-          las-vegas_nevada.osm.pbf
-          reno_nevada.osm.pbf
-          dc-baltimore_maryland.osm.pbf
-          san-francisco-bay_california.osm.pbf
-          san-juan_puerto-rico.osm.pbf
-          
-          singapore.osm.pbf
-          yerevan_armenia.osm.pbf
-          reykjavik_iceland.osm.pbf
-          ankara_turkey.osm.pbf
-          
-          bogota_colombia.osm.pbf
-          guatemala-city_guatemala.osm.pbf
-          lima_peru.osm.pbf
-          medellin_colombia.osm.pbf
-          mexico-city_mexico.osm.pbf
-          quito_ecuador.osm.pbf
-          rio-de-janeiro_brazil.osm.pbf
-          san-jose_costa-rica.osm.pbf
-          santiago_chile.osm.pbf
-          trinidad-tobago.osm.pbf
-          trondheim_norway.osm.pbf
-          rome_italy.osm.pbf
-          stockholm_sweden.osm.pbf
-          moscow_russia.osm.pbf
-          
-          albany_new-york.osm.pbf
-          atlanta_georgia.osm.pbf
-          austin_texas.osm.pbf
-          boise_idaho.osm.pbf
-          boston_massachusetts.osm.pbf
-          columbus_ohio.osm.pbf
-          denver-boulder_colorado.osm.pbf
-          des-moines_iowa.osm.pbf
-          honolulu_hawaii.osm.pbf
-          indianapolis_indiana.osm.pbf
-          kansas-city-lawrence-topeka_kansas.osm.pbf
-          lincoln_nebraska.osm.pbf
-          madison_wisconsin.osm.pbf
-          minneapolis-saint-paul_minnesota.osm.pbf
-          nashville_tennessee.osm.pbf
-          oklahoma-city_oklahoma.osm.pbf
-          phoenix_arizona.osm.pbf
-          providence_rhode-island.osm.pbf
-          raleigh_north-carolina.osm.pbf
-          richmond_virginia.osm.pbf
-          salt-lake-city_utah.osm.pbf
-          santa-fe_new-mexico.osm.pbf
-          
-          vancouver_canada.osm.pbf 
-          
-          berlin_germany.osm.pbf
-          munich_germany.osm.pbf
-          london_england.osm.pbf
-          moscow_russia.osm.pbf
-          
-          lagos_nigeria.osm.pbf
-          dhaka_bangladesh.osm.pbf
-          dubai_abu-dhabi.osm.pbf
-          baghdad_iraq.osm.pbf
-          bangkok_thailand.osm.pbf
-          mexico-city_mexico.osm.pbf
-          beijing_china.osm.pbf
-          taipei_taiwan.osm.pbf
-          hong-kong_china.osm.pbf
-          ulaanbaatar_mongolia.osm.pbf
-          taichung_taiwan.osm.pbf
-          seoul_south-korea.osm.pbf
-          thessaloniki_greece.osm.pbf
-          tokyo_japan.osm.pbf
-     )
-     mkdir -p tmp
-     for item in ${arr[*]}; do
-         wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/$item
-         if [ ! -f tmp/$item.o5m ]; then
-             osmconvert  $item -o=tmp/$item.o5m
-         fi
-     done
-     echo combining tmp/*.o5m
-
-     # warning -- on Azure's vms, the following command gets killed by the OOM-killer"
-     # [3627992.636610] Out of memory: Kill process 14391 (osmconvert) score 643 or sacrifice child
-     # [3627992.653675] Killed process 14391 (osmconvert) total-vm:12158980kB, anon-rss:2262076kB, file-rss:4kB
-     #
-     # Docs suggest this might make it work --- but it still doesn't.
-     #  osmconvert --hash-memory=400 tmp/*.o5m -o=/tmp/new.o5m
-     # 
-     # Workaround is to add 10GB of swap space like this:
-     #
-     # sudo mkdir /mnt/swap
-     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
-     # sudo chown root:root /mnt/swap/10GB
-     # sudo chmod 0600 /mnt/swap/10GB
-     # sudo mkswap /mnt/swap/10GB
-     # sudo swapon /mnt/swap/10GB
-     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
-
-     # Even though osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this
-     #    osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
-     # because some of these extracts have redundant data, and with the option it gives the following error
-     #
-     # Osm2pgsql --Flat-Nodes $flat_node_file -D $PGDATABASE -U $PGUSER -H $PGHOST failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
-     # 
-     # However we can also not use it without the option due to this issue:
-     #    https://github.com/openstreetmap/osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST/issues/151
-     # that requires that nodes (apparently even across files) need to be ordered
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
-
-
-    # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
-    # Processing: Node(154550k 76.7k/s) Way(0k 0.00k/s) Relation(0 0.00/s)COPY_END for COPY planet_osm_nodes FROM STDIN;
-    # failed: ERROR:  could not extend file "base/59648/71418.12": wrote only 4096 of 8192 bytes at block 1674031
-    # HINT:  Check free disk space.
-
-
-  fi
-
-  if [ "$map_data" == "smaller" ]; then 
-     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
-  fi
-  if [ "$map_data" == "tiny" ]; then 
-     # Note the bbox flag here:
-     # http://wiki.openstreetmap.org/wiki/Mapnik
-     # to debug the missing lakes in oakland
-     #    37.81079 -122.26463,-122.24828 37.79822
-     # or the missing roads in NRH
-     #    32.85531 -97.25333 -97.24225 32.84897
-     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
-  fi
-
-  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql 
-  echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql 
-  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql 
-  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql 
-
-  # TODO: consider if those should be partial indexes instead.
-  #   (yes, they should, but mapfile will need rewrite)
-
-
-  psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO gis"
-
-fi
 
 if [ "$install_munin_plugins" == "true" ]; then 
     plugins_with_db=`(cd /usr/share/munin/plugins/; ls postgres_*) | grep _$`

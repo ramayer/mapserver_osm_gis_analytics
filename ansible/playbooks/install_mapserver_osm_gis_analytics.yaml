@@ -1,6 +1,6 @@
 ---
 - name: Common for all machines
-  hosts: all
+  hosts: ansible_managed
   become: yes
   roles:
     - ansible_managed

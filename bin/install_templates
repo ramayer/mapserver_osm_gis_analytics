@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# creates
+#
+#    $INSTALLDIR/etc/mapcache/mapcache.xml
+#
+#    $INSTALLDIR/etc/mapserver/[layer].map
+#    $INSTALLDIR/etc/mapserver/fonts/[font].ttf
+#    $INSTALLDIR/etc/mapserver/shapefiles/[shapefile].{shp,prj,etc}
+#
+#    $INSTALLDIR/var/www/test_[layer].html
+#    $INSTALLDIR/var/www/test_maps.html
+
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+$DIR/download_shapefiles
+$DIR/install_fonts
+$DIR/rebuild_map_files
+
+
+echo "consider either:"
+echo "sudo rsync -aP -e ssh ~/tmp/installdir/etc/. /etc/."
+echo "sudo rm -rf /var/tmp/cache/"
+echo "or deploying using ansible"

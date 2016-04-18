@@ -40,4 +40,6 @@ instructions
 
     ansible-playbook -i ~/mapserver_osm_gis_analytics/ansible/hosts.3-tier ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml 
 
+# And to load map data.
 
+    nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &

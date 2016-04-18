@@ -1,0 +1,18 @@
+sc fonts/DejaVuSansCondensed.ttf
+scb fonts/DejaVuSansCondensed-Bold.ttf
+lsr fonts/LucidaSansRegular.ttf
+lsrb fonts/LucidaSansRegular.ttf
+bigfont fonts/unifont.ttf
+bigfontb fonts/unifont.ttf
+oldarial                           fonts/arial.ttf
+oldarial-bold                      fonts/arialbd.ttf
+realarial fonts/Arial-Unicode-Regular.ttf
+realarialbold fonts/Arial-Unicode-Bold.ttf
+okarial /usr/share/fonts/truetype/unifont/unifont.ttf
+dejavu /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf
+dejavu-bold /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf
+
+
+arial fonts/Arial-Unicode-Bold.ttf
+arialbold fonts/Arial-Unicode-Bold.ttf
+
