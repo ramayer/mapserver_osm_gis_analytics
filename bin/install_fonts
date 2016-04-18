@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source `git rev-parse --show-toplevel`/bin/default_environment.sh
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
 
 mapdir=$INSTALL_DIR/etc/mapserver
 fontdir=$INSTALL_DIR/etc/mapserver/fonts

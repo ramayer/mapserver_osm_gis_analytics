@@ -16,6 +16,4 @@ else
 fi
 
 
-ansible-playbook -i $ansible_hosts_file ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
-
-ansible-playbook -i $PROJECT_DIR/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
+ansible-playbook -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
