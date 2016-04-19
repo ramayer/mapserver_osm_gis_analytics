@@ -56,6 +56,14 @@
        ENV["PGPASSWORD"] || 'changeme'
    end
 
+   def default_connection
+       %Q{
+         CONNECTIONTYPE postgis
+         CONNECTION "host=#{ database_host() } dbname=gis user=#{ database_username() } password=#{ database_password() } port=5432"
+         PROCESSING "CLOSE_CONNECTION=DEFER"
+       }
+   end
+
    def get_color(f,c='color')
        feature = $map_colors[f.to_sym]
        unless feature
@@ -165,8 +173,7 @@ LAYER
     # DATA "coastlines/land-polygons-split-3857/land_polygons"
     # DATA "shapefiles/land_polygons"
 
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "geom from land_polygons using unique gid using srid=3857"
 
     MAXSCALEDENOM 500000 # size of the oakland or smaller
@@ -202,8 +209,7 @@ LAYER
     STATUS ON 
     GROUP "default"
     NAME "Country_borders"
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id from planet_osm_line where admin_level='2') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
@@ -232,9 +238,6 @@ END
 #       NAME "water_polygons"
 #       GROUP "default"
 #   
-#   #    CONNECTIONTYPE POSTGIS
-#   #    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
-#   #    PROCESSING "CLOSE_CONNECTION=DEFER"
 #   #    DATA "geom from water_polygons using unique gid using srid=3857"
 #   
 #          DATA "shapefiles/water_polygons"
@@ -253,9 +256,6 @@ END
 #       PROJECTION "init=epsg:3857" END
 #       NAME "simplified_water_polygons"
 #       GROUP "default"
-#       CONNECTIONTYPE POSTGIS
-#       CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
-#       PROCESSING "CLOSE_CONNECTION=DEFER"
 #       DATA "geom from simplified_water_polygons using unique gid using srid=3857"
 #   
 #   
@@ -314,11 +314,9 @@ LAYER
     PROJECTION "init=epsg:3857" END
     NAME "landuse_layer1"
     GROUP "default"
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id ,landuse, name from planet_osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     CLASSITEM "landuse"
     LABELITEM "name"
     MAXSCALEDENOM 1000010
@@ -352,11 +350,9 @@ LAYER
     PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "landuse_layer2"
-    CONNECTIONTYPE postgis
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id ,leisure , landuse, name from planet_osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     LABELITEM "name"
     MAXSCALEDENOM 500000
     CLASS
@@ -400,13 +396,11 @@ LAYER
     GROUP "default"
     NAME "landuse_layer3"
     TYPE POLYGON
-    CONNECTIONTYPE postgis
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "amenity"
     PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 110000
     CLASS
         EXPRESSION "hospital"
@@ -461,11 +455,9 @@ END
 #     PROJECTION "init=epsg:3857" END
 #     NAME "landuse_layer4"
 #     GROUP "default"
-#     CONNECTIONTYPE POSTGIS
-#     CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+#      default_connection()
 #     DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
 #     PROCESSING "LABEL_NO_CLIP=ON"
-#     PROCESSING "CLOSE_CONNECTION=DEFER"
 #     CLASSITEM "landuse"
 #     MAXSCALEDENOM 5000010
 #     LABELITEM "name"
@@ -527,12 +519,10 @@ LAYER
     PROJECTION "init=epsg:3857" END
     NAME "landuse_layer5"
     GROUP "default"
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id ,nature , name from planet_osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 5000010
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     LABELITEM "name"
     CLASS
         STYLE
@@ -558,8 +548,7 @@ LAYER
     TYPE LINE
     NAME "landuse_layer6"
     GROUP "default"
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA 'way from (select way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
     CLASSITEM "waterway"
     SIZEUNITS meters
@@ -604,7 +593,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MINSCALEDENOM 0
     MAXSCALEDENOM 5010
     TYPE LINE
@@ -627,7 +616,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "roadsclose"
@@ -944,7 +933,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "railways"
@@ -966,7 +955,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "roadsclose"
@@ -1272,7 +1261,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "railways"
@@ -1294,7 +1283,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "roadsclose"
@@ -1468,7 +1457,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "railways"
@@ -1490,7 +1479,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "roadsclose"
@@ -1632,7 +1621,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "railways"
@@ -1654,7 +1643,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "roadsclose"
@@ -1769,7 +1758,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 175010 minscaledenom 100010
     TYPE LINE
     NAME "railways"
@@ -1791,7 +1780,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "roadsclose"
@@ -1896,7 +1885,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 250010 minscaledenom 175010
     TYPE LINE
     NAME "railways"
@@ -1918,7 +1907,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE LINE
     NAME "roadsclose"
@@ -2028,7 +2017,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "railways"
@@ -2050,7 +2039,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "roadsclose"
@@ -2152,7 +2141,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "railways"
@@ -2178,7 +2167,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "roadsclose"
@@ -2232,7 +2221,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roadsfar"
@@ -2270,7 +2259,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roadsfar"
@@ -2300,7 +2289,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 10000010
     MINSCALEDENOM 5000010
     TYPE LINE
@@ -2331,7 +2320,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MINSCALEDENOM 10000010
     MAXSCALEDENOM 20000010
 
@@ -2366,12 +2355,10 @@ LAYER
     GROUP "default"
     NAME "building"
     TYPE POLYGON
-    CONNECTIONTYPE postgis
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id, coalesce(name,\"addr:housenumber\") as name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 60000
     CLASS
         MAXSCALEDENOM 7000
@@ -2418,12 +2405,10 @@ LAYER
     NAME "sports"
     PROJECTION "init=epsg:3857" END
     TYPE POLYGON
-    CONNECTIONTYPE postgis
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way,osm_id, name from planet_osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 60000
     CLASS
         STYLE
@@ -2462,10 +2447,8 @@ LAYER
     PROJECTION "init=epsg:3857" END
     GROUP "default"
     NAME "oneways"
-    CONNECTIONTYPE postgis
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    <%= default_connection() %>
     DATA "way from (select way, osm_id from planet_osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 10010
     CLASS
         STYLE
@@ -2478,7 +2461,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2506,7 +2489,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2552,7 +2535,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2616,7 +2599,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 250010 minscaledenom 100010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2728,7 +2711,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2816,7 +2799,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2904,7 +2887,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2992,7 +2975,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3056,7 +3039,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 10000010 minscaledenom 5000010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3124,7 +3107,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     MAXSCALEDENOM 100000000010 minscaledenom 10000010
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -3183,7 +3166,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     TYPE POLYGON
     NAME "poly_body"
     DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
@@ -3199,7 +3182,7 @@ END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    <%= default_connection() %>
     TYPE POLYGON
     NAME "polys_outlines"
     DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
