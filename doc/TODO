@@ -1,0 +1,10 @@
+* Automate:
+  shp2pgsql -I -s 3857 '/etc/mapserver/shapefiles/land_polygons.shp' > /tmp/land_polygons.sql
+  psql -q -h localhost gis gis < /tmp/land_polygons.sql 
+  to avoid the disk I/O of reading that 600MB shapefile for every map tile.
+
+* Consider adding polygons like PG&E substations and transmission lines.
+
+* Find out why the great lakes disappeared.
+
+* 

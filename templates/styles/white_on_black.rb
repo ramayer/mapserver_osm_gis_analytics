@@ -30,14 +30,14 @@ $map_colors = {
   hospital:        {color:'#eedddd'},
   oneway:          {color:'#9A9ACA'},
   pedestrian:      {color:'#888888'},
-  rail:            {color:'#ffffff', outline:'#A5A5A4',symbol:'#A5A5A4'},
+  rail:            {color:'#000000', outline:'#A5A5A4',symbol:'#A5A5A4'},
 
 
-  road_1:          {color:'#000000', outline:'#cccccc'},
-  road_2:          {color:'#111111', outline:'#cccccc'},
-  road_3:          {color:'#222222', outline:'#cccccc'},
-  road_4:          {color:'#333333', outline:'#cccccc'},
-  road_5:          {color:'#cccccc'},
+  road_1:          {color:'#777777', outline:'#888888'},
+  road_2:          {color:'#666666', outline:'#888888'},
+  road_3:          {color:'#555555', outline:'#888888'},
+  road_4:          {color:'#444444', outline:'#888888'},
+  road_5:          {color:'#888888'},
   tunnel:          {outline:'#444444'},
 
   school:          {color:'#222200'},

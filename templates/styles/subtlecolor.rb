@@ -5,11 +5,11 @@
 #    forest = redundant with some parks in some counties
 #    oneway = arrows on one-way roads
 #    pedestrian === note that there are some polygons tagged as pedestrian highways
-#       road_1	# major highways
-#       road_2	# oregon expressway, etc
-#       road_3	# el camino, alma, hwy 9, etc.
-#       road_4	# the inside of smaller roads - Stevenson and all smalll roads.
-#       road_5	# roads zoomed out so they're just 1px wide
+#       road_1	motorway  # major highways
+#       road_2	trunk     # oregon expressway, etc
+#       road_3	primary   # el camino, alma, hwy 9, etc.
+#       road_4	secondary # the inside of smaller roads - Stevenson and all smalll roads.
+#       road_5	tertiary  # roads zoomed out so they're just 1px wide
 
 $map_colors = {
 

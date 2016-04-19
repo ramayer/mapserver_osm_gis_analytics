@@ -1,4 +1,5 @@
 [
-           { "desc":"White on Black"        , "name":"white_on_black"},
-           { "desc":"Higher Contrast"       , "name":"higher_contrast"}
+           { "desc":"Higher Contrast"       , "name":"higher_contrast"},
+           { "desc":"Subtle Color"          , "name":"subtlecolor"},
+           { "desc":"White on Black"        , "name":"white_on_black"}
 ]
