@@ -197,6 +197,27 @@ LAYER
     END
 END
 
+LAYER
+    TYPE LINE
+    STATUS ON 
+    GROUP "default"
+    NAME "Country_borders"
+    CONNECTIONTYPE POSTGIS
+    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+    DATA "way from (select way,osm_id from planet_osm_line where admin_level='2') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("land","outline") %>"
+        END
+    END
+END
+
+
+
+
+
+
 
 #### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
 #### without land should be water).

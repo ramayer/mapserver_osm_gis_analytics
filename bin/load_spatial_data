@@ -304,6 +304,9 @@ function load_osm_data {
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
 
+
+  echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
+
   # TODO: consider if those should be partial indexes instead.
   #   (yes, they should, but mapfile will need rewrite)
 
