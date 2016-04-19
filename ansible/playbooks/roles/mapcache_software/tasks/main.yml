@@ -1,6 +1,6 @@
 ---
 
-  - name: ensure apache is at the latest version
+  - name: ensure apache, and the components needed for mod-mapcache is at the latest version
     apt: pkg={{ item }} state=latest
     with_items:
       - apache2
@@ -59,39 +59,16 @@
   # - name: copy test pages for maps
   #   synchronize: src={{ lookup('pipe','pwd') }}/roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
 
-  - name: Copy test pages for maps
-    synchronize: src={{ lookup('env','INSTALL_DIR') }}/var/www/mapcache/. dest=/var/www/mapcache/.
-
   - name: Creates mapcache config directory
     file: path=/etc/mapcache state=directory
-
-  - name: Install mapcache config files to /etc/mapcache
-    synchronize: src={{ lookup('env','INSTALL_DIR') }}/etc/mapcache/. dest=/etc/mapcache/.
-    notify:
-      - restart apache
 
   - name: Make sure a mapcache directory exists
     file: path=/var/tmp/cache/mapcache state=directory owner=www-data
 
-  - name: Check old map cache tiles
-    shell: ls -1 /var/tmp/cache/mapcache/
-    register: cache_contents
-
-  - name: Remove old map cache tiles
-    file: name=/var/tmp/cache/mapcache/{{ item }} state=absent
-    with_items: '{{cache_contents.stdout_lines}}'
-    notify:
-      - restart apache
 
 
 
-#  - name: Make sure static html directories exist
-#    file: dest={{ item }} mode=755 state=directory owner=fli
-#    with_items:
-#      - /var/www/html/munin
-#
-#   - name: symlink to munin output
-#     file: src=/var/cache/munin/www dest=/var/www/html/munin state=link
+
 
 # WARNING - WITH SOME VERSIONS OF ANSIBLE, THE "/." AT THE END OF THE LINE
 # IS LOST IF YOU USE THE "~".
