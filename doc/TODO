@@ -13,3 +13,7 @@
 * Find out why the great lakes disappeared.
   Water polygons from
   http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
+
+
+* Census demographic data:
+   wget -x -p www2.census.gov/geo/tiger/TIGER2010BLKPOPHU/tabblock2010_06_pophu.zip
