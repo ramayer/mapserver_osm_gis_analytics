@@ -29,7 +29,7 @@ function load_shapefile {
        echo already had $shapefile
    else
        mkdir -p $shapefiledir
-       unzip -n -j $zipfile -d $shapefiledir
+       unzip -o -j $zipfile -d $shapefiledir
    fi
 
    if ( psql -q -c "COPY (select table_catalog,table_name from information_schema.tables where table_name='$tablename') to stdout csv header"  | grep -qw $tablename ); 
@@ -48,8 +48,19 @@ load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip  l
 load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip simplified_land_polygons.shp simplified_land_polygons  3857
 load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip cb_2014_us_state_20m.shp cb_2014_us_state_20m 4269
 
-# If, instead of loading the shapefile into the database, we want MapServer to render it directly ...
-# Note that the shapefile cb_2014_us_state_20m.shp can not be used directly by mapserver,
-# but if converted to another shapefile with the same information using ogr2ogr, it works.
+#### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
+#### without land should be water).
+####
+#### However the April 18th land polygons from http://openstreetmapdata.com/data/land-polygons
+#### were missing the great lakes, so these were temporarily added.
+#load_shapefile http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip simplified_water_polygons.shp simplified_water_polygons 3857
+#load_shapefile http://data.openstreetmapdata.com/water-polygons-split-3857.zip water_polygons.shp water_polygons 3857
+
+# On our large memory physical servers, it was more efficient to
+# render the large polygons directly from the shapefiles rather than
+# loading them into a database.  If we want to go back to that
+# approach, note that the shapefile cb_2014_us_state_20m.shp can not be
+# rendered directly by mapserver, but if converted to another
+# shapefile with the same information using ogr2ogr, it works.
 
 [ -f $shapefiledir/states.shp ] || ogr2ogr -f "ESRI Shapefile"  $shapefiledir/states.shp  $shapefiledir/cb_2014_us_state_20m.shp

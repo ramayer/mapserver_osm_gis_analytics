@@ -5,6 +5,11 @@
 
 * Consider adding polygons like PG&E substations and transmission lines.
 
-* Find out why the great lakes disappeared.
 
-* 
+* Consider indexes:
+
+  create index water on planet_osm_polygon("natural") where "natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank';
+
+* Find out why the great lakes disappeared.
+  Water polygons from
+  http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
