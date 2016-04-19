@@ -32,12 +32,13 @@
 	       preload: Infinity,
 	       type: 'base',
 	       title: item.desc,
-               visible: true,
+               visible: false,
 	       source: new ol.source.XYZ({
 		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
 	       }),
 	    });
 	});
+	local_base_layers[0].setVisible(true);
 	    
 	var external_base_layers = [
 /*
@@ -75,6 +76,7 @@
                 layers: [
                     new ol.layer.Tile({
                         title: 'Countries',
+                        visible: false,
                         source: new ol.source.TileWMS({
                             url: 'http://demo.opengeo.org/geoserver/wms',
                             params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
