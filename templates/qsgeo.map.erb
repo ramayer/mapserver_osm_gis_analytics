@@ -368,68 +368,79 @@ LAYER
         END
     END
 END
-LAYER
-    TYPE POLYGON
-    STATUS ON
-    PROJECTION "init=epsg:3857" END
-    NAME "landuse_layer4"
-    GROUP "default"
-    CONNECTIONTYPE POSTGIS
-    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
-    DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    PROCESSING "CLOSE_CONNECTION=DEFER"
-    CLASSITEM "landuse"
-    MAXSCALEDENOM 5000010
-    LABELITEM "name"
-    CLASS
-        EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
-        STYLE
-            COLOR "<%= get_color("forest") %>"
-            OUTLINECOLOR "<%= get_color("forest") %>"
-            OUTLINEWIDTH 1
-        END
-        LABEL
-            MAXSCALEDENOM 600000
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            SIZE 7
-            COLOR "<%= get_color("forest_label") %>"
-            OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
-            PRIORITY 2
-            WRAP ' '
-            MINFEATURESIZE 20
-            #MINFEATURESIZE AUTO
-            #MAXLENGTH 8
-            ALIGN CENTER
-        END
-    END
-    CLASS
-        EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
-        STYLE
-            COLOR "<%= get_color("grass") %>"
-            OUTLINECOLOR "<%= get_color("forest") %>"
-            OUTLINEWIDTH 1
-        END
-    END
 
-  # Consider styling these based on "leisure" or "historic" or "surface" instead.
-  CLASS
-        EXPRESSION ('[highway]'='pedestrian')
-        STYLE
-            COLOR "<%= get_color("pedestrian") %>"
-        END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-          MAXSCALEDENOM 11000
-          SIZE 7
-          COLOR  "<%= get_color("road_label") %>"
-          OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
-          WRAP ' '
-          #MAXLENGTH 6
-          ALIGN CENTER
-        END
-    END
-END
+
+######  This landuse tag seems more trouble than it's worth.
+#   Some counties seem to tag polygons in some ways; and others in others.
+#   http://wiki.openstreetmap.org/wiki/Environment
+#   other tags (leisure=park, amenity=school) seem more useful for polygons
+#
+# LAYER
+#     TYPE POLYGON
+#     STATUS OFF
+#     PROJECTION "init=epsg:3857" END
+#     NAME "landuse_layer4"
+#     GROUP "default"
+#     CONNECTIONTYPE POSTGIS
+#     CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+#     DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
+#     PROCESSING "LABEL_NO_CLIP=ON"
+#     PROCESSING "CLOSE_CONNECTION=DEFER"
+#     CLASSITEM "landuse"
+#     MAXSCALEDENOM 5000010
+#     LABELITEM "name"
+#     CLASS
+#         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+#         STYLE
+#             COLOR "<%= get_color("forest") %>"
+#             OUTLINECOLOR "<%= get_color("forest") %>"
+#             OUTLINEWIDTH 1
+#         END
+#         LABEL
+#             MAXSCALEDENOM 600000
+#             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+#             SIZE 7
+#             COLOR "<%= get_color("forest_label") %>"
+#             OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
+#             PRIORITY 2
+#             WRAP ' '
+#             MINFEATURESIZE 20
+#             #MINFEATURESIZE AUTO
+#             #MAXLENGTH 8
+#             ALIGN CENTER
+#         END
+#     END
+#     CLASS
+#         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
+#         STYLE
+#             COLOR "<%= get_color("grass") %>"
+#             OUTLINECOLOR "<%= get_color("forest") %>"
+#             OUTLINEWIDTH 1
+#         END
+#     END
+# 
+#   # Consider styling these based on "leisure" or "historic" or "surface" instead.
+#   CLASS
+#         EXPRESSION ('[highway]'='pedestrian')
+#         STYLE
+#             COLOR "<%= get_color("pedestrian") %>"
+#         END
+#         LABEL
+#           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+#           MAXSCALEDENOM 11000
+#           SIZE 7
+#           COLOR  "<%= get_color("road_label") %>"
+#           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+#           WRAP ' '
+#           #MAXLENGTH 6
+#           ALIGN CENTER
+#         END
+#     END
+# END
+
+
+# water
+
 LAYER
     TYPE POLYGON
     STATUS ON
