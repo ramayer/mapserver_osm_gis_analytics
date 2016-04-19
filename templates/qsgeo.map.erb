@@ -2120,14 +2120,13 @@ END
 
 # The 12th most zoomed in road and rail layers - scaledenom 10000010
 # Zoom level 5 - most of a continent fits
-# Zoom level 4 - all of a continent fits
 
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MINSCALEDENOM 10000010
-    MAXSCALEDENOM 40000010
+    MAXSCALEDENOM 20000010
 
     TYPE LINE
     NAME "roadsfar"
