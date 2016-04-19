@@ -121,6 +121,13 @@
   notify:
     - restart postgres
 
+- name: set postgres to log slow queries
+  become: yes
+  become_user: postgres
+  command: psql -U postgres postgres -c "ALTER SYSTEM SET log_min_duration_statement=1000;"
+  notify: 
+    - restart postgres
+
 - name: create privileged gis user 
   become: yes
   become_user: postgres
