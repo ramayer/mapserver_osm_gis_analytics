@@ -2,6 +2,22 @@
    # see http://wiki.openstreetmap.org/wiki/Key:highway
    # https://github.com/mapserver/basemaps
 
+   # translation table from tilecache scales to mapserver ratios
+   $scales = [
+       {minscaledenom:0        , maxscaledenom:5010     ,   zoom:17},
+       {minscaledenom:5010     , maxscaledenom:10010    ,   zoom:16},
+       {minscaledenom:10010    , maxscaledenom:25010    ,   zoom:15},
+       {minscaledenom:25010    , maxscaledenom:50010    ,   zoom:14},
+       {minscaledenom:50010    , maxscaledenom:100010   ,   zoom:13},
+       {minscaledenom:100010   , maxscaledenom:175010   ,   zoom:12},
+       {minscaledenom:175010   , maxscaledenom:250010   ,   zoom:11},
+       {minscaledenom:250010   , maxscaledenom:500010   ,   zoom:10},
+       {minscaledenom:500010   , maxscaledenom:1000010  ,   zoom:9},
+       {minscaledenom:1000010  , maxscaledenom:2500010  ,   zoom:8},
+       {minscaledenom:2500010  , maxscaledenom:5000010  ,   zoom:7},
+       {minscaledenom:5000010  , maxscaledenom:10000010 ,   zoom:6},
+       {minscaledenom:10000010 , maxscaledenom:20000010 ,   zoom:5},
+    ]
 
    original_colors = {
        forest_color:		 '#CCDEAD',          # forest
@@ -45,13 +61,13 @@
        unless feature
            $stderr.puts("CAN'T FIND COLOR FOR #{f}")
            return '#FF0000'
-       end 
-       
+       end
+
        clr = feature[c.to_sym]
        unless clr
            $stderr.puts("CAN'T FIND COLOR FOR #{f} #{c}")
            clr='#FF0000'
-       end 
+       end
        clr
    end
 
@@ -75,7 +91,7 @@
 
    end
 
-%> 
+%>
 MAP
 
 OUTPUTFORMAT
@@ -161,13 +177,7 @@ LAYER
     END
 END
 
-
-
-
-
-
 # http://www.mercatorgeosystems.com/blog-articles/2008/05/30/using-ogr2ogr-to-re-project-a-shape-file/
-
 LAYER
     TYPE POLYGON
     STATUS ON #  FIGURE OUT HOW TO FIX THIS SHAPEFILE !!! WAS: ON
@@ -188,7 +198,56 @@ LAYER
 END
 
 
-
+#### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
+#### without land should be water).
+####
+#### However the April 18th land polygons from http://openstreetmapdata.com/data/land-polygons
+#### were missing the great lakes, so these were temporarily added.
+#
+#   LAYER
+#       TYPE POLYGON
+#       STATUS ON
+#       PROJECTION "init=epsg:3857" END
+#       NAME "water_polygons"
+#       GROUP "default"
+#   
+#   #    CONNECTIONTYPE POSTGIS
+#   #    CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+#   #    PROCESSING "CLOSE_CONNECTION=DEFER"
+#   #    DATA "geom from water_polygons using unique gid using srid=3857"
+#   
+#          DATA "shapefiles/water_polygons"
+#   
+#       MAXSCALEDENOM 5000010
+#       CLASS
+#           STYLE
+#               OUTLINECOLOR '#ff00ff' # "<%= get_color("water") %>"
+#               OUTLINEWIDTH 3
+#           END
+#       END
+#   END
+#   LAYER
+#       TYPE POLYGON
+#       STATUS ON
+#       PROJECTION "init=epsg:3857" END
+#       NAME "simplified_water_polygons"
+#       GROUP "default"
+#       CONNECTIONTYPE POSTGIS
+#       CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432"
+#       PROCESSING "CLOSE_CONNECTION=DEFER"
+#       DATA "geom from simplified_water_polygons using unique gid using srid=3857"
+#   
+#   
+#   
+#       MINSCALEDENOM 5000010
+#       CLASS
+#           STYLE
+#               COLOR '#ff0000' # "<%= get_color("water") %>"
+#           END
+#       END
+#   END
+#   
+#   
 
 SYMBOL
     NAME "rail"
@@ -418,7 +477,7 @@ END
 #             OUTLINEWIDTH 1
 #         END
 #     END
-# 
+#
 #   # Consider styling these based on "leisure" or "historic" or "surface" instead.
 #   CLASS
 #         EXPRESSION ('[highway]'='pedestrian')
@@ -519,7 +578,7 @@ END
 
 # The most zoomed in road and rail layers - scaledenom 0 to 5010
 # About 1 city block
-# Zoom of 16 or closer.
+# Zoom of 17 or closer.
 
 LAYER
     STATUS ON GROUP "default"
@@ -859,6 +918,7 @@ END
 
 # The second most zoomed in road and rail layers - scaledenom 5010 to 10010
 # A single tile-set where a tile is about as large as a shopping center.
+# zoom 16
 
 LAYER
     STATUS ON GROUP "default"
@@ -1030,7 +1090,7 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
+            OUTLINECOLOR '#ff0000' # "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 15
@@ -1684,13 +1744,139 @@ LAYER
 END
 
 # The sixth most zoomed in road and rail layers - scaledenom 100010 to 250010
-# zoom level 11 - palo alto is about a map tile
-# zoom level 12 - east palo alto is about a map tile
+#  zoom level 12 - east palo alto is about a map tile
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 175010 minscaledenom 100010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR  "<%= get_color("rail") %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR  "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
     MAXSCALEDENOM 250010 minscaledenom 100010
+    TYPE LINE
+    NAME "roadsclose"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "highway"
+    CLASS
+        EXPRESSION "motorway"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 3
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
+            COLOR "<%= get_color("road_1") %>"
+        END
+        <%= road_label("road_label",8,8) %>
+    END
+    CLASS
+        EXPRESSION "motorway_link"
+        STYLE
+            WIDTH 3
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_1") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "trunk"
+        TEXT '[ref]'
+        STYLE
+            WIDTH 2
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_2") %>"
+        END
+        <%= road_label("road_label",7,7) %>
+    END
+    CLASS
+        EXPRESSION "trunk_link"
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("road_2","outline") %>"
+            COLOR "<%= get_color("road_2") %>"
+        END
+    END
+    CLASS
+        TEXT '[name]'
+        EXPRESSION "primary"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_3") %>"
+        END
+        <%= road_label("road_label",7,4) %>
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_3") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 1
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "tertiary"
+        STYLE
+            WIDTH 0.8
+            COLOR "<%= get_color("road_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 0.5
+            COLOR "<%= get_color("road_5") %>"
+        END
+    END
+END
+
+# zoom level 11 - palo alto is about a map tile
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    CONNECTIONTYPE postgis CONNECTION "host=<%= database_host() %> dbname=gis user=<%= database_username() %> password=<%= database_password() %> port=5432" PROCESSING "CLOSE_CONNECTION=DEFER"
+    MAXSCALEDENOM 250010 minscaledenom 175010
     TYPE LINE
     NAME "railways"
     DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
@@ -2020,7 +2206,7 @@ END
 
 
 # The nineth most zoomed in road and rail layers - scaledenom 1000010 to 2500010
-# Zoom level 8 
+# Zoom level 8
 
 LAYER
     STATUS ON GROUP "default"
@@ -2058,7 +2244,7 @@ END
 
 
 # The tenth most zoomed in road and rail layers - scaledenom 2500010 to 5000010
-# Zoom level 7 
+# Zoom level 7
 
 LAYER
     STATUS ON GROUP "default"
@@ -3027,4 +3213,3 @@ END
 #include './user_features.layers'
 
 END
-
