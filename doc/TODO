@@ -27,3 +27,49 @@
      http://gis.mdc.opendata.arcgis.com/
      http://gis.mdc.opendata.arcgis.com/datasets/f4cbc17d8e5e4e2e994e573baf8bedfa_3
      http://gis.mdc.opendata.arcgis.com/datasets/13584874642449d48725253bab30c958_0
+     http://gis.mdc.opendata.arcgis.com/datasets/48aa304e1c8b4a049ea638e32275236e_3
+
+* Seed tiles:
+   http://www.mapserver.org/mapcache/seed.html#mapcache-seed
+   sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t higher_contrast -g g2 -z 0,12
+   But note that we need to increase swap space on the app server for this to not fail.
+     # sudo mkdir /mnt/swap
+     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+     # sudo chown root:root /mnt/swap/10GB
+     # sudo chmod 0600 /mnt/swap/10GB
+     # sudo mkswap /mnt/swap/10GB
+     # sudo swapon /mnt/swap/10GB
+
+* Make the map as big as
+  http://13.91.253.215/
+
+* Ubuntu 16.04 port
+
+* Zoom level 14 may look better with small roads as single pixel lines instead of areas.
+
+* Non-bold fonts may look nicer
+
+* Zoom level 11 may need fewer road labels (like old) in san jose
+
+* Zoom level 6 may look better with fewer roads
+
+* Zoom level 5 may look better with no roads and more major cities
+
+* Start adding more detail at zoom level 14 or 15 around Lake Tahoe
+
+* Add lake labels starting at zoom level 9 for large lakes
+
+* Remove cities and states;  add country labels at zoom 2.
+
+* Restore the Great Lakes.
+
+* Darker green grass layers would be nice.
+
+* On
+  http://13.91.253.215/test_maps.html#map=12/-13576878.71/4532333.65/0
+  the secondary roads and grass looks better on subtlecolor
+
+* airport runways are missing
+
+* Old has nicer buildings at: 
+  http://13.91.253.215/test_maps.html#map=17/-13624226.34/4543081.61/0
