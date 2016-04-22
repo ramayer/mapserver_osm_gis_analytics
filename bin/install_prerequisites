@@ -7,6 +7,8 @@
 # sudo apt-get install -y software-properties-common
 # sudo apt-add-repository -y ppa:ansible/ansible 
 
+[ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && visudo -cf /etc/sudoers.d/$USER )
+
 sudo apt-get update
 sudo apt-get install -y ansible git
 
@@ -15,4 +17,7 @@ sudo apt-get install -y ansible git
 grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~/.ssh/known_hosts)
 grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
 grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
+
+# some users may prefer  git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
+[ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
