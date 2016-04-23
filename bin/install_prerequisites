@@ -18,6 +18,13 @@ grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~
 grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
 grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
 
+
+cd
+
 # some users may prefer  git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
 [ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
+
+cd ~/mapserver_osm_gis_analytics
+
+git pull
 
