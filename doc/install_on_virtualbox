@@ -1,23 +1,24 @@
+# create VirtualBox vm with:
 
-# create VirtualBox vm with 2GB RAM and 20GB disk space
-
-# change VirtualBox setting "Network Settings -> Bridged"
+   * 2GB RAM and
+   * 20GB disk space and 
+   * "Network Settings -> Bridged"
 
 # install Ubuntu 16.04 server using all defaults except:
     * username/password, of course
     * ssh server
 
-
 # this would be a reasonable time to shut down the VM and use VirtualBox's "clone" feature.
 
-
 # log into Ubuntu
+
+
+  curl https://raw.githubusercontent.com/forensiclogic/mapserver_osm_gis_analytics/master/bin/install_prerequisites | bash
+
 
 # make note of your IP address 
 
   hostname -I
-
-
 
 
 
