@@ -13,7 +13,7 @@
 # log into Ubuntu
 
 
-  curl https://raw.githubusercontent.com/forensiclogic/mapserver_osm_gis_analytics/master/bin/install_prerequisites | bash
+  curl https://raw.githubusercontent.com/forensiclogic/mapserver_osm_gis_analytics/master/bin/install_prerequisites | sudo bash
 
 
 # make note of your IP address 
