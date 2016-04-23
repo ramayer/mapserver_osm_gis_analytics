@@ -52,6 +52,9 @@
   - name: Make maps template
     template: src=index.html dest=/var/www/mapcache/index.html mode=755
 
+  - name: Put a temporary mapcache config file in /etc/mapcache/mapcache.xml
+    synchronize: src=/usr/share/doc/libapache2-mod-mapcache/examples/mapcache.xml dest=/etc/mapcache/mapcache.xml
+
   # Seems an ansible bug -- if I use 
   #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
   # the destination acts like /var/www/mapcache/test_maps/test_maps/.

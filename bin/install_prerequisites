@@ -10,7 +10,7 @@
 [ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && visudo -cf /etc/sudoers.d/$USER )
 
 sudo apt-get update
-sudo apt-get install -y ansible git
+sudo apt-get install -y ansible git ruby
 
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
 [ -f ~/.ssh/authorized_keys ] || install -m 0600 ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
