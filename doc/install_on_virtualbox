@@ -1,7 +1,7 @@
 # create VirtualBox vm with:
 
    * 2GB RAM and
-   * 20GB disk space and 
+   * 30GB disk space (20GB is not enough for the Coastlines polygons)
    * "Network Settings -> Bridged"
 
 # install Ubuntu 16.04 server using all defaults except:
@@ -20,5 +20,7 @@
 
   hostname -I
 
-
+  ~/mapserver_osm_gis_analytics/bin/install_using_ansible
+  ~/mapserver_osm_gis_analytics/bin/download_shapefiles
+  
 
