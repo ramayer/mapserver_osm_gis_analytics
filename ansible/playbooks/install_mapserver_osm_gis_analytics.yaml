@@ -10,14 +10,12 @@
   become: yes
   roles:
     - mapcache_software
-    - mapcache_config
 
 - name: Set up mapserver application servers
   hosts: mapserver
   become: yes
   roles:
     - mapserver_software
-    - mapserver_config
 
 - name: Install current postgres from the postgres repositories
   hosts: postgis-master
