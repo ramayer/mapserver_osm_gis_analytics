@@ -286,7 +286,7 @@ function load_osm_data {
 
   if [ "$map_data" == "smaller" ]; then 
      wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
+     osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
   fi
 
   if [ "$map_data" == "tiny" ]; then 
@@ -297,7 +297,7 @@ function load_osm_data {
      # or the missing roads in NRH
      #    32.85531 -97.25333 -97.24225 32.84897
      GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
+     osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
   fi
 
   echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
