@@ -10,15 +10,21 @@ mapcachedir=$INSTALL_DIR/etc/mapcache
 mkdir -p $mapdir/map
 mkdir -p $mapcachedir
 
-for style in $(jq -r ".[] | .name" $PROJECT_DIR/templates/layers.json)
+layers=$PROJECT_DIR/templates/layers.json
+
+for style in $(jq -r '.[] | select( .template == "qsgeo" ) | .name' $layers)
 do
- echo trying $style
+ echo trying qsgeo based style: $style
  erb -r $PROJECT_DIR/templates/styles/$style.rb     templates/qsgeo.map.erb > $mapdir/$style.map
 done
 
+for style in $(jq -r '.[] | select( .template == "simple" ) | .name' $layers)
+do
+ echo trying simple style: $style
+ erb  $PROJECT_DIR/templates/$style.map.erb > $mapdir/$style.map
+done
 
 erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
-
 
 mkdir -p $INSTALL_DIR/var/www/mapcache
 if [ -d $INSTALL_DIR/var/www/mapcache/ol3-layerswitcher ];

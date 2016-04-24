@@ -51,7 +51,7 @@
 
 * Zoom level 11 may need fewer road labels (like old) in san jose
 
-* Zoom level 6 may look better with fewer roads
+* Zoom level 6 may look better with fewer roads [done - removed all except 'motorway']
 
 * Zoom level 5 may look better with no roads and more major cities
 
@@ -63,7 +63,7 @@
 
 * Restore the Great Lakes.
 
-* Darker green grass layers would be nice.
+* Darker green grass layers would be nice. [done]
 
 * On
   http://13.91.253.215/test_maps.html#map=12/-13576878.71/4532333.65/0

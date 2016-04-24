@@ -8,15 +8,18 @@
   </head>
 
   <body>
+
+  <!--
   <ul>
   <li>   <a href="/cgi-bin/mapserv?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true&LAYERS=default&map=%2Fetc%2Fmapserver%2Fmapserver_osm_templates%2Fmap%2Fqsgeo_subtlecolor.map&WIDTH=256&HEIGHT=256&CRS=EPSG%3A3857&STYLES=&BBOX=-13775786.985667605%2C5009377.085697312%2C-13149614.849955441%2C5635549.221409475">Test of a mapserv tile</a><br>
   <li><a href="/mapcache/wmts?service=wmts&request=GetCapabilities">Mapcache wmts capabilities</a><br>
   <li><a href="/mapcache/tms/1.0.0/subtlecolor@g2/7/20/78.png">Test of a mapcache tile</a>
   </ul>
+  -->
 
   <br>
-   
-      <div id="map" style="width: 800px; height:600px; border: 1px solid black"></div>
+      <div id="map" style="width: 100%; height:95%; border: 1px solid black"></div>
+
       <script type="text/javascript">
         var projection = ol.proj.get('EPSG:3857');
         var projectionExtent = projection.getExtent();
@@ -26,8 +29,11 @@
         });
 
        var layer_json = <%= File.read("#{ENV['PROJECT_DIR']}/templates/layers.json") %>
+       var base_layers = layer_json.filter( function(value) { return value.type=='base' });
+       var overlay_layers = layer_json.filter( function(value) { return value.type!='base' });
 
-	var local_base_layers = layer_json.map( function(item,index){
+
+	var local_base_layers = base_layers.map( function(item,index){
 	    return new ol.layer.Tile({
 	       preload: Infinity,
 	       type: 'base',
@@ -40,6 +46,17 @@
 	});
 	local_base_layers[0].setVisible(true);
 	    
+	var local_overlay_layers = overlay_layers.map( function(item,index){
+	    return new ol.layer.Tile({
+	       preload: Infinity,
+	       title: item.desc,
+               visible: false,
+	       source: new ol.source.XYZ({
+		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
+	       }),
+	    });
+	});
+
 	var external_base_layers = [
 
                     new ol.layer.Tile({
@@ -56,6 +73,27 @@
                         visible: false,
                         source: new ol.source.OSM()
                     }),
+	
+                    new ol.layer.Tile({
+                        title: 'Old OSM Data',
+                        visible: false,
+                        type: 'base',
+                        source: new ol.source.TileWMS({
+                            url: 'https://go.leapportal.us/tilecache/tilecache.cgi',
+                            params: {'LAYERS': 'subtlecolor2'} //,
+                            // serverType: 'geoserver'
+                        })
+                    }),
+
+	    new ol.layer.Tile({
+	       preload: Infinity,
+	       type: 'base',
+	       title: 'azure test server',
+               visible: false,
+	       source: new ol.source.XYZ({
+		       url: 'http://13.91.253.215/mapcache/tms/1.0.0/' + 'higher_contrast' + '@g2/{z}/{x}/{-y}.png',
+	       }),
+	    }),
 
                     new ol.layer.Tile({
                         title: 'Satellite',
@@ -66,14 +104,7 @@
        ];
 
 
-        var layers = [
-            new ol.layer.Group({
-                'title': 'Base maps',
-                layers: local_base_layers.concat(external_base_layers)
-            }),
-            new ol.layer.Group({
-                title: 'Overlays',
-                layers: [
+        var external_overlays = [
                     new ol.layer.Tile({
                         title: 'Countries',
                         visible: false,
@@ -83,7 +114,16 @@
                             serverType: 'geoserver'
                         })
                     })
-                ]
+                ];
+
+        var layers = [
+            new ol.layer.Group({
+                'title': 'Base maps',
+                layers: local_base_layers.concat(external_base_layers)
+            }),
+            new ol.layer.Group({
+                title: 'Overlays',
+                layers: local_overlay_layers.concat(external_overlays)
             })
         ];
         
