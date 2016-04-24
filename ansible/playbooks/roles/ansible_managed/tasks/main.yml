@@ -4,6 +4,7 @@
   with_items:
     - unzip
     - sysstat
+    - jq
 
 - name: add ansible user
   user: name=ansible
