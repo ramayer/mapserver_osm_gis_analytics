@@ -43,11 +43,11 @@
     with_items:
       - 000-default.conf
 
-  - name: Make sure static html directories exist
+  - name: Make sure directories exist for mapcache
     file: dest={{ item }} mode=755 state=directory
     with_items:
+      - /etc/mapcache
       - /var/www/mapcache
-      - /var/www/mapcache/test_maps
 
   - name: Make maps template
     template: src=index.html dest=/var/www/mapcache/index.html mode=755
