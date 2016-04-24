@@ -21,7 +21,7 @@
   hosts: postgis-master
   become: yes
   vars:
-     database_password: "changeme"
+     database_password: "{{ lookup('env','PGPASSWORD') }}"
   roles:
     - postgres
 

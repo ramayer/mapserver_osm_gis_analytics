@@ -83,11 +83,12 @@ function create_default_users {
   unset PGHOST
   unset PGUSER
   unset PGDATABASE
+  echo -n "GIS database user password:"
+  read -s gis_password
   psql -c "CREATE ROLE admins   SUPERUSER NOLOGIN CREATEDB CREATEROLE"
   psql -c "CREATE ROLE readonly"
-  psql -c "CREATE USER gis       SUPERUSER CREATEDB INHERIT IN ROLE admins   ENCRYPTED PASSWORD 'changeme'"
+  psql -c "CREATE USER gis       SUPERUSER CREATEDB INHERIT IN ROLE admins   ENCRYPTED PASSWORD '$gis_password'"
   psql -c "CREATE USER mapserver INHERIT IN ROLE readonly ENCRYPTED PASSWORD 'mapserver'" postgres
-  echo "the default username for the gis user is 'changeme' and should be changed"
 }
 
 function create_default_database {

@@ -53,7 +53,9 @@
    end
 
    def database_password()
-       ENV["PGPASSWORD"] || 'changeme'
+       ENV["PGPASSWORD"] ||
+        `grep $PGHOST:$PGPORT:.:$PGUSER ~/.pgpass | perl -pe 's/.*://'` ||
+	 $stderr.puts("Can't find find password for the mapserver to access the spatial database.")
    end
 
    def default_connection

@@ -21,4 +21,4 @@ export PGPORT=${PGPORT-5432}
 export PGHOST=${PGHOST-'postgis-01'}
 export PGUSER=${PGUSER-gis}
 export PGDATABASE=${PGDATABASE-gis}
-
+export PGPASSWORD=`grep $PGHOST:$PGPORT:.:$PGUSER ~/.pgpass | perl -pe 's/.*://'`

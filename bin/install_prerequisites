@@ -7,10 +7,23 @@
 # sudo apt-get install -y software-properties-common
 # sudo apt-add-repository -y ppa:ansible/ansible 
 
+
 [ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && visudo -cf /etc/sudoers.d/$USER )
 
+if ( grep -q ':gis:' ~/.pgpass ); then
+    echo "Found 'gis' entries in .pgpass. Not modifying them" 
+else
+    echo "Please pick a default password for the 'gis' database user."
+    echo -n "GIS database user password:"
+    read -s gis_password
+    echo "password will be $password"
+    echo postgis-01:5432:*:gis:$gis_password >> $HOME/.pgpass
+    echo localhost:5432:*:gis:$gis_password >> $HOME/.pgpass
+    chmod og-rwx $HOME/.pgpass
+fi
+
 sudo apt-get update
-sudo apt-get install -y ansible git ruby
+sudo apt-get install -y ansible git ruby jq
 
 mkdir -m 0600 -p ~/.ssh
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
