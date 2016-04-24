@@ -80,7 +80,8 @@
    end
 
    def road_label(color,size,priority)
-      %Q{        LABEL
+      %Q{
+        LABEL
             TYPE TRUETYPE
             FONT arial
             PARTIALS FALSE
@@ -95,7 +96,8 @@
 	    # some are made up of such tiny segments
             #MINFEATURESIZE AUTO
             #MINFEATURESIZE 50
-        END}
+        END
+        }
 
    end
 
@@ -321,7 +323,7 @@ LAYER
     LABELITEM "name"
     MAXSCALEDENOM 1000010
     CLASS
-        EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='airport' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
+        EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
         STYLE
             COLOR "<%= get_color("industrial") %>"
         END
@@ -422,7 +424,7 @@ LAYER
     CLASS
         EXPRESSION ("[amenity]"="parking" or "[aeroway]"="apron")
         STYLE
-            COLOR "<%= get_color('industrial') %>"
+            COLOR "<%= get_color('parking') %>"
         END
     END
     CLASS
@@ -510,6 +512,78 @@ END
 #     END
 # END
 
+ LAYER
+     TYPE POLYGON
+     STATUS OFF
+     PROJECTION "init=epsg:3857" END
+     NAME "landuse_layer4"
+     GROUP "default"
+     <%= default_connection() %>
+     DATA "way from (select way,osm_id ,\"natural\" as nature,landuse ,highway, name from planet_osm_polygon where landuse is not null or \"natural\"='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
+     PROCESSING "LABEL_NO_CLIP=ON"
+     CLASSITEM "landuse"
+     MAXSCALEDENOM 5000010
+     LABELITEM "name"
+     CLASS
+         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+         STYLE
+             COLOR "<%= get_color("forest") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+             text 'nature: [nature]'
+         LABEL
+             COLOR "#FF0000"
+             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+             SIZE 7
+             OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
+             PRIORITY 2
+             WRAP ' '
+             #MINFEATURESIZE AUTO
+             #MAXLENGTH 8
+             ALIGN CENTER
+         END
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
+             text 'landuse: [landuse]'
+         STYLE
+             COLOR "#FF0000"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+         LABEL
+           COLOR "#FF0000"
+           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+           SIZE 7
+           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+           WRAP ' '
+           ALIGN CENTER
+         END
+     END
+
+   # Consider styling these based on "leisure" or "historic" or "surface" instead.
+   CLASS
+         EXPRESSION ('[highway]'='pedestrian')
+         STYLE
+             COLOR "<%= get_color("pedestrian") %>"
+         END
+             text 'highway: [highway]'
+         LABEL
+             COLOR "#FF0000"
+           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+           SIZE 7
+           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+           WRAP ' '
+           #MAXLENGTH 6
+           ALIGN CENTER
+         END
+     END
+ END
+
+
+
+
 
 # water
 
@@ -520,7 +594,7 @@ LAYER
     NAME "landuse_layer5"
     GROUP "default"
     <%= default_connection() %>
-    DATA "way from (select way,osm_id ,nature , name from planet_osm_polygon_view where nature='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where \"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 5000010
     LABELITEM "name"
@@ -872,15 +946,23 @@ LAYER
         <%= road_label("road_label",8,2) %>
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION "residential"
         STYLE
-            WIDTH 10
+            WIDTH 8
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            COLOR "<%= get_color("road_4","outline") %>"
         END
         STYLE
-            WIDTH 10
+            WIDTH 8
             COLOR "<%= get_color("road_4") %>"
+        END
+        <%= road_label("road_label",8,1) %>
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 5
+            COLOR "<%= get_color("road_5") %>"
         END
         <%= road_label("road_label",8,1) %>
     END
@@ -1100,7 +1182,7 @@ LAYER
         STYLE
             WIDTH 15
             OUTLINEWIDTH 1
-            OUTLINECOLOR '#ff0000' # "<%= get_color("road_1","outline") %>"
+            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
         END
         STYLE
             WIDTH 15
@@ -1210,7 +1292,7 @@ LAYER
         <%= road_label("road_label",8,2) %>
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION "residential"
         STYLE
             WIDTH 8
             OUTLINEWIDTH 1
@@ -1219,6 +1301,14 @@ LAYER
         STYLE
             WIDTH 8
             COLOR "<%= get_color("road_4") %>"
+        END
+        <%= road_label("road_label",8,1) %>
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_5") %>"
         END
         <%= road_label("road_label",8,1) %>
     END
@@ -1407,7 +1497,7 @@ LAYER
         <%= road_label("road_label",7,2) %>
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION "residential"
         STYLE
             WIDTH 4
             OUTLINEWIDTH 1
@@ -1416,6 +1506,14 @@ LAYER
         STYLE
             WIDTH 4
             COLOR "<%= get_color("road_4") %>"
+        END
+        <%= road_label("road_label",6,1) %>
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 3
+            COLOR "<%= get_color("road_5") %>"
         END
         <%= road_label("road_label",6,1) %>
     END
@@ -1578,9 +1676,7 @@ LAYER
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
             WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
-            COLOR "<%= get_color("road_4") %>"
+            COLOR "<%= get_color("road_5") %>"
         END
     END
     CLASS
@@ -1739,7 +1835,7 @@ LAYER
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
-            WIDTH 0.8
+            WIDTH 1
             COLOR "<%= get_color("road_5") %>"
         END
     END
@@ -1868,7 +1964,7 @@ LAYER
     CLASS
         EXPRESSION "tertiary"
         STYLE
-            WIDTH 0.8
+            WIDTH 2
             COLOR "<%= get_color("road_4") %>"
         END
     END
@@ -1963,7 +2059,6 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "primary_link"
@@ -1984,25 +2079,16 @@ LAYER
         END
     END
     CLASS
-        EXPRESSION "secondary_link"
-        STYLE
-            WIDTH 1
-            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
-            OUTLINEWIDTH 1
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
         EXPRESSION "tertiary"
         STYLE
-            WIDTH 0.8
-            COLOR "<%= get_color("road_4") %>"
+            WIDTH 1
+            COLOR "<%= get_color("road_5") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
         STYLE
-            WIDTH 0.5
+            WIDTH 0.3
             COLOR "<%= get_color("road_5") %>"
         END
     END
@@ -2272,7 +2358,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",7,1) %>
+        <%= road_label("road_label",8,1) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2303,24 +2389,19 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,8) %>
-    END
-    CLASS
-        EXPRESSION "trunk"
-        STYLE
-            WIDTH 0.5
-            COLOR "<%= get_color("road_2") %>"
-        END
     END
 END
 
-# The 12th most zoomed in road and rail layers - scaledenom 10000010
-# Zoom level 5 - most of a continent fits
+<% if false %>
+ The 12th most zoomed in road and rail layers - scaledenom 10000010
+ Zoom level 5 - most of a continent fits
+
+  Roads are distracting at this point.
 
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
+
     MINSCALEDENOM 10000010
     MAXSCALEDENOM 20000010
 
@@ -2338,7 +2419,7 @@ LAYER
     END
 
 END
-
+<% end %>
 
 
 ################################################################################
@@ -2393,7 +2474,7 @@ LAYER
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("building") %>"
+            COLOR "<%= get_color("building","offset") %>"
             WIDTH 0.5
         END
     END
