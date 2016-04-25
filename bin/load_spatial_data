@@ -285,8 +285,10 @@ function load_osm_data {
   fi
 
   if [ "$map_data" == "smaller" ]; then 
-     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
+      # This one seems to have pretty old data
+      # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+      wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/san-francisco-bay_california.osm.pbf
+      osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs san-francisco-bay_california.osm.pbf
   fi
 
   if [ "$map_data" == "tiny" ]; then 
