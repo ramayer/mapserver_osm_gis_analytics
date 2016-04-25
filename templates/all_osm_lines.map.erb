@@ -79,7 +79,7 @@ LAYER
     GROUP "default"
     NAME "Country_borders"
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,name from planet_osm_line where highway is null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,name from planet_osm_line where highway is null and waterway is null) as foo using unique osm_id using srid=900913 limit 1000"
     MAXSCALEDENOM 1000000
 
     <%
