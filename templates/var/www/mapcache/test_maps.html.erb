@@ -48,7 +48,6 @@
 	    
 	var local_overlay_layers = overlay_layers.map( function(item,index){
 	    return new ol.layer.Tile({
-	       preload: Infinity,
 	       title: item.desc,
                visible: true,
 	       source: new ol.source.XYZ({
