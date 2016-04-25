@@ -1,6 +1,7 @@
 [
- { "desc":"Higher Contrast"       , "name":"higher_contrast", "template":"qsgeo",  "type":"base"},
- { "desc":"Subtle Color"          , "name":"subtlecolor",     "template":"qsgeo",  "type":"base"},
- { "desc":"White on Black"        , "name":"white_on_black",  "template":"qsgeo",  "type":"base"},
- { "desc":"All OSM Lines"         , "name":"all_osm_lines",   "template":"simple", "type":"overlay"}
+    { "desc":"Higher Contrast"       , "name":"higher_contrast", "template":"qsgeo",  "type":"base"},
+    { "desc":"Subtle Color"          , "name":"subtlecolor",     "template":"qsgeo",  "type":"base"},
+    { "desc":"White on Black"        , "name":"white_on_black",  "template":"qsgeo",  "type":"base"},
+    { "desc":"All OSM Lines"         , "name":"all_osm_lines",   "template":"simple", "type":"overlay"},
+    { "desc":"OPD Beats"             , "name":"opd_beats",       "template":"simple", "type":"overlay"}
 ]

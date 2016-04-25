@@ -47,6 +47,13 @@ function load_shapefile {
 load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip  land_polygons.shp land_polygons 3857
 load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip simplified_land_polygons.shp simplified_land_polygons  3857
 load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip cb_2014_us_state_20m.shp cb_2014_us_state_20m 4269
+load_shapefile http://data.openoakland.org/sites/default/files/Oak_CommunityPoliceBeats_0.zip Oak_PoliceBeats.shp oak_policebeats 4326
+
+## # http://data.openoakland.org/group/public-safety TODO - double-check if it is SRID 4326
+
+
+
+
 
 #### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
 #### without land should be water).
