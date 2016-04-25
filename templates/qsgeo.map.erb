@@ -401,7 +401,7 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='apron') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway in ('apron','runway')) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "amenity"
     PROCESSING "LABEL_NO_CLIP=ON"
@@ -430,6 +430,12 @@ LAYER
         END
     END
     CLASS
+        EXPRESSION ("[aeroway]"="runway")
+        STYLE
+            COLOR "<%= get_color('parking') %>"
+        END
+    END
+    CLASS
         EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
         STYLE
             COLOR "<%= get_color('school') %>"
@@ -447,73 +453,6 @@ LAYER
     END
 END
 
-
-######  This landuse tag seems more trouble than it's worth.
-#   Some counties seem to tag polygons in some ways; and others in others.
-#   http://wiki.openstreetmap.org/wiki/Environment
-#   other tags (leisure=park, amenity=school) seem more useful for polygons
-#
-# LAYER
-#     TYPE POLYGON
-#     STATUS OFF
-#     PROJECTION "init=epsg:3857" END
-#     NAME "landuse_layer4"
-#     GROUP "default"
-#      default_connection()
-#     DATA "way from (select way,osm_id ,nature,landuse ,highway, name from planet_osm_polygon_view where landuse is not null or nature='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
-#     PROCESSING "LABEL_NO_CLIP=ON"
-#     CLASSITEM "landuse"
-#     MAXSCALEDENOM 5000010
-#     LABELITEM "name"
-#     CLASS
-#         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
-#         STYLE
-#             COLOR "<%= get_color("forest") %>"
-#             OUTLINECOLOR "<%= get_color("forest") %>"
-#             OUTLINEWIDTH 1
-#         END
-#         LABEL
-#             MAXSCALEDENOM 600000
-#             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-#             SIZE 7
-#             COLOR "<%= get_color("forest_label") %>"
-#             OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
-#             PRIORITY 2
-#             WRAP ' '
-#             MINFEATURESIZE 20
-#             #MINFEATURESIZE AUTO
-#             #MAXLENGTH 8
-#             ALIGN CENTER
-#         END
-#     END
-#     CLASS
-#         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
-#         STYLE
-#             COLOR "<%= get_color("grass") %>"
-#             OUTLINECOLOR "<%= get_color("forest") %>"
-#             OUTLINEWIDTH 1
-#         END
-#     END
-#
-#   # Consider styling these based on "leisure" or "historic" or "surface" instead.
-#   CLASS
-#         EXPRESSION ('[highway]'='pedestrian')
-#         STYLE
-#             COLOR "<%= get_color("pedestrian") %>"
-#         END
-#         LABEL
-#           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-#           MAXSCALEDENOM 11000
-#           SIZE 7
-#           COLOR  "<%= get_color("road_label") %>"
-#           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
-#           WRAP ' '
-#           #MAXLENGTH 6
-#           ALIGN CENTER
-#         END
-#     END
-# END
-
  LAYER
      TYPE POLYGON
      STATUS OFF
@@ -524,7 +463,7 @@ END
      DATA "way from (select way,osm_id ,\"natural\" as nature,landuse ,highway, name from planet_osm_polygon where landuse is not null or \"natural\"='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
      PROCESSING "LABEL_NO_CLIP=ON"
      CLASSITEM "landuse"
-     MAXSCALEDENOM 5000010
+     MAXSCALEDENOM 2000010
      LABELITEM "name"
      CLASS
          EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
@@ -535,7 +474,7 @@ END
          END
              text 'nature: [nature]'
          LABEL
-             COLOR "#FF0000"
+             COLOR  "<%= get_color("forest_label") %>"
              TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
              SIZE 7
              OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
@@ -546,19 +485,20 @@ END
              ALIGN CENTER
          END
      END
+     # TODO - consider different greens for these
      CLASS
          EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
-             text 'landuse: [landuse]'
+             text '[name]'
          STYLE
-             COLOR "#FF0000"
+             COLOR "<%= get_color("grass") %>"
              OUTLINECOLOR "<%= get_color("forest") %>"
              OUTLINEWIDTH 1
          END
          LABEL
-           COLOR "#FF0000"
+           COLOR "<%= get_color("forest_label") %>"
            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
            SIZE 7
-           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+           OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
            WRAP ' '
            ALIGN CENTER
          END
@@ -652,6 +592,55 @@ LAYER
             COLOR "<%= get_color("water") %>"
             WIDTH 10
             MINWIDTH 0.5
+        END
+    END
+END
+
+
+################################################################################
+## Airport line layers
+## See:   http://wiki.openstreetmap.org/wiki/Key:highway
+################################################################################
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50000
+    TYPE LINE
+    NAME "airport lines"
+    DATA "way from (select way, osm_id ,aeroway,ref,name from planet_osm_line where aeroway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "ref"
+    CLASSITEM "aeroway"
+    CLASS
+#        STYLE
+#            WIDTH 4
+#            COLOR "<%= get_color('parking') %>"
+#	    OUTLINECOLOR  "<%= get_color('road_label','outline') %>"
+#	    OUTLINEWIDTH 1
+#        END
+	 STYLE
+		COLOR 102 102 102
+	        WIDTH 4.0
+	 END # STYLE
+	 STYLE
+	      COLOR 255 255 255
+	      WIDTH 2.0
+	      LINECAP BUTT
+	      PATTERN 8 12 END
+	 END # STYLE
+	text '[aeroway] [ref] [name]'
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 400
+          MINFEATURESIZE AUTO
+          SIZE 8
+          COLOR "<%= get_color("road_label") %>"
+          OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+          ANGLE FOLLOW
+	  PARTIALS FALSE
         END
     END
 END
@@ -2476,8 +2465,9 @@ LAYER
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("building","offset") %>"
-            WIDTH 0.5
+            COLOR "<%= get_color("building") %>"
+            OUTLINECOLOR "<%= get_color("building","offset") %>"
+            OUTLINEWIDTH 0.5
         END
     END
 END
