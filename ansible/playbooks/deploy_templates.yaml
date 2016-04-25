@@ -5,12 +5,14 @@
 
 - name: Set up mapserver application servers
   hosts: mapserver
+  accelerate: true
   become: yes
   roles:
     - mapserver_config
 
 - name: MapCache hosts (apache, mod-tilecache, mod-proxy, etc)
   hosts: mapcache
+  accelerate: true
   become: yes
   roles:
     - mapcache_config

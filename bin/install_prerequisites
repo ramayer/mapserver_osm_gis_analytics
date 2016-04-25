@@ -23,7 +23,8 @@ else
 fi
 
 sudo apt-get update
-sudo apt-get install -y ansible git ruby jq
+# python-keyczar is needed for the 'accelerate: true' ansible optimization
+sudo apt-get install -y ansible git ruby jq  python-keyczar
 
 mkdir -m 0600 -p ~/.ssh
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
