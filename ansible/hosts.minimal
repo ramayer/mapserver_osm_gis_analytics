@@ -5,16 +5,16 @@
 # hosts
 ######################################################################
 
-mapcache-01  ansible_ssh_host=127.0.0.1
-mapserver-01 ansible_ssh_host=127.0.0.1
-postgis-01   ansible_ssh_host=127.0.0.1
+mapcache-01  ansible_ssh_host=127.0.0.2
+mapserver-01 ansible_ssh_host=127.0.0.2
+postgis-01   ansible_ssh_host=127.0.0.2
 
 ######################################################################
 # groups
 ######################################################################
 
 [ansible_managed]
-127.0.0.1
+127.0.0.2
 
 [mapcache]
 mapcache-01
