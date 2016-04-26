@@ -9,7 +9,7 @@ $map_colors = {
 
   park:        {color:'#d5e2bc'},
   grass:       {color:'#e5f2cc'},
-  forest:      {color:'#c5d2ac'},
+  forest:      {color:'#c5d2ac', outline:"#b5c29c"},
 
   building:    {color:'#d1d0cd', offset:'#8e8d8c'},
   citycircle:  {color:'#ddcdcd', outline:'#000000', inner:'#000000'},

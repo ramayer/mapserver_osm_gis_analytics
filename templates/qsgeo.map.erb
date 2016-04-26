@@ -1,4 +1,4 @@
-<%
+ <%
    # see http://wiki.openstreetmap.org/wiki/Key:highway
    # https://github.com/mapserver/basemaps
 
@@ -100,8 +100,28 @@
             #MINFEATURESIZE 50
         END
         }
-
    end
+
+
+
+   def poly_label(color,size,priority)
+      %Q{
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY #{ priority || 4 }
+            SIZE #{ size || 8 }
+            MINDISTANCE 250
+            COLOR "#{get_color(color)}"
+            OUTLINECOLOR "#{get_color(color,"outline")}"
+	    MINFEATURESIZE AUTO
+	    WRAP ' '
+        END
+        }
+   end
+
 
 %>
 MAP
@@ -307,97 +327,69 @@ SYMBOL
 END
 
 
-LAYER
-    TYPE POLYGON
-    STATUS ON
-    PROJECTION "init=epsg:3857" END
-    NAME "landuse_layer1"
-    GROUP "default"
-    <%= default_connection() %>
-    DATA "way from (select way,osm_id ,landuse, name from planet_osm_polygon where landuse is not null) as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    CLASSITEM "landuse"
-    LABELITEM "name"
-    MAXSCALEDENOM 1000010
-    CLASS
-        EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
-        STYLE
-            COLOR "<%= get_color("industrial") %>"
-        END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 30000
-            SIZE 7
-            COLOR "<%= get_color("land_label") %>"
-            OUTLINECOLOR  "<%= get_color("land_label", "outline") %>"
-            PRIORITY 2
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
-    END
-    CLASS
-        EXPRESSION ('[landuse]'='residential')
-        STYLE
-            COLOR "<%= get_color('residential') %>"
-        END
-    END
-END
-LAYER
-    TYPE POLYGON
-    STATUS ON
-    PROJECTION "init=epsg:3857" END
-    GROUP "default"
-    NAME "landuse_layer2"
-    <%= default_connection() %>
-    DATA "way from (select way,osm_id ,leisure , landuse, name from planet_osm_polygon where leisure='park' or leisure='golf_course' or landuse='recreation_ground' or landuse='cemetery') as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    LABELITEM "name"
-    MAXSCALEDENOM 500000
-    CLASS
-        EXPRESSION ('[landuse]'='cemetery')
-        STYLE
-            COLOR "<%= get_color("industrial") %>"
-        END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 30000
-            SIZE 7
-            COLOR "<%= get_color("land_label") %>"
-            OUTLINECOLOR "<%= get_color("land_label", "outline") %>"
-            PRIORITY 2
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
-    END
-    CLASS
-        STYLE
-            COLOR "<%= get_color("park") %>"
-        END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 30000
-            SIZE 7
-            COLOR "<%= get_color("forest_label") %>"
-            OUTLINECOLOR  "<%= get_color("forest_label", "outline") %>"
-            PRIORITY 2
-            POSITION cc
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
-    END
-END
+<%
 
+   # other aeroway values are more like buildings
+   # that should always be on top of these sometimes larger areas
 
+   # interesting polygons to shade:
+   #    EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
+   #    EXPRESSION ("[amenity]"="parking")
+   #    EXPRESSION ("[amenity]"="hospital")
+   #    EXPRESSION ("[amenity]"="swimming_pool")
+   #    EXPRESSION ("[aeroway]"="aerodrome")
+   #    EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
+   #    EXPRESSION ('[landuse]'='residential')
+   #    EXPRESSION ('[landuse]'='cemetery')
+   #    EXPRESSION ('[landuse]'='recreation_ground')
+   #    EXPRESSION ('[leisure]'='park')
+   #    EXPRESSION ('[leisure]'='track' or "[leisure]"='pitch' or "[leisure]"='golf_course')
+   #    EXPRESSION ('[leisure']='golf_course')
+   #    EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+   #    EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
+   #    EXPRESSION ('[highway]'='pedestrian')
+   #
+   # [name] [sport] is a good label
+   # DATA "way from (select way,osm_id, coalesce(name,sport) as nicelabel from planet_osm_polygon where leisure='track' or leisure='pitch' or leisure='golf_course') as foo using unique osm_id using srid=900913"
+
+   # consider 'wetland'='saltmarsh' too.
+
+   sql = %q{
+        SELECT way,
+	       osm_id,
+	       name,
+	       amenity,
+	       aeroway,
+	       landuse,
+	       leisure,
+	       military,
+	       sport,
+	       tourism,
+	       highway,
+	       waterway,
+	       boundary,
+	       \"natural\" as nature,
+	       coalesce(name,sport,amenity,leisure) as nicelabel
+        FROM planet_osm_polygon
+   	WHERE amenity is not null
+	   OR aeroway='aerodrome'
+	   OR landuse is not null
+	   OR waterway is not null
+	   OR leisure is not null
+	   OR tourism is not null
+	   OR \"natural\" is not null
+	   OR highway is not null
+        ORDER by way_area desc 
+   }.gsub(/\s+/," ")
+
+%>
 
 # The 'order by way_area desc' clause is an interesting hack to handle cases where you may have:
 #    a large grass polygon, surrounding a smaller school polygon, surrounding a smaller grass polygon
 # 
 # It doesn't seem guaranteed to work, though, because it pushes the "order by" clause into a subquery so the ordering of the outer query is undefined, though.
 # 
-#  execute <unnamed>: select "amenity","name",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc ) as foo where way && ST_GeomFromText('POLYGON((-13570947.0959847 4512525.05572228,-13570947.0959847 4514076.48853071,-13569395.6631763 4514076.48853071,-13569395.6631763 4512525.05572228,-13570947.0959847 4512525.05572228))',900913)
+#  execute <unnamed>: select "amenity","name",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc) as foo where way && ST_GeomFromText('POLYGON((-13570947.0959847 4512525.05572228,-13570947.0959847 4514076.48853071,-13569395.6631763 4514076.48853071,-13569395.6631763 4512525.05572228,-13570947.0959847 4512525.05572228))',900913)
 
 
 LAYER
@@ -407,167 +399,294 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc ) as foo using unique osm_id using srid=900913"
-    LABELITEM "name"
-    CLASSITEM "amenity"
+    DATA "way from (<%= sql %>) as foo using unique osm_id using srid=900913"
+    LABELITEM "nicelabel"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 220000
     CLASS
-        EXPRESSION "hospital"
+        EXPRESSION ("[nature]"="water" or "[nature]"="bay" or "[nature]"="pond" or "[landuse]"="pond" or "[landuse]"="basin" or "[landuse]"='reservoir' or "[waterway]"='riverbank' or "[waterway]"='stream' or "[amenity]"='fountain')
+        STYLE
+            COLOR "<%= get_color("water") %>"
+        END
+	<%= poly_label('water_label',7,5) %>
+    END
+    CLASS
+        EXPRESSION ("[amenity]"="swimming_pool" or "[leisure]"="swimming_pool")
+        STYLE
+            COLOR "<%= get_color('water') %>"
+        END
+	<%= poly_label('water_label',7,1) %>
+    END
+    CLASS
+        EXPRESSION ("[leisure]"="water_park" or "[tourism]"="zoo" or "[tourism]"="theme_park")
+        STYLE
+            COLOR '#ccaaff'
+        END
+	<%= poly_label('water_label',7,2) %>
+    END
+
+    CLASS
+        EXPRESSION ("[amenity]"="hospital" or "[amenity]"="doctors" )
         STYLE
             COLOR "<%= get_color('hospital') %>"
         END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 15000
-            SIZE 7
-            COLOR "<%= get_color('place_label') %>"
-            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
-            PRIORITY 1
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
+	<%= poly_label('place_label',7,7) %>
     END
     CLASS
         EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
         STYLE
             COLOR "<%= get_color('school') %>"
         END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 15000
-            SIZE 7
-            COLOR "<%= get_color('place_label') %>"
-            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
-            PRIORITY 1
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
+	<%= poly_label('place_label',8,8) %>
     END
     CLASS
         EXPRESSION ("[aeroway]"="aerodrome")
         STYLE
             COLOR "#ffeeff"
         END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 15000
-            SIZE 7
-            COLOR "<%= get_color('place_label') %>"
-            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
-            PRIORITY 1
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
+	<%= poly_label('place_label',7,5) %>
     END
     CLASS
-        EXPRESSION ("[amenity]"="parking")
+        EXPRESSION ("[amenity]"="parking" or "[amenity]"="bicycle_parking")
         STYLE
             COLOR "<%= get_color('parking') %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-	    MINFEATURESIZE AUTO
-            SIZE 7
-            COLOR "<%= get_color('place_label') %>"
-            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
-            PRIORITY 1
-            WRAP ' '
-            ALIGN CENTER
-        END
+	<%= poly_label('place_label',7,5) %>
     END
     CLASS
-        EXPRESSION ("[amenity]"="swimming_pool")
+        EXPRESSION ("[amenity]"="theater" or "[leisure]"="garden" or "[leisure]"="common" or "[leisure]"="sports_centre" or "[leisure]"="fairgrounds" or "[leisure]"="dog_park")
         STYLE
-            COLOR "<%= get_color('water') %>"
+            COLOR "<%= get_color('grass') %>"
         END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-	    MINFEATURESIZE AUTO
-            SIZE 7
-            COLOR "<%= get_color('water_label') %>"
-            OUTLINECOLOR "<%= get_color('water_label', 'outline') %>"
-            PRIORITY 1
-            WRAP ' '
-            ALIGN CENTER
-        END
+	<%= poly_label('place_label',7,5) %>
     END
-END
-
-
-
- LAYER
-     TYPE POLYGON
-     STATUS OFF
-     PROJECTION "init=epsg:3857" END
-     NAME "landuse_layer4"
-     GROUP "default"
-     <%= default_connection() %>
-     DATA "way from (select way,osm_id ,\"natural\" as nature,landuse ,highway, name from planet_osm_polygon where landuse is not null or \"natural\"='wood' or highway='pedestrian') as foo using unique osm_id using srid=900913"
-     PROCESSING "LABEL_NO_CLIP=ON"
-     CLASSITEM "landuse"
-     MAXSCALEDENOM 2000010
-     LABELITEM "name"
-     CLASS
-         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+    CLASS
+         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest" or '[nature]'='ridge' or '[boundary]'='national_park' or '[boundary]'='protected_area')
          STYLE
              COLOR "<%= get_color("forest") %>"
              OUTLINECOLOR "<%= get_color("forest") %>"
              OUTLINEWIDTH 1
          END
-             text 'nature: [nature]'
-         LABEL
-             COLOR  "<%= get_color("forest_label") %>"
-             TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-             SIZE 7
-             OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
-             PRIORITY 2
-             WRAP ' '
-             #MINFEATURESIZE AUTO
-             #MAXLENGTH 8
-             ALIGN CENTER
-         END
+ 	 <%= poly_label('place_label',7,5) %>
      END
-     # TODO - consider different greens for these
+    CLASS
+         EXPRESSION ('[landuse]'="railway")
+         STYLE
+             COLOR "<%= get_color("parking") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+    CLASS
+         EXPRESSION ('[nature]'='marsh' or '[nature]'='wetland')
+         STYLE
+             COLOR "#ddcc88"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+    CLASS
+         EXPRESSION ('[nature]'='mud' or '[leisure]'='brownfield' or '[landuse]'='brownfield' or '[landuse]'='landfill' or '[landuse]'='salt_pond')
+         STYLE
+             COLOR "#ddbb88"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+    CLASS
+         EXPRESSION ('[landuse]'='military')
+         STYLE
+             COLOR "#444444"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+   CLASS
+	# hmm, the island in the middle of lake elisabeth in fremont
+	# claims to be rock (according to OSM tags), even though
+	# it's covered with trees
+         EXPRESSION ('[nature]'='rock' or '[landuse]'='quarry' or '[nature]'='rocks')
+         STYLE
+             COLOR "#ddbb88"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+    CLASS
+         EXPRESSION ('[nature]'='sand' or '[nature]'='beach')
+         STYLE
+             COLOR "#ddbb88"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
      CLASS
          EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
-             text '[name]'
          STYLE
              COLOR "<%= get_color("grass") %>"
              OUTLINECOLOR "<%= get_color("forest") %>"
              OUTLINEWIDTH 1
          END
-         LABEL
-           COLOR "<%= get_color("forest_label") %>"
-           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-           SIZE 7
-           OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
-           WRAP ' '
-           ALIGN CENTER
-         END
+ 	 <%= poly_label('place_label',7,5) %>
      END
-
-   # Consider styling these based on "leisure" or "historic" or "surface" instead.
-   CLASS
+     CLASS
+         EXPRESSION ('[leisure]'='park')
+         STYLE
+             COLOR "<%= get_color("forest") %>"
+             OUTLINECOLOR "<%= get_color("forest","outline") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[leisure]'='recreation_ground')
+         STYLE
+             COLOR "<%= get_color("forest") %>"
+             OUTLINECOLOR "<%= get_color("forest","outline") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[leisure]'='nature_reserve')
+         STYLE
+             COLOR "<%= get_color("forest") %>"
+             OUTLINECOLOR "<%= get_color("forest","outline") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[highway]'='pedestrian')
+        STYLE
+            COLOR "<%= get_color("grass") %>"
+            OUTLINECOLOR "<%= get_color("forest") %>"
+        END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     # Consider styling these based on "leisure" or "historic" or "surface" instead.
+     CLASS
          EXPRESSION ('[highway]'='pedestrian')
          STYLE
              COLOR "<%= get_color("parking") %>"
          END
-         COLOR "<%= get_color("place_label") %>"
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[leisure]'='track' or "[leisure]"='pitch' or "[leisure]"='golf_course')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[tourism]'='picnic_site')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[tourism]'='camp_site')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[tourism]'='attraction')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[leisure]'='playground' or '[landuse]'='recreation_ground' or '[landuse]'='village_green')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='orchard' or '[landuse]'='vineyard' or '[landuse]'='plant_nursery' or '[landuse]'='conservation' or '[landuse]'='cemetery')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[nature]'='heath' or '[nature]'='scrub' or '[nature]'='scree' or '[nature]'='grassland')
+         STYLE
+             COLOR "<%= get_color("grass") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[amenity]'='place_of_worship')
+         STYLE
+             COLOR "<%= get_color("hospital") %>"
+             OUTLINECOLOR "<%= get_color("forest") %>"
+         END
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='farmland' or '[landuse]'='farmyard')
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+	 # not rendered because cities are inconsistent on if the marina is land or water
+         EXPRESSION ('[leisure]'='marina' or '[waterway]'='boatyard')
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='residential' or '[landuse]'='industrial' or '[amenity]'='trailer_park' or '[amenity]'='marketplace' or '[amenity]'='restaurant' or '[landuse]'='institutional')
+	 # Intentionally not coloring these; because
+	 # different cities and counties are very inconsistent in how they use them.
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='special_use' or '[landuse]'='commercial' or '[landuse]'='construction' or '[landuse]'='retail' or '[landuse]'='public_facility' or '[amenity]'='fire_station')
+	 # Intentionally not coloring these; because
+	 # different cities and counties are very inconsistent in how they use them.
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+
+     CLASS
+	 # Silly layers
+         EXPRESSION ('[landuse]'='greenhouse_horticulture')
+ 	 <%= poly_label('place_label',7,5) %>
+     END
+
+     CLASS
+         #STYLE
+         #    COLOR "#000000"
+         #    OUTLINECOLOR "#ff0000"
+         #END
+	 #TEXT "[osm_id] L:[landuse] N:[nature] T:[tourism] A:[amenity]"
          LABEL
-           COLOR "<%= get_color("road_label") %>"
+           COLOR "#000000"
+           OUTLINECOLOR "#ffffff"
            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
            SIZE 7
-           OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
            WRAP ' '
-           #MAXLENGTH 6
-           ALIGN CENTER
+           MINFEATURESIZE AUTO
          END
      END
- END
+
+END
+
+
 
 
 
@@ -589,97 +708,31 @@ END
 # Note -- we should make sure the expression in this layer matches the index in 
 # the load_spatial_data script.
 # create index big_water on planet_osm_polygon (way_area) where ("natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000 ;
+# or consider
+# create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;
 # Or consider a materialized view with all big polygons instead.
 
 LAYER
-    TYPE POLYGON
     STATUS ON
     PROJECTION "init=epsg:3857" END
-    NAME "landuse_layer5"
     GROUP "default"
+    NAME "big_water"
+    TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where (\"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>100000000) as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    MINSCALEDENOM 5000010
+    DATA "way from (select * from planet_osm_polygon where \"natural\" = 'water' or landuse='reservoir'and way_area>100000000) as a using unique osm_id using srid=900913"
     LABELITEM "name"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MINSCALEDENOM 220000
     CLASS
         STYLE
             COLOR "<%= get_color("water") %>"
-        END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-          MAXSCALEDENOM 110000
-          MINDISTANCE 100
-          MINFEATURESIZE AUTO
-          SIZE 8
-          COLOR "<%= get_color("water_label") %>"
-          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
-          WRAP ' '
-          ALIGN CENTER
         END
     END
 END
 
 
-LAYER
-    TYPE POLYGON
-    STATUS ON
-    PROJECTION "init=epsg:3857" END
-    NAME "landuse_layer5"
-    GROUP "default"
-    <%= default_connection() %>
-    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where (\"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000) as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    MINSCALEDENOM 1000010
-    MAXSCALEDENOM 5000010
-    LABELITEM "name"
-    CLASS
-        STYLE
-            COLOR "<%= get_color("water") %>"
-        END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-          MAXSCALEDENOM 110000
-          MINDISTANCE 100
-          MINFEATURESIZE AUTO
-          SIZE 8
-          COLOR "<%= get_color("water_label") %>"
-          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
-          WRAP ' '
-          ALIGN CENTER
-        END
-    END
-END
 
 
-LAYER
-    TYPE POLYGON
-    STATUS ON
-    PROJECTION "init=epsg:3857" END
-    NAME "landuse_layer5"
-    GROUP "default"
-    <%= default_connection() %>
-    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where \"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') as foo using unique osm_id using srid=900913"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    MAXSCALEDENOM 1000010
-    LABELITEM "name"
-    CLASS
-        STYLE
-            COLOR "<%= get_color("water") %>"
-        END
-        LABEL
-          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-          MAXSCALEDENOM 110000
-          MINDISTANCE 100
-          MINFEATURESIZE AUTO
-          SIZE 8
-          COLOR "<%= get_color("water_label") %>"
-          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
-          WRAP ' '
-          ALIGN CENTER
-        END
-    END
-END
 
 
 # This scales nicely. Consider using SIZEUNITS for everything (roads in meters, etc).
@@ -822,7 +875,7 @@ LAYER
 	      LINECAP BUTT
 	      PATTERN 8 12 END
 	 END # STYLE
-	text '[aeroway] [ref] [name]'
+	text '[ref] [name]'
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 110000
@@ -880,7 +933,6 @@ LAYER
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "roadsclose"
-#   DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
     DATA "way from (select way, osm_id ,highway,ref, name, tunnel,route from planet_osm_line where waterway is null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
@@ -1153,7 +1205,7 @@ LAYER
         <%= road_label("road_label",8,1) %>
     END
     CLASS
-        EXPRESSION "track"
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
@@ -1161,35 +1213,6 @@ LAYER
             PATTERN 2 3 END
         END
         <%= road_label("road_label",7,1) %>
-    END
-    CLASS
-        EXPRESSION 'footway'
-        STYLE
-            WIDTH 2
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 2 3 END
-        END
-    END
-    CLASS
-        EXPRESSION 'pedestrian'
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 3 4 END
-        END
-        <%= road_label("road_label",6,1) %>
-    END
-    CLASS
-        EXPRESSION ('[route]' = 'bicycle')
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 10 20 END
-        END
-        <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION (length('[name]') > 0)
@@ -1508,7 +1531,7 @@ LAYER
         <%= road_label("road_label",8,1) %>
     END
     CLASS
-        EXPRESSION "track"
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
@@ -1517,35 +1540,7 @@ LAYER
         END
         <%= road_label("road_label",7,1) %>
     END
-    CLASS
-        EXPRESSION 'footway'
-        STYLE
-            WIDTH 1
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 2 3 END
-        END
-    END
-    CLASS
-        EXPRESSION 'pedestrian'
-        STYLE
-            WIDTH 6
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 3 4 END
-        END
-        <%= road_label("road_label",6,1) %>
-    END
-    CLASS
-        EXPRESSION 'bicycle'
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 10 20 END
-        END
-        <%= road_label("road_label",6,1) %>
-    END
+
 END
 
 # The third most zoomed in road and rail layers - scaledenom 10010 to 25010
@@ -1722,41 +1717,14 @@ LAYER
         <%= road_label("road_label",6,1) %>
     END
     CLASS
-        EXPRESSION "track"
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
             PATTERN 2 3 END
         END
-        <%= road_label("road_label",6,1) %>
-    END
-    CLASS
-        EXPRESSION 'footway'
-        STYLE
-            WIDTH 1
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 2 3 END
-        END
-    END
-    CLASS
-        EXPRESSION 'pedestrian'
-        STYLE
-            WIDTH 1
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 3 4 END
-        END
-    END
-    CLASS
-        EXPRESSION 'bicycle'
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 10 20 END
-        END
+        <%= road_label("road_label",7,1) %>
     END
 END
 
@@ -1892,41 +1860,14 @@ LAYER
         END
     END
     CLASS
-        EXPRESSION "track"
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
             PATTERN 2 3 END
         END
-        <%= road_label("road_label",6,1) %>
-    END
-    CLASS
-        EXPRESSION 'footway'
-        STYLE
-            WIDTH 1
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 2 3 END
-        END
-    END
-    CLASS
-        EXPRESSION 'pedestrian'
-        STYLE
-            WIDTH 0.5
-            COLOR "<%= get_color("footway") %>"
-            LINECAP BUTT
-            PATTERN 3 4 END
-        END
-    END
-    CLASS
-        EXPRESSION 'bicycle'
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 10 20 END
-        END
+        <%= road_label("road_label",7,1) %>
     END
 END
 
@@ -2057,15 +1998,6 @@ LAYER
         STYLE
             WIDTH 1
             COLOR "<%= get_color("road_5") %>"
-        END
-    END
-    CLASS
-        EXPRESSION "track"
-        STYLE
-            WIDTH 2
-            COLOR "<%= get_color('footway') %>"
-            LINECAP BUTT
-            PATTERN 2 3 END
         END
     END
 END
@@ -2652,9 +2584,9 @@ END
 ################################################################################
 
 ################################################################################
-# Polygon layers
-# building: {yes,farm_auxiliary}  (no longer has 'no','false')
-# aeroway: {taxiway,parking_position,runway}
+# Building layers
+# building: {yes,farm_auxiliary}  (very few haves 'no' or 'false', and mostly
+# those seem like buildings too)
 ################################################################################
 
 LAYER
@@ -2664,7 +2596,7 @@ LAYER
     NAME "buildings"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id, coalesce(name,\"addr:housenumber\") as name from planet_osm_polygon where (building is not null) or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null) or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 60000
@@ -2701,42 +2633,13 @@ LAYER
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("building") %>"
-            OUTLINECOLOR "<%= get_color("building","offset") %>"
-            OUTLINEWIDTH 0.5
+            COLOR "<%= get_color("building","offset") %>"
+            # OUTLINECOLOR "<%= get_color("building","offset") %>"
+            # OUTLINEWIDTH 0.5
         END
     END
 END
 
-LAYER
-    STATUS ON
-    GROUP "default"
-    NAME "sports"
-    PROJECTION "init=epsg:3857" END
-    TYPE POLYGON
-    <%= default_connection() %>
-    DATA "way from (select way,osm_id, coalesce(name,sport) as nicelabel from planet_osm_polygon where leisure='track' or leisure='pitch' or leisure='golf_course') as foo using unique osm_id using srid=900913"
-    LABELITEM "nicelabel"
-    PROCESSING "LABEL_NO_CLIP=ON"
-    MAXSCALEDENOM 60000
-    CLASS
-        STYLE
-            COLOR "<%= get_color("grass") %>"
-            OUTLINECOLOR "<%= get_color("forest") %>"
-        END
-        LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-            MAXSCALEDENOM 7000
-            SIZE 7
-            COLOR "<%= get_color("forest_label") %>"
-            OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"
-            PRIORITY 1
-            WRAP ' '
-            #MAXLENGTH 6
-            ALIGN CENTER
-        END
-    END
-END
 ################################################################################
 ################################################################################
 ## END OF POLYGON LAYERS

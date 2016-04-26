@@ -3,16 +3,19 @@
 # This script assumes that the software installation playbook alrady ran
 # so only runs the much lighter-weight tasks
 
+# We would like to add
+#    accelerate: true
+# bug can't because of
+#     https://github.com/ansible/ansible/issues/11465
+
 - name: Set up mapserver application servers
   hosts: mapserver
-  accelerate: true
   become: yes
   roles:
     - mapserver_config
 
 - name: MapCache hosts (apache, mod-tilecache, mod-proxy, etc)
   hosts: mapcache
-  accelerate: true
   become: yes
   roles:
     - mapcache_config
