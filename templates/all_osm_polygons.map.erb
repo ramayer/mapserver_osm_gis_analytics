@@ -76,7 +76,7 @@ PROJECTION  "init=epsg:3857"  END
 <%
  sql = %Q{
      way from (
-       SELECT way,osm_id,name,way_area, CASE WHEN ((osm_id % 2) = 1) THEN '#ff000022' ELSE '#00ff0022' END as color
+       SELECT *, CASE WHEN ((osm_id % 2) = 1) THEN '#ff000022' ELSE '#00ff0022' END as color
         FROM planet_osm_polygon
 	WHERE (building is null)
    ) as foo using unique osm_id using srid=900913  order by way_area
@@ -123,19 +123,21 @@ LAYER
 		 COLOR [color]
 		 OPACITY 10
         END
-        TEXT '[osm_id]: [name]'
+        TEXT '[osm_id] N:[name] A:[amenity] L:[landuse] L:[leisure]'
         LABEL
             TYPE TRUETYPE
             FONT arial
             PARTIALS FALSE
-            SIZE 12
+            SIZE 8
             OUTLINEWIDTH 2
             PRIORITY 5
-            COLOR '#0000ff'
+            COLOR '#000000'
+	    WRAP ' '
             OUTLINECOLOR '#ffffff'
+	    FORCE true
+	    POSITION cc
         END
     END
-
 END
 
 
