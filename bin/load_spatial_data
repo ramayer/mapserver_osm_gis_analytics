@@ -304,7 +304,8 @@ function load_osm_data {
 
   echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
   echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
-  echo "create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;" | psql 
+  # echo "create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;" | psql 
+  echo "CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE (\"natural\" = 'water' OR landuse='reservoir') AND way_area>100 * 1000 * 1000;"  | psql
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
 

@@ -711,6 +711,10 @@ END
 # or consider
 # create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;
 # Or consider a materialized view with all big polygons instead.
+#
+#
+#
+#   CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE ("natural" = 'water' OR landuse='reservoir') AND way_area>100 * 1000 * 1000;
 
 LAYER
     STATUS ON
@@ -719,7 +723,8 @@ LAYER
     NAME "big_water"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "sway from (select st_simplify(way,500) as sway,* from planet_osm_polygon where (\"natural\" = 'water' or landuse='reservoir') and way_area>10 * 1000 * 1000) as a using unique osm_id using srid=900913"
+    # DATA "sway from (select st_simplify(way,500) as sway,* from planet_osm_polygon where (\"natural\" = 'water' or landuse='reservoir') and way_area>100 * 1000 * 1000) as a using unique osm_id using srid=900913"
+    DATA "sway from simple_large_water using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     MINSCALEDENOM 220000
