@@ -536,7 +536,8 @@ LAYER
      CLASS
          EXPRESSION ('[leisure]'='park')
          STYLE
-             COLOR "<%= get_color("forest") %>"
+             # Do not fill these.  Emerald Bay State Park's polygon
+	     # would fill Emerald Bay if we do.
              OUTLINECOLOR "<%= get_color("forest","outline") %>"
              OUTLINEWIDTH 1
          END
