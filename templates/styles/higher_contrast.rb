@@ -5,7 +5,7 @@ $map_colors = {
   industrial:  {color:'#f0f0f0'},
   land:        {color:'#f0f0f0', outline:'#aaaaaa'},
   residential: {color:'#f0f0f0'},
-  parking:     {color:'#cccccc'},
+  parking:     {color:'#bbbbbb', outline:'#666666'},   # should be noticably darker than 'building'
 
   park:        {color:'#d5e2bc'},
   grass:       {color:'#e5f2cc'},

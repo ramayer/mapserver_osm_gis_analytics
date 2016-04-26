@@ -285,16 +285,11 @@ END
 # TODO - PATTERN in a SYMBOL is deprecated and no longer works.
 # See: http://mapserver.org/mapfile/symbology/construction.html#sym-construction
 
-SYMBOL
-    NAME "path"
-    TYPE SIMPLE
-    #PATTERN 1 1 END
-END
-SYMBOL
-    NAME "track"
-    TYPE SIMPLE
-    # PATTERN        5 5    END
-END
+# SYMBOL
+#     NAME "path"
+#     TYPE SIMPLE
+#     #PATTERN 1 1 END
+# END
 SYMBOL
     NAME "tunnel"
     TYPE SIMPLE
@@ -394,6 +389,17 @@ LAYER
         END
     END
 END
+
+
+
+# The 'order by way_area desc' clause is an interesting hack to handle cases where you may have:
+#    a large grass polygon, surrounding a smaller school polygon, surrounding a smaller grass polygon
+# 
+# It doesn't seem guaranteed to work, though, because it pushes the "order by" clause into a subquery so the ordering of the outer query is undefined, though.
+# 
+#  execute <unnamed>: select "amenity","name",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc ) as foo where way && ST_GeomFromText('POLYGON((-13570947.0959847 4512525.05572228,-13570947.0959847 4514076.48853071,-13569395.6631763 4514076.48853071,-13569395.6631763 4512525.05572228,-13570947.0959847 4512525.05572228))',900913)
+
+
 LAYER
     STATUS ON
     PROJECTION "init=epsg:3857" END
@@ -401,17 +407,17 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway in ('apron','runway')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "amenity"
     PROCESSING "LABEL_NO_CLIP=ON"
-    MAXSCALEDENOM 110000
+    MAXSCALEDENOM 220000
     CLASS
         EXPRESSION "hospital"
         STYLE
             COLOR "<%= get_color('hospital') %>"
         END
-         LABEL
+        LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
             SIZE 7
@@ -424,25 +430,47 @@ LAYER
         END
     END
     CLASS
-        EXPRESSION ("[amenity]"="parking" or "[aeroway]"="apron")
-        STYLE
-            COLOR "<%= get_color('parking') %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[aeroway]"="runway")
-        STYLE
-            COLOR "<%= get_color('parking') %>"
-        END
-    END
-    CLASS
         EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
         STYLE
             COLOR "<%= get_color('school') %>"
         END
         LABEL
-            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
             MAXSCALEDENOM 15000
+            SIZE 7
+            COLOR "<%= get_color('place_label') %>"
+            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        EXPRESSION ("[aeroway]"="aerodrome")
+        STYLE
+            COLOR "#ffeeff"
+        END
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 15000
+            SIZE 7
+            COLOR "<%= get_color('place_label') %>"
+            OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
+            PRIORITY 1
+            WRAP ' '
+            #MAXLENGTH 6
+            ALIGN CENTER
+        END
+    END
+    CLASS
+        EXPRESSION ("[amenity]"="parking")
+        STYLE
+            COLOR "<%= get_color('parking') %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+	    MINFEATURESIZE AUTO
             SIZE 7
             COLOR "<%= get_color('place_label') %>"
             OUTLINECOLOR "<%= get_color('place_label', 'outline') %>"
@@ -451,7 +479,25 @@ LAYER
             ALIGN CENTER
         END
     END
+    CLASS
+        EXPRESSION ("[amenity]"="swimming_pool")
+        STYLE
+            COLOR "<%= get_color('water') %>"
+        END
+        LABEL
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+	    MINFEATURESIZE AUTO
+            SIZE 7
+            COLOR "<%= get_color('water_label') %>"
+            OUTLINECOLOR "<%= get_color('water_label', 'outline') %>"
+            PRIORITY 1
+            WRAP ' '
+            ALIGN CENTER
+        END
+    END
 END
+
+
 
  LAYER
      TYPE POLYGON
@@ -508,11 +554,11 @@ END
    CLASS
          EXPRESSION ('[highway]'='pedestrian')
          STYLE
-             COLOR "<%= get_color("pedestrian") %>"
+             COLOR "<%= get_color("parking") %>"
          END
-             text 'highway: [highway]'
+         COLOR "<%= get_color("place_label") %>"
          LABEL
-             COLOR "#FF0000"
+           COLOR "<%= get_color("road_label") %>"
            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
            SIZE 7
            OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
@@ -536,7 +582,7 @@ LAYER
     NAME "landuse_layer5"
     GROUP "default"
     <%= default_connection() %>
-    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where \"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where \"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 5000010
     LABELITEM "name"
@@ -560,30 +606,56 @@ LAYER
         END
     END
 END
+
+
+# This scales nicely. Consider using SIZEUNITS for everything (roads in meters, etc).
 LAYER
     TYPE LINE
     NAME "landuse_layer6"
     GROUP "default"
     <%= default_connection() %>
-    DATA 'way from (select way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
+    DATA 'way from (select name,way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
     CLASSITEM "waterway"
     SIZEUNITS meters
     MAXSCALEDENOM 1500000
+    LABELITEM "name"
     CLASS
         EXPRESSION "river"
         STYLE
             COLOR "<%= get_color("water") %>"
             WIDTH 30
-            MINWIDTH 0.5
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE 10
+            MINDISTANCE 250
+            ANGLE FOLLOW
+	    COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
         END
     END
     CLASS
-        MAXSCALEDENOM 105000
         EXPRESSION "stream"
         STYLE
             COLOR "<%= get_color("water") %>"
             WIDTH 5
-            MINWIDTH 0.5
+        END
+        LABEL
+	    MAXSCALEDENOM 150000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 9
+            MINDISTANCE 250
+            ANGLE FOLLOW
+	    COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
         END
     END
     CLASS
@@ -591,16 +663,61 @@ LAYER
         STYLE
             COLOR "<%= get_color("water") %>"
             WIDTH 10
-            MINWIDTH 0.5
+        END
+        LABEL
+	    MAXSCALEDENOM 150000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 4
+            SIZE 9
+            MINDISTANCE 250
+            ANGLE FOLLOW
+	    COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
         END
     END
 END
 
 
 ################################################################################
-## Airport line layers
-## See:   http://wiki.openstreetmap.org/wiki/Key:highway
+## Airport details
+## If we want whole airports shaded, put a polygon for ( aeroway = 'aerodrome' ) above the grass layers
 ################################################################################
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "airport_aeroways"
+    TYPE POLYGON
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id,aeroway,ref,name from planet_osm_polygon where aeroway is not null and aeroway != 'aerodrome') as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    MAXSCALEDENOM 110000
+    CLASSITEM "aeroway"
+    CLASS
+        STYLE
+            COLOR "<%= get_color('parking') %>"
+            OUTLINECOLOR "<%= get_color('parking','outline') %>"
+        END
+	text '[aeroway] [ref] [name]'
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 400
+          MINFEATURESIZE 50   # slow, but quite a bit nicer.
+          SIZE 8
+          COLOR "<%= get_color("water_label") %>"
+          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+          WRAP ' '
+          #MAXLENGTH 5
+          ALIGN CENTER
+        END
+    END
+
+END
 
 
 LAYER
@@ -614,12 +731,6 @@ LAYER
     LABELITEM "ref"
     CLASSITEM "aeroway"
     CLASS
-#        STYLE
-#            WIDTH 4
-#            COLOR "<%= get_color('parking') %>"
-#	    OUTLINECOLOR  "<%= get_color('road_label','outline') %>"
-#	    OUTLINEWIDTH 1
-#        END
 	 STYLE
 		COLOR 102 102 102
 	        WIDTH 4.0
@@ -686,7 +797,7 @@ LAYER
     TYPE LINE
     NAME "roadsclose"
 #   DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where true order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel,route from planet_osm_line where waterway is null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
@@ -960,23 +1071,20 @@ LAYER
     CLASS
         EXPRESSION "track"
         STYLE
-            WIDTH 3
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("track","outline") %>"
-        END
-        STYLE
-            SYMBOL "track"
-            WIDTH 3
-            COLOR "<%= get_color("track","symbol") %>"
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
         <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
-            SYMBOL "path"
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
     END
     CLASS
@@ -984,6 +1092,18 @@ LAYER
         STYLE
             WIDTH 8
             COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 3 4 END
+        END
+        <%= road_label("road_label",6,1) %>
+    END
+    CLASS
+        EXPRESSION ('[route]' = 'bicycle')
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 10 20 END
         END
         <%= road_label("road_label",6,1) %>
     END
@@ -1307,22 +1427,19 @@ LAYER
         EXPRESSION "track"
         STYLE
             WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("track","outline") %>"
-        END
-        STYLE
-            SYMBOL "track"
-            WIDTH 2
-            COLOR "<%= get_color("track","symbol") %>"
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
         <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
-            SYMBOL "path"
             WIDTH 1
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
     END
     CLASS
@@ -1330,6 +1447,18 @@ LAYER
         STYLE
             WIDTH 6
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 3 4 END
+        END
+        <%= road_label("road_label",6,1) %>
+    END
+    CLASS
+        EXPRESSION 'bicycle'
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 10 20 END
         END
         <%= road_label("road_label",6,1) %>
     END
@@ -1511,23 +1640,20 @@ LAYER
     CLASS
         EXPRESSION "track"
         STYLE
-            WIDTH 1
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("track","outline") %>"
-        END
-        STYLE
-            SYMBOL "track"
-            WIDTH 1
-            COLOR "<%= get_color("track","symbol") %>"
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
         <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
-            SYMBOL "path"
             WIDTH 1
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
     END
     CLASS
@@ -1535,6 +1661,17 @@ LAYER
         STYLE
             WIDTH 1
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 3 4 END
+        END
+    END
+    CLASS
+        EXPRESSION 'bicycle'
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 10 20 END
         END
     END
 END
@@ -1673,23 +1810,20 @@ LAYER
     CLASS
         EXPRESSION "track"
         STYLE
-            WIDTH 1
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("track","outline") %>"
-        END
-        STYLE
-            SYMBOL "track"
-            WIDTH 1
-            COLOR "<%= get_color("track","symbol") %>"
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
         <%= road_label("road_label",6,1) %>
     END
     CLASS
         EXPRESSION 'footway'
         STYLE
-            SYMBOL "path"
             WIDTH 1
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
     END
     CLASS
@@ -1697,6 +1831,17 @@ LAYER
         STYLE
             WIDTH 0.5
             COLOR "<%= get_color("footway") %>"
+            LINECAP BUTT
+            PATTERN 3 4 END
+        END
+    END
+    CLASS
+        EXPRESSION 'bicycle'
+        STYLE
+            WIDTH 8
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 10 20 END
         END
     END
 END
@@ -1833,9 +1978,10 @@ LAYER
     CLASS
         EXPRESSION "track"
         STYLE
-            SYMBOL "track"
-            WIDTH 1
-            COLOR "<%= get_color("track","symbol") %>"
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 2 3 END
         END
     END
 END
@@ -2419,16 +2565,18 @@ END
 
 ################################################################################
 # Polygon layers
+# building: {yes,farm_auxiliary}  (no longer has 'no','false')
+# aeroway: {taxiway,parking_position,runway}
 ################################################################################
 
 LAYER
     STATUS ON
     PROJECTION "init=epsg:3857" END
     GROUP "default"
-    NAME "building"
+    NAME "buildings"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id, coalesce(name,\"addr:housenumber\") as name from planet_osm_polygon where (building is not null and building!='no' and building!='false') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id, coalesce(name,\"addr:housenumber\") as name from planet_osm_polygon where (building is not null) or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='place_of_worship' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 60000
@@ -2479,8 +2627,8 @@ LAYER
     PROJECTION "init=epsg:3857" END
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id, name from planet_osm_polygon where leisure='track' or leisure='pitch') as foo using unique osm_id using srid=900913"
-    LABELITEM "name"
+    DATA "way from (select way,osm_id, coalesce(name,sport) as nicelabel from planet_osm_polygon where leisure='track' or leisure='pitch' or leisure='golf_course') as foo using unique osm_id using srid=900913"
+    LABELITEM "nicelabel"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 60000
     CLASS
@@ -2489,8 +2637,8 @@ LAYER
             OUTLINECOLOR "<%= get_color("forest") %>"
         END
         LABEL
-        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
-        MAXSCALEDENOM 7000
+            TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+            MAXSCALEDENOM 7000
             SIZE 7
             COLOR "<%= get_color("forest_label") %>"
             OUTLINECOLOR "<%= get_color("forest_label", "outline") %>"

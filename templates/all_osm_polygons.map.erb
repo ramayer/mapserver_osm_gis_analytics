@@ -78,8 +78,7 @@ PROJECTION  "init=epsg:3857"  END
      way from (
        SELECT way,osm_id,name,way_area, CASE WHEN ((osm_id % 2) = 1) THEN '#ff000022' ELSE '#00ff0022' END as color
         FROM planet_osm_polygon
-	WHERE
-          (building is null or building in ('no','false'))
+	WHERE (building is null)
    ) as foo using unique osm_id using srid=900913  order by way_area
  }.gsub(/\s+/," ")
 %> 
