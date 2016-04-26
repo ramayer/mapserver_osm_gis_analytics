@@ -304,14 +304,14 @@ function load_osm_data {
 
   echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
   echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
-  echo "create index big_water on planet_osm_polygon (way_area) where ("natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000 ;" | psql
-  
+  echo "create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;" | psql 
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
 
 
   echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
 
+  
   # TODO: consider if those should be partial indexes instead.
   #   (yes, they should, but mapfile will need rewrite)
 
