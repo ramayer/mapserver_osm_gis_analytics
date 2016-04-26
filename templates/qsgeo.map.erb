@@ -461,7 +461,7 @@ LAYER
 	<%= poly_label('place_label',7,5) %>
     END
     CLASS
-         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest" or '[nature]'='ridge' or '[boundary]'='national_park' or '[boundary]'='protected_area')
+         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest" or '[nature]'='ridge' or '[boundary]'='national_park')
          STYLE
              COLOR "<%= get_color("forest") %>"
              OUTLINECOLOR "<%= get_color("forest") %>"
@@ -494,6 +494,21 @@ LAYER
          END
  	 <%= poly_label('place_label',7,5) %>
      END
+     CLASS
+         EXPRESSION (length('[boundary]') > 0)
+         STYLE
+             # Do not fill these.  Emerald Bay State Park's polygon
+	     # would fill Emerald Bay if we do.
+	     #
+             # Similar for osm_id -3945021 ... Don Edwards Bay north of the Dumbarton Bridge
+	     #
+	     # TODO - find why 160032399 / Biscayne National Park is still covering the water.
+             OUTLINECOLOR "<%= get_color("forest","outline") %>"
+             OUTLINEWIDTH 1
+         END
+ 	 <%= poly_label('place_label',8,10) %>
+     END
+
     CLASS
          EXPRESSION ('[landuse]'='military')
          STYLE
@@ -529,16 +544,6 @@ LAYER
          STYLE
              COLOR "<%= get_color("grass") %>"
              OUTLINECOLOR "<%= get_color("forest") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[leisure]'='park')
-         STYLE
-             # Do not fill these.  Emerald Bay State Park's polygon
-	     # would fill Emerald Bay if we do.
-             OUTLINECOLOR "<%= get_color("forest","outline") %>"
              OUTLINEWIDTH 1
          END
  	 <%= poly_label('place_label',7,5) %>
