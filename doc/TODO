@@ -73,3 +73,13 @@
 
 * Old has nicer buildings at: 
   http://13.91.253.215/test_maps.html#map=17/-13624226.34/4543081.61/0
+
+
+* consider
+  [defaults]
+  host_key_checking = False
+  http://stackoverflow.com/questions/30226113/ansible-ssh-prompt-known-hosts-issue
+
+  to workaround
+  https://github.com/forensiclogic/mapserver_osm_gis_analytics/commit/cd304f71e4fb2ad0934dc961b5cbca34653c7c0c
+  https://github.com/ansible/ansible-modules-core/issues/3136
