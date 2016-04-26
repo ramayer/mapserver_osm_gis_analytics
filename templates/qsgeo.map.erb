@@ -369,7 +369,7 @@ END
 	       waterway,
 	       boundary,
 	       \"natural\" as nature,
-	       coalesce(name,sport,amenity,leisure) as nicelabel
+	       coalesce(name,sport,amenity) as nicelabel
         FROM planet_osm_polygon
    	WHERE amenity is not null
 	   OR aeroway='aerodrome'
