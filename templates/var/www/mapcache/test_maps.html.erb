@@ -49,7 +49,7 @@
 	var local_overlay_layers = overlay_layers.map( function(item,index){
 	    return new ol.layer.Tile({
 	       title: item.desc,
-               visible: true,
+               visible: false,
 	       source: new ol.source.XYZ({
 		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
 	       }),

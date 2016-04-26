@@ -572,8 +572,85 @@ END
 
 
 
+################################################################################
+################################################################################
+##  WATER
+################################################################################
+################################################################################
+# Ideally, much of this wouldn't be needed, but 
+#    http://openstreetmapdata.com/data/land-polygons
+# occasionally misses important bodies of water, like the great lakes.
+#
+# Zoomed out, only include large water polygons by filtering on way_area
+#    way_area>10000000 will get the San Luis Reservoir, way_area>100000000 won't.
+# In 2016, openstreetmap has about 50,000 that match this expression with 10000000
+# In 2016, openstreetmap has about 6,000  that match this expression with 100000000
+#
+# Note -- we should make sure the expression in this layer matches the index in 
+# the load_spatial_data script.
+# create index big_water on planet_osm_polygon (way_area) where ("natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000 ;
+# Or consider a materialized view with all big polygons instead.
 
-# water
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    NAME "landuse_layer5"
+    GROUP "default"
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where (\"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>100000000) as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MINSCALEDENOM 5000010
+    LABELITEM "name"
+    CLASS
+        STYLE
+            COLOR "<%= get_color("water") %>"
+        END
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 100
+          MINFEATURESIZE AUTO
+          SIZE 8
+          COLOR "<%= get_color("water_label") %>"
+          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+          WRAP ' '
+          ALIGN CENTER
+        END
+    END
+END
+
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    NAME "landuse_layer5"
+    GROUP "default"
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where (\"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000) as foo using unique osm_id using srid=900913"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MINSCALEDENOM 1000010
+    MAXSCALEDENOM 5000010
+    LABELITEM "name"
+    CLASS
+        STYLE
+            COLOR "<%= get_color("water") %>"
+        END
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 100
+          MINFEATURESIZE AUTO
+          SIZE 8
+          COLOR "<%= get_color("water_label") %>"
+          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+          WRAP ' '
+          ALIGN CENTER
+        END
+    END
+END
+
 
 LAYER
     TYPE POLYGON
@@ -584,24 +661,21 @@ LAYER
     <%= default_connection() %>
     DATA "way from (select way,osm_id ,\"natural\" as nature , name from planet_osm_polygon where \"natural\"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') as foo using unique osm_id using srid=900913"
     PROCESSING "LABEL_NO_CLIP=ON"
-    MAXSCALEDENOM 5000010
+    MAXSCALEDENOM 1000010
     LABELITEM "name"
     CLASS
         STYLE
             COLOR "<%= get_color("water") %>"
-            WIDTH 0.5
-            OUTLINECOLOR "<%= get_color("water") %>"
         END
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 110000
-          MINDISTANCE 400
-          MINFEATURESIZE 50   # slow, but quite a bit nicer.
+          MINDISTANCE 100
+          MINFEATURESIZE AUTO
           SIZE 8
           COLOR "<%= get_color("water_label") %>"
           OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
           WRAP ' '
-          #MAXLENGTH 5
           ALIGN CENTER
         END
     END
@@ -679,8 +753,17 @@ LAYER
         END
     END
 END
+################################################################################
+################################################################################
+##  END OF WATER
+################################################################################
+################################################################################
 
 
+################################################################################
+################################################################################
+##  AIRPORTS
+################################################################################
 ################################################################################
 ## Airport details
 ## If we want whole airports shaded, put a polygon for ( aeroway = 'aerodrome' ) above the grass layers
@@ -716,9 +799,7 @@ LAYER
           ALIGN CENTER
         END
     END
-
 END
-
 
 LAYER
     STATUS ON GROUP "default"
@@ -756,10 +837,13 @@ LAYER
     END
 END
 
-
+################################################################################
+################################################################################
 ################################################################################
 ## Road layers
 ## See:   http://wiki.openstreetmap.org/wiki/Key:highway
+################################################################################
+################################################################################
 ################################################################################
 
 # The most zoomed in road and rail layers - scaledenom 0 to 5010
@@ -2560,7 +2644,11 @@ END
 
 
 ################################################################################
+################################################################################
+################################################################################
 # End of road layers
+################################################################################
+################################################################################
 ################################################################################
 
 ################################################################################
@@ -2649,6 +2737,19 @@ LAYER
         END
     END
 END
+################################################################################
+################################################################################
+## END OF POLYGON LAYERS
+################################################################################
+################################################################################
+
+
+################################################################################
+################################################################################
+## Annotations and labels
+################################################################################
+################################################################################
+
 SYMBOL
     NAME "citycircle"
     TYPE ELLIPSE
@@ -3383,6 +3484,13 @@ LAYER
     END
 END
 
+################################################################################
+################################################################################
+## Extra overlays so that mapserver can render large printable maps
+## without having to composite tiles on top of the base map, risking
+## labels colliding
+################################################################################
+################################################################################
 
 LAYER
     STATUS ON GROUP "default"
