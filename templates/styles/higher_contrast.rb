@@ -5,17 +5,25 @@ $map_colors = {
   industrial:  {color:'#f0f0f0'},
   land:        {color:'#f0f0f0', outline:'#aaaaaa'},
   residential: {color:'#f0f0f0'},
-  parking:     {color:'#bbbbbb', outline:'#666666'},   # should be noticably darker than 'building'
+  parking:     {color:'#d0d0d0', outline:'#666666'},   # should be noticably darker than 'building'
 
-  park:        {color:'#d5e2bc'},
-  grass:       {color:'#dadead'},
-  forest:      {color:'#c5d2ac', outline:"#b5c29c"},
+  park:        {color:'#f0f0f0'},
+  grass:       {color:'#f0f0f0'},
+  forest:      {color:'#f0f0f0', outline:"#b5c29c"},
+  sand:        {color:'#f0f0f0', outline:"#ccaa77"},
+  mud:         {color:'#f0f0f0', outline:"#ccbb77"},
+  military:    {color:'#f0f0f0', outline:"#444444"},
+  tourism:     {color:'#f0f0f0', outline:"#ccaaff"},
+  school:      {color:'#f0f0f0'},
+  water:       {color:'#99b3cc'},
+
 
   building:    {color:'#d1d0cd', offset:'#8e8d8c'},
   citycircle:  {color:'#ddcdcd', outline:'#000000', inner:'#000000'},
+
   footway:     {color:'#7f7f7f'},
 
-  hospital:    {color:'#eedddd'},
+  hospital:    {color:'#f0f0f0'},
   oneway:      {color:'#ffffff'},
   pedestrian:  {color:'#aaaaaa'},
   rail:        {color:'#ffffff', outline:'#A5A5A4',symbol:'#A5A5A4'},
@@ -26,10 +34,9 @@ $map_colors = {
   road_4:      {color:'#ddccaa', outline:'#666666'},
   road_5:      {color:'#aaaaaa'},
 
-  school:      {color:'#ffffcc'},
   track:       {outline:'#cccccc',symbol:'#ffffff'},
   tunnel:      {outline:'#444444'},
-  water:       {color:'#99b3cc'},
+
 
   building_label:  {color:'#000000',outline:'#ffffff'},
   forest_label:    {color:'#888888',outline:'#ffffff'},
