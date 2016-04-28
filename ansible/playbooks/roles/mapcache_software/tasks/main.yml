@@ -44,7 +44,7 @@
       - 000-default.conf
 
   - name: Make sure directories exist for mapcache
-    file: dest={{ item }} mode=755 state=directory
+    file: dest={{ item }} mode=775 state=directory owner={{ lookup("env","USER") }}
     with_items:
       - /etc/mapcache
       - /var/www/mapcache
@@ -63,7 +63,7 @@
     command: creates=/etc/mapcache/mapcache.xml  cp /usr/share/doc/libapache2-mod-mapcache/examples/mapcache.xml /etc/mapcache/mapcache.xml
 
   - name: Make sure a mapcache directory exists
-    file: path=/var/tmp/cache/mapcache state=directory owner=www-data
+    file: path=/var/tmp/cache/mapcache state=directory owner=www-data group=ansible owner=ansible
 
 
 
