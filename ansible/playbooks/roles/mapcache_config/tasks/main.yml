@@ -1,7 +1,7 @@
 ---
 
   - name: Make sure static html directories exist
-    file: dest={{ item }} mode=755 state=directory
+    file: dest={{ item }} mode=755 state=directory owner={{ lookup("env","USER") }}
     with_items:
       - /var/www/mapcache
 
@@ -13,12 +13,14 @@
   #   synchronize: src={{ lookup('pipe','pwd') }}/roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
 
   - name: Copy test pages for maps
+    become: false
     synchronize: src={{ lookup('env','INSTALL_DIR') }}/var/www/mapcache/. dest=/var/www/mapcache/.
 
   - name: Creates mapcache config directory
     file: path=/etc/mapcache state=directory
 
   - name: Install mapcache config files to /etc/mapcache
+    become: false
     synchronize: src={{ lookup('env','INSTALL_DIR') }}/etc/mapcache/. dest=/etc/mapcache/.
     notify:
       - restart apache

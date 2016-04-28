@@ -20,7 +20,6 @@
   roles:
     - mapcache_config
 
-
 # At this point, the following script seems to work.
 # 
 #  env PGHOST=localhost bash install_spatial_db  --map-data=tiny

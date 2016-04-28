@@ -36,7 +36,7 @@
       - 002-apache-mapserver.conf
 
   - name: Make sure mapserver config directory exists
-    file: dest=/etc/mapserver mode=755 state=directory
+    file: dest=/etc/mapserver mode=775 state=directory owner={{ lookup("env","USER") }}
 
   - name: ensure apache is running
     service: name=apache2 state=started
