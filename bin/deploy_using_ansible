@@ -16,4 +16,4 @@ else
    ansible_hosts_file=$HOME/mapserver_osm_gis_analytics/ansible/hosts.minimal
 fi
 
-ansible-playbook -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/deploy_templates.yaml
+ansible-playbook -vvv -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/deploy_templates.yaml

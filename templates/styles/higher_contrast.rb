@@ -8,7 +8,7 @@ $map_colors = {
   parking:     {color:'#bbbbbb', outline:'#666666'},   # should be noticably darker than 'building'
 
   park:        {color:'#d5e2bc'},
-  grass:       {color:'#e5f2cc'},
+  grass:       {color:'#dadead'},
   forest:      {color:'#c5d2ac', outline:"#b5c29c"},
 
   building:    {color:'#d1d0cd', offset:'#8e8d8c'},

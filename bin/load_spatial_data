@@ -136,7 +136,7 @@ function load_osm_data {
   flat_node_file=osm2pgsql.flat_nodes.$PGDATABASE
 
   # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file
-  echo 'DROP VIEW planet_osm_polygon_view' | psql gis
+  echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_water" | psql -h localhost gis gis
 
   if [ "$map_data" == "planet" ]; then 
      wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
@@ -302,14 +302,14 @@ function load_osm_data {
      osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
   fi
 
-  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
   echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
-  # echo "create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;" | psql 
-  echo "CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE (\"natural\" = 'water' OR landuse='reservoir') AND way_area>100 * 1000 * 1000;"  | psql
+
+  echo "CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE (\"natural\" = 'water' OR landuse='reservoir') AND way_area>50 * 1000 * 1000;"  | psql
+
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
-
-
+  echo 'create index "planet_osm_point(place)" on planet_osm_point(place);' | psql
+  
   echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
 
   
