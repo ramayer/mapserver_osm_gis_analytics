@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# Two good Oakland LPR sources: 
+#     https://data.oaklandnet.com/browse?q=alpr&sortBy=relevance&utf8=
+#     https://www.eff.org/deeplinks/2015/01/what-we-learned-oakland-raw-alpr-data
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+layername='opd_lpr'
+source='https://data.oaklandnet.com/api/views/7axi-hi5i/rows.csv'
+
+mkdir -p /tmp/lpr
+wget -nc $source -O /tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv
+
+psql << EOF
+
+     DROP TABLE IF EXISTS opd_lpr CASCADE;
+     CREATE TABLE opd_lpr (plate TEXT ,ts TEXT,lat_lon TEXT);
+     \COPY opd_lpr FROM '/tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv' CSV HEADER
+     ALTER TABLE opd_lpr ADD COLUMN geom geometry(Point,4326);
+     UPDATE opd_lpr SET geom = ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326);
+     CREATE INDEX opd_lpr__geom ON opd_lpr using GIST (geom);
+
+     DELETE FROM additional_layers WHERE layername='opd_lpr' AND source='$source';
+     INSERT INTO additional_layers (layername,source)
+   	    VALUES ('opd_lpr','https://data.oaklandnet.com/browse?q=alpr&sortBy=relevance&utf8=');
+     INSERT INTO additional_points (layer_id,label,color,tags,geom)
+     	     SELECT (select id from additional_layers where layername='opd_lpr' and source='$source'),
+	     	    plate,
+		    '#ff0000',
+		    hstore(t),
+		    st_transform(geom,3857)
+                FROM opd_lpr as t;
+
+EOF

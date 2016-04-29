@@ -1,0 +1,55 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+psql << EOF
+
+  DROP TABLE IF EXISTS additional_layers   CASCADE;
+  DROP TABLE IF EXISTS additional_lines    CASCADE;
+  DROP TABLE IF EXISTS additional_polygons CASCADE;
+  DROP TABLE IF EXISTS additional_points   CASCADE;
+
+  CREATE TABLE additional_layers (
+  	 id        	serial primary key,
+	 user_id   	int,
+	 layername 	text,
+         source   	text
+  );
+
+  CREATE TABLE additional_polygons (
+  	 id            bigserial,
+	 layer_id      int references additional_layers(id) ON DELETE CASCADE,
+	 label         text,
+	 color         text,
+	 outlinecolor  text,
+	 opacity       text,
+	 tags	       hstore,
+	 geom	       geometry(MultiPolygon,3857)
+  );
+
+  CREATE TABLE additional_lines (
+  	 id           bigserial,
+	 layer_id     int references additional_layers(id) ON DELETE CASCADE,
+	 label        text,
+	 color        text,
+	 outlinecolor text,
+	 outlinewidth text,
+	 opacity      text,
+	 tags	      hstore,
+	 geom	      geometry(LineString,3857)
+  );
+
+  CREATE TABLE additional_points (
+  	 id          bigserial,
+	 layer_id    int references additional_layers(id) ON DELETE CASCADE,
+	 label       text,
+	 color       text,
+	 opacity     text,
+	 size        float,
+	 symbol      text,
+	 tags	     hstore,
+	 geom	     geometry(Point,3857)
+  );
+
+EOF
