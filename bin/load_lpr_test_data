@@ -9,28 +9,37 @@ source $DIR/default_environment.sh
 
 layername='opd_lpr'
 source='https://data.oaklandnet.com/api/views/7axi-hi5i/rows.csv'
+tmp_table='tmp_'$layername
+tmp_filename='/tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv'
 
 mkdir -p /tmp/lpr
-wget -nc $source -O /tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv
+wget -nc $source -O $tmp_filename
 
 psql << EOF
 
-     DROP TABLE IF EXISTS opd_lpr CASCADE;
-     CREATE TABLE opd_lpr (plate TEXT ,ts TEXT,lat_lon TEXT);
-     \COPY opd_lpr FROM '/tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv' CSV HEADER
-     ALTER TABLE opd_lpr ADD COLUMN geom geometry(Point,4326);
-     UPDATE opd_lpr SET geom = ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326);
-     CREATE INDEX opd_lpr__geom ON opd_lpr using GIST (geom);
+     DROP TABLE IF EXISTS $tmp_table CASCADE;
 
-     DELETE FROM additional_layers WHERE layername='opd_lpr' AND source='$source';
-     INSERT INTO additional_layers (layername,source)
-   	    VALUES ('opd_lpr','https://data.oaklandnet.com/browse?q=alpr&sortBy=relevance&utf8=');
+     CREATE TABLE $tmp_table (plate TEXT ,ts TEXT,lat_lon TEXT);
+
+     \COPY $tmp_table FROM $tmp_filename CSV HEADER
+
+     ALTER TABLE $tmp_table ADD COLUMN geom geometry(Point,4326);
+
+     UPDATE $tmp_table
+        SET geom = ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326);
+
+     CREATE INDEX $tmp_table__geom ON $tmp_table using GIST (geom);
+
+     DELETE FROM additional_layers WHERE layername='$layername' AND source='$source';
+
+     INSERT INTO additional_layers (layername,source) VALUES ('$layername','$source');
+
      INSERT INTO additional_points (layer_id,label,color,tags,geom)
-     	     SELECT (select id from additional_layers where layername='opd_lpr' and source='$source'),
+     	     SELECT (select id from additional_layers where layername='$layername' and source='$source'),
 	     	    plate,
 		    '#ff0000',
 		    hstore(t),
 		    st_transform(geom,3857)
-                FROM opd_lpr as t;
+                FROM $tmp_table as t;
 
 EOF

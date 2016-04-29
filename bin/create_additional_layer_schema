@@ -52,4 +52,8 @@ psql << EOF
 	 geom	     geometry(Point,3857)
   );
 
+  CREATE INDEX "additional_points(geom)"   ON additional_points using GIST (geom);
+  CREATE INDEX "additional_lines(geom)"    ON additional_lines using GIST (geom);
+  CREATE INDEX "additional_polygons(geom)" ON additional_polygons using GIST (geom);
+
 EOF
