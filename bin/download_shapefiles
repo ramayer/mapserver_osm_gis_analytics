@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -42,6 +43,18 @@ function load_shapefile {
       shp2pgsql -I -s $srid $shapefile $tablename > /tmp/shp2pgsql/$tablename.sql
       psql -q < /tmp/shp2pgsql/$tablename.sql
    fi
+
+   psql <<EOF
+     INSERT INTO additional_layers (layername,source) values ('$shapefilename','$url')
+     INSERT INTO additional_polygons (layer_id,label,color,tags,geom)
+            SELECT (select id from additional_layers where layername='$shapefilename'),
+                   'TODO-fixme',
+                   null,
+                   null,
+                   st_transform(geom,3857)
+             FROM $tablename
+EOF
+
 
 }
 
