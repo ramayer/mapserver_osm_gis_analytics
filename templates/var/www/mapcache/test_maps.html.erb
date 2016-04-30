@@ -13,8 +13,8 @@
       height: 100%;
       }
     </style>
-    <link rel="stylesheet" href="http://openlayers.org/en/v3.14.2/css/ol.css" type="text/css">
-    <script src="http://openlayers.org/en/v3.14.2/build/ol.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="http://openlayers.org/en/v3.15.1/css/ol.css" type="text/css">
+    <script src="http://openlayers.org/en/v3.15.1/build/ol.js" type="text/javascript"></script>
     <link rel="stylesheet" href="ol3-layerswitcher/src/ol3-layerswitcher.css" />
     <script src="ol3-layerswitcher/src/ol3-layerswitcher.js"></script>
   </head>
@@ -32,7 +32,6 @@
   -->
 <body>
       <div id="map" class="map"></div>
-
       <script type="text/javascript">
         var projection = ol.proj.get('EPSG:3857');
         var projectionExtent = projection.getExtent();
@@ -99,6 +98,363 @@
 	    });
 	});
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Atlas
+// # http://openlayers.org/en/v3.15.1/examples/symbol-atlas-webgl.html?q=vector
+////////////////////////////////////////////////////////////////////////////////
+var atlasManager = new ol.style.AtlasManager({
+    // we increase the initial size so that all symbols fit into
+    // a single atlas image
+    initialSize: 512
+});
+
+var symbolInfo = [{
+    opacity: 1.0,
+    scale: 1.0,
+    fillColor: 'rgba(255, 153, 0, 0.4)',
+    strokeColor: 'rgba(255, 204, 0, 0.2)'
+}, {
+    opacity: 0.75,
+    scale: 1.25,
+    fillColor: 'rgba(70, 80, 224, 0.4)',
+    strokeColor: 'rgba(12, 21, 138, 0.2)'
+}, {
+    opacity: 0.5,
+    scale: 1.5,
+    fillColor: 'rgba(66, 150, 79, 0.4)',
+    strokeColor: 'rgba(20, 99, 32, 0.2)'
+}, {
+    opacity: 1.0,
+    scale: 1.0,
+    fillColor: 'rgba(176, 61, 35, 0.4)',
+    strokeColor: 'rgba(145, 43, 20, 0.2)'
+}];
+
+var radiuses = [3, 6, 9, 15, 19, 25];
+var symbolCount = symbolInfo.length * radiuses.length * 2;
+var symbols = [];
+var i, j;
+for (i = 0; i < symbolInfo.length; ++i) {
+    var info = symbolInfo[i];
+    for (j = 0; j < radiuses.length; ++j) {
+	// circle symbol
+	symbols.push(new ol.style.Circle({
+	    opacity: info.opacity,
+	    scale: info.scale,
+	    radius: radiuses[j],
+	    fill: new ol.style.Fill({
+		color: info.fillColor
+	    }),
+	    stroke: new ol.style.Stroke({
+		color: info.strokeColor,
+		width: 1
+	    }),
+	    // by passing the atlas manager to the symbol,
+	    // the symbol will be added to an atlas
+	    atlasManager: atlasManager
+	}));
+
+	// star symbol
+	symbols.push(new ol.style.RegularShape({
+	    points: 8,
+	    opacity: info.opacity,
+	    scale: info.scale,
+	    radius: radiuses[j],
+	    radius2: radiuses[j] * 0.7,
+	    angle: 1.4,
+	    fill: new ol.style.Fill({
+		color: info.fillColor
+	    }),
+	    stroke: new ol.style.Stroke({
+		color: info.strokeColor,
+		width: 1
+	    }),
+	    atlasManager: atlasManager
+	}));
+    }
+}
+
+var featureCount = 50000;
+var features = new Array(featureCount);
+var feature, geometry;
+var e = 25000000;
+for (i = 0; i < featureCount; ++i) {
+    geometry = new ol.geom.Point(
+	[2 * e * Math.random() - e, 2 * e * Math.random() - e]);
+    feature = new ol.Feature(geometry);
+    feature.setStyle(
+	new ol.style.Style({
+	    image: symbols[i % symbolCount]
+	})
+    );
+    features[i] = feature;
+}
+
+var vectorSource = new ol.source.Vector({
+    features: features
+});
+var atlasvector = new ol.layer.Vector({
+    title: 'Atlas Vectors',
+    visible: false,
+    source: vectorSource
+});
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// KML
+////////////////////////////////////////////////////////////////////////////////
+
+
+	var styleCache = {};
+	var lightningStyleFunction = function(feature) {
+	// 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
+	// standards-violating <magnitude> tag in each Placemark.  We extract it from
+	  // the Placemark's name instead.
+	  var name = feature.get('name');
+	  var magnitude = parseFloat(name.substr(2));
+	  var size = parseInt(10 + 40 * (magnitude - 5), 10);
+	  var style = styleCache[size];
+	  if (!style) {
+	  var canvas =
+	  /** @type {HTMLCanvasElement} */ (document.createElement('canvas'));
+	  var vectorContext = ol.render.toContext(
+	  /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')),
+	  {size: [size + 2, size + 2], pixelRatio: size / 10});
+	  vectorContext.setStyle(new ol.style.Style({
+	  fill: new ol.style.Fill({color: 'rgba(255, 153, 0, 0.4)'}),
+	  stroke: new ol.style.Stroke({color: 'rgba(255, 204, 0, 0.2)', width: 1})
+	  }));
+	  vectorContext.drawGeometry(new ol.geom.Polygon(
+	  [[[0, 0], [4, 2], [6, 0], [10, 5], [6, 3], [4, 5], [0, 0]]]));
+	  style = new ol.style.Style({
+	  image: new ol.style.Icon({
+	  img: canvas,
+	  imgSize: [canvas.width, canvas.height],
+	  rotation: 1.2
+	  })
+	  });
+	  styleCache[size] = style;
+	  }
+	  return style;
+	        };
+var kmlvectors = new ol.layer.Vector({
+  title: 'KML Vectors',
+  visible: false,
+  source: new ol.source.Vector({
+    url: './data/2012_Earthquakes_Mag5.kml',
+    format: new ol.format.KML({
+        extractStyles: false
+    })
+  }),
+  style: lightningStyleFunction
+});
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Heatmap
+////////////////////////////////////////////////////////////////////////////////
+var heatmap = new ol.layer.Heatmap({
+  title: 'Heat Map',
+  visible: false,
+/*
+  source: new ol.source.KML({
+    extractStyles: false,
+    projection: 'EPSG:3857',
+    // url: './ol/examples/data/kml/2012_Earthquakes_Mag5.kml'
+    url: './data/data.kml'
+  }),
+*/
+  source: new ol.source.Vector({
+    url: './data/data.kml',
+    format: new ol.format.KML({
+        extractStyles: false
+    })
+  }),
+  blur: 5,
+  radius: 5
+});
+
+heatmap.getSource().on('addfeature', function(event) {
+  // 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
+  // standards-violating <magnitude> tag in each Placemark.  We extract it from
+  // the Placemark's name instead.
+
+//  var name = event.feature.get('name');
+//  var magnitude = parseFloat(name.substr(2));
+//  event.feature.set('weight', magnitude - 5);
+  event.feature.set('weight', 1);
+});
+
+////////////////////////////////////////////////////////////////////////////////
+// Clusters
+////////////////////////////////////////////////////////////////////////////////
+
+var earthquakeFill = new ol.style.Fill({
+  color: 'rgba(255, 255, 0, 0.8)'
+});
+var earthquakeStroke = new ol.style.Stroke({
+  color: 'rgba(255, 0, 0, 0.9)',
+  width: 1
+});
+var textFill = new ol.style.Fill({
+  color: '#000'
+});
+var textStroke = new ol.style.Stroke({
+  color: 'rgba(255, 255, 255, 0.6)',
+  width: 2
+});
+var invisibleFill = new ol.style.Fill({
+  color: 'rgba(255, 0, 0, 1.00)'
+});
+
+function createEarthquakeStyle(feature) {
+  var name = feature.get('name');
+  return new ol.style.Style({
+    geometry: feature.getGeometry(),
+    image: new ol.style.RegularShape({
+      radius1: 7,
+      radius2: 3,
+      points: 5,
+      angle: Math.PI,
+      fill: earthquakeFill,
+      stroke: earthquakeStroke
+    })
+  });
+}
+
+function nicecolor(num,maxFeatureCount) {
+	var opacity = 0.8;
+
+	if (num >= maxFeatureCount / 2) {
+		var brightness = 1 - (2.0 * num / maxFeatureCount - 1.0);
+		return [127 + 127 * brightness, 0,  0,opacity];
+	} else {
+		var brightness = 1 - (num / maxFeatureCount * 2);
+		return [255, 255*brightness,  0,opacity];
+	}
+
+	// their demo had:
+	// [255, 153, 0, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
+	if      (num < 3.3)  {return [255,255,  0,opacity];}   // "#ffff00"
+	else if (num < 10)   {return [255,191,  0,opacity];}   // "#ffcc00"
+	else if (num < 33)   {return [255,127,  0,opacity];}   // "#ff8800"
+	else if (num < 100)  {return [255, 63,  0,opacity];}   // "#ff4400"
+	else if (num < 333)  {return [255,  0,  0,opacity];}   // "#ff0000"
+	else if (num < 1000) {return [191,  0,  0,opacity];}   // "#cc0000"
+	else if (num < 3333) {return [ 63,  0,  0,opacity];}   // "#880000"
+	else                 {return [255,255,255,opacity];} // "#880000"
+}
+
+function clustersize(num) {
+    if (num < 2) {return 2;}
+    return Math.log(num)/Math.log(2) + 5;
+}
+
+
+var maxFeatureCount;
+function calculateClusterInfo(resolution) {
+  maxFeatureCount = 0;
+  var features = clusters.getSource().getFeatures();
+  var feature, radius, color;
+  for (var i = features.length - 1; i >= 0; --i) {
+    var feature = features[i];
+    var origFeatures = feature.get('features');
+    maxFeatureCount = Math.max(maxFeatureCount, origFeatures.length)
+  }
+  for (var i = features.length - 1; i >= 0; --i) {
+    feature = features[i];
+    var originalFeatures = feature.get('features');
+    var extent = ol.extent.createEmpty();
+    for (var j = 0, jj = originalFeatures.length; j < jj; ++j) {
+      ol.extent.extend(extent, originalFeatures[j].getGeometry().getExtent());
+    }
+    radius = clustersize(originalFeatures.length);
+    feature.set('radius', radius);
+    color = nicecolor(originalFeatures.length,maxFeatureCount);
+    feature.set('color', color);
+  }
+}
+
+var currentResolution;
+function styleFunction(feature, resolution) {
+  if (resolution != currentResolution) {
+    calculateClusterInfo(resolution);
+    currentResolution = resolution;
+  }
+  var style;
+  var size = feature.get('features').length;
+  if (size > 1) {
+    style = [new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: feature.get('radius'),
+        fill: new ol.style.Fill({
+          color: feature.get('color')
+        }),
+        stroke: earthquakeStroke
+      }),
+      text: new ol.style.Text({
+        text: size.toString(),
+        fill: textFill,
+        textAlign: 'center', 
+        textBaseline: 'middle',
+        offsetY: 1,
+        font: 'bold 12px Arial',
+        //stroke: textStroke
+      })
+    })];
+  } else {
+    var originalFeature = feature.get('features')[0];
+    style = [createEarthquakeStyle(originalFeature)];
+  }
+  return style;
+}
+
+function selectStyleFunction(feature, resolution) {
+  var styles = [new ol.style.Style({
+    image: new ol.style.Circle({
+      radius: feature.get('radius'),
+      fill: invisibleFill
+    })
+  })];
+  var originalFeatures = feature.get('features');
+  var originalFeature;
+  for (var i = originalFeatures.length - 1; i >= 0; --i) {
+    originalFeature = originalFeatures[i];
+    styles.push(createEarthquakeStyle(originalFeature));
+  }
+  return styles;
+}
+
+var clusters = new ol.layer.Vector({
+  title: 'Clusters',
+  visible: false,
+  source: new ol.source.Cluster({
+    distance: 14,
+/*
+    source: new ol.source.KML({
+      extractStyles: false,
+      projection: 'EPSG:3857',
+      url: './data/data.kml'
+    })
+*/
+  source: new ol.source.Vector({
+    url: './data/data.kml',
+    format: new ol.format.KML()
+  }),
+
+  }),
+  style: styleFunction
+});
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 	var external_base_layers = [
 
                     new ol.layer.Tile({
@@ -146,7 +502,7 @@
        ];
 
 
-        var external_overlays = [
+var external_overlays = [atlasvector,kmlvectors,heatmap,clusters,
                     new ol.layer.Tile({
                         title: 'Countries',
                         visible: false,
