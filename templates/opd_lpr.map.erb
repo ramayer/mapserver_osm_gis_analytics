@@ -68,7 +68,7 @@ MAP
         END
     END
     
-    DEBUG 10
+    DEBUG 3
     CONFIG "PROJ_LIB" "/usr/share/proj"
     CONFIG "MS_ERRORFILE" "stderr"
     PROJECTION  "init=epsg:3857"  END
@@ -88,60 +88,41 @@ MAP
         STATUS ON 
         GROUP "default"
         NAME "LPR"
-        MAXSCALEDENOM 10010
         <%= default_connection() %>
-        DATA "geom from additional_points using unique id using srid=3857"
+        DATA "geom from (select * from additional_points where layer='opd_lpr') as a using unique id using srid=3857"
         <%
             color='#ff0000'
         %>
         CLASS
+            MAXSCALEDENOM 50010
+            TEXT "[label]"
             STYLE
-                SIZE   3
-                SYMBOL 'circle'
-                COLOR '#ff000044'
-            END
-        END
-    END
-    LAYER
-        TYPE POINT
-        PROJECTION "init=epsg:3857" END
-        STATUS ON 
-        GROUP "default"
-        NAME "LPR"
-        MINSCALEDENOM 10010
-        MAXSCALEDENOM 50010
-        <%= default_connection() %>
-        DATA "geom from additional_points using unique id using srid=3857"
-        <%
-            color='#ff0000'
-        %>
-        CLASS
-            STYLE
-                SIZE   2
+                SIZE   4
                 SYMBOL 'circle'
                 COLOR '#ff000088'
             END
+	    LABEL
+	        MAXSCALEDENOM 2010
+		FONT arial
+		TYPE TRUETYPE
+		SIZE 8
+		COLOR "#ff0000"
+		OUTLINECOLOR "#ffffff"
+		OUTLINEWIDTH 1
+		POSITION auto
+		BUFFER 1
+		PARTIALS FALSE
+	    END
         END
-    END
-    LAYER
-        TYPE POINT
-        PROJECTION "init=epsg:3857" END
-        STATUS ON 
-        GROUP "default"
-        NAME "LPR"
-        MINSCALEDENOM 50010
-        <%= default_connection() %>
-        DATA "geom from additional_points using unique id using srid=3857"
-        <%
-            color='#ff0000'
-        %>
         CLASS
+            MINSCALEDENOM 50010
             STYLE
-                SIZE   1
+                SIZE   4
                 SYMBOL 'circle'
-                COLOR '#ff0000'
+                COLOR '#ff000022'
             END
         END
     END
 
 END
+

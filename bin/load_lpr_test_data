@@ -23,23 +23,28 @@ psql << EOF
 
      \COPY $tmp_table FROM $tmp_filename CSV HEADER
 
-     ALTER TABLE $tmp_table ADD COLUMN geom geometry(Point,4326);
+     ALTER TABLE $tmp_table ADD COLUMN geom geometry(Point,3857);
 
      UPDATE $tmp_table
-        SET geom = ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326);
+        SET geom = ST_Transform(ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326),3857);
 
      CREATE INDEX $tmp_table__geom ON $tmp_table using GIST (geom);
 
-     DELETE FROM additional_layers WHERE layername='$layername' AND source='$source';
+     DELETE FROM additional_layers WHERE layer='$layername' AND source='$source';
 
-     INSERT INTO additional_layers (layername,source) VALUES ('$layername','$source');
+     INSERT INTO additional_layers (layer,source) VALUES ('$layername','$source');
 
-     INSERT INTO additional_points (layer_id,label,color,tags,geom)
-     	     SELECT (select id from additional_layers where layername='$layername' and source='$source'),
+     INSERT INTO additional_points (layer,label,color,tags,geom)
+     	     SELECT '$layername',
 	     	    plate,
 		    '#ff0000',
 		    hstore(t),
 		    st_transform(geom,3857)
                 FROM $tmp_table as t;
 
+     ALTER TABLE tmp_opd_lpr ADD COLUMN dttm TIMESTAMP WITH TIME ZONE;
+     UPDATE tmp_opd_lpr SET dttm=ts::TIMESTAMP WITH TIME ZONE;
+     ALTER TABLE tmp_opd_lpr ADD COLUMN id serial;
+
 EOF
+

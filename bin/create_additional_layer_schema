@@ -12,14 +12,14 @@ psql << EOF
 
   CREATE TABLE additional_layers (
   	 id        	serial primary key,
+	 layer          varchar(20) UNIQUE,
 	 user_id   	int,
-	 layername 	text,
          source   	text
   );
 
   CREATE TABLE additional_polygons (
   	 id            bigserial,
-	 layer_id      int references additional_layers(id) ON DELETE CASCADE,
+	 layer         varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label         text,
 	 color         text,
 	 outlinecolor  text,
@@ -30,7 +30,7 @@ psql << EOF
 
   CREATE TABLE additional_lines (
   	 id           bigserial,
-	 layer_id     int references additional_layers(id) ON DELETE CASCADE,
+	 layer        varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label        text,
 	 color        text,
 	 outlinecolor text,
@@ -42,7 +42,7 @@ psql << EOF
 
   CREATE TABLE additional_points (
   	 id          bigserial,
-	 layer_id    int references additional_layers(id) ON DELETE CASCADE,
+	 layer       varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label       text,
 	 color       text,
 	 opacity     text,
@@ -55,5 +55,9 @@ psql << EOF
   CREATE INDEX "additional_points(geom)"   ON additional_points using GIST (geom);
   CREATE INDEX "additional_lines(geom)"    ON additional_lines using GIST (geom);
   CREATE INDEX "additional_polygons(geom)" ON additional_polygons using GIST (geom);
+
+  CREATE INDEX "additional_points(layer)"   ON additional_points(layer);
+  CREATE INDEX "additional_lines(layer)"    ON additional_lines(layer);
+  CREATE INDEX "additional_polygons(layer)" ON additional_polygons(layer);
 
 EOF
