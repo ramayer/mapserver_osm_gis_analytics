@@ -48,3 +48,4 @@ psql << EOF
 
 EOF
 
+perl -pe 's/[\"\(\)]//g; s/Location 1/lat,lon/' /tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv  > /var/www/mapcache/lpr.csv
