@@ -62,10 +62,10 @@ load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip  l
 load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip simplified_land_polygons.shp simplified_land_polygons  3857
 load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip cb_2014_us_state_20m.shp cb_2014_us_state_20m 4269
 load_shapefile http://data.openoakland.org/sites/default/files/Oak_CommunityPoliceBeats_0.zip Oak_PoliceBeats.shp oak_policebeats 4326
-load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/1f42ddb43bfb4fc2b98a5b14f06388a0_6.zip' Municipal_Police_Grid.shp mdc_municipal_police_grid 4326
 load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/689f41305d8b46d3b708113ce1444734_5.zip' Police_Grid.shp mdc_mdpd_police_grid 4326
 load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/ca807c842bca47cdac87fc880442150c_1.zip' Police_Station.shp mdc_police_stations 4326
-load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/e9f4fcf584974b9996326186467a8a3e_0.zip' Municipal_Police_Station.shp  mdc_municipal_police_stations 4326
+# load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/1f42ddb43bfb4fc2b98a5b14f06388a0_6.zip' Municipal_Police_Grid.shp mdc_municipal_police_grid 4326
+# load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/e9f4fcf584974b9996326186467a8a3e_0.zip' Municipal_Police_Station.shp  mdc_municipal_police_stations 4326
 
 ## # http://data.openoakland.org/group/public-safety TODO - double-check if OPD's is SRID 4326
 #### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
