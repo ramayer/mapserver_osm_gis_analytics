@@ -265,7 +265,7 @@ function load_osm_data {
      # sudo chmod 0600 /mnt/swap/10GB
      # sudo mkswap /mnt/swap/10GB
      # sudo swapon /mnt/swap/10GB
-     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
+     osmconvert  tmp/*.o5m -o=./new.o5m
 
      # Even though osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this
      #    osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
@@ -276,7 +276,7 @@ function load_osm_data {
      # However we can also not use it without the option due to this issue:
      #    https://github.com/openstreetmap/osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST/issues/151
      # that requires that nodes (apparently even across files) need to be ordered
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
+     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs ./new.o5m
 
 
     # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 

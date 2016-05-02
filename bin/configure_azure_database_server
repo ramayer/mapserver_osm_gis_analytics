@@ -9,3 +9,21 @@ sudo mv /var/lib/postgresql /datadisks/disk1
 sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
 sudo service postgresql start
 
+
+# where the load_spatial_data script expects it
+sudo mkdir -p /datadisks/disk1/gis_data
+sudo ln -s /datadisks/disk1/gis_data /mnt/gisdata
+sudo chown $USER /datadisks/disk1/gis_data /mnt/gisdata
+
+
+# assume the server has a ssd mounted on /mnt
+#
+# Need more swap space if we want to run osm2pgsql or osmconvert
+# directly on the database server
+
+sudo fallocate -l 10G /mnt/10G.swap
+sudo chmod 0600 /mnt/10G.swap
+sudo mkswap /mnt/10G.swap
+sudo swapon /mnt/10G.swap
+
+
