@@ -48,6 +48,7 @@
       var zoom = 12;
       var center = [-13606244, 4548015];
       var rotation = 0;
+      var active_layers = []
 
         function showPosition(position) {
             var position_in_3857 = ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857');
@@ -60,13 +61,15 @@
         // try to restore center, zoom-level and rotation from the URL
         var hash = window.location.hash.replace('#map=', '');
         var parts = hash.split('/');
-        if (parts.length === 4) {
+        if (parts.length === 5) {
           zoom = parseInt(parts[0], 10);
           center = [
             parseFloat(parts[1]),
             parseFloat(parts[2])
           ];
           rotation = parseFloat(parts[3]);
+          active_layers = JSON.parse(decodeURI(parts[4]));
+          console.log("AL:"+active_layers);
         }
       } else {
        var html5_position;
@@ -470,7 +473,6 @@ var clusters = new ol.layer.Vector({
 
 
 	var external_base_layers = [
-
                     new ol.layer.Tile({
                         title: 'Stamen Watercolor',
                         type: 'base',
@@ -528,17 +530,29 @@ var clusters = new ol.layer.Vector({
                     })
                 ];
 
+        var all_base_layers = local_base_layers.concat(external_base_layers);
+        var all_overlay_layers = local_overlay_layers.concat(external_overlays);
+
         var layers = [
             new ol.layer.Group({
                 'title': 'Base maps',
-                layers: local_base_layers.concat(external_base_layers)
+                layers: all_base_layers
             }),
             new ol.layer.Group({
                 title: 'Overlays',
-                layers: local_overlay_layers.concat(external_overlays)
+                layers: all_overlay_layers
             })
         ];
         
+        layers.forEach(function(lg){
+            lg.getLayers().forEach(function(l){
+                var props = l.getProperties();
+                if (active_layers.indexOf(props.title) >= 0) {
+                    l.setVisible(true);
+                }
+            });
+          });
+
         var map = new ol.Map({
           layers: layers,
           target: 'map',
@@ -555,8 +569,6 @@ var clusters = new ol.layer.Vector({
     });
     map.addControl(layerSwitcher);
 
-
-
       var shouldUpdate = true;
       var view = map.getView();
       var updatePermalink = function() {
@@ -566,20 +578,41 @@ var clusters = new ol.layer.Vector({
           return;
         }
         var center = view.getCenter();
+
+        // save visible layers
+        var active_layer_names=[];
+        map.getLayers().forEach(function(lg){
+            lg.getLayers().forEach(function(l){
+                var props = l.getProperties();
+                if (props.visible) {
+                    active_layer_names.push(props.title);
+                }
+            });
+        })
+        var active_layer_string = JSON.stringify(active_layer_names);
         var hash = '#map=' +
             view.getZoom() + '/' +
             Math.round(center[0] * 100) / 100 + '/' +
             Math.round(center[1] * 100) / 100 + '/' +
-            view.getRotation();
+            view.getRotation()+'/'+
+            encodeURI(active_layer_string);
+
         var state = {
           zoom: view.getZoom(),
           center: view.getCenter(),
-          rotation: view.getRotation()
+          rotation: view.getRotation(),
+          active_layers: active_layer_names
         };
         window.history.pushState(state, 'map', hash);
       };
 
       map.on('moveend', updatePermalink);
+        all_base_layers.forEach(function(l) {
+            l.on('change:visible',updatePermalink);
+        });
+        all_overlay_layers.forEach(function(l) {
+            l.on('change:visible',updatePermalink);
+        });
 
       // restore the view state when navigating through the history, see
       // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onpopstate
@@ -590,6 +623,7 @@ var clusters = new ol.layer.Vector({
         map.getView().setCenter(event.state.center);
         map.getView().setZoom(event.state.zoom);
         map.getView().setRotation(event.state.rotation);
+        // TODO - restore active layers
         shouldUpdate = false;
       });
       </script>
