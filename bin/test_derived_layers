@@ -1,0 +1,93 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+# Federal "Gun Free School Zone .... 1000 feet"
+
+
+layer=school_zones
+
+if ( psql -q -c "select layer from additional_layers where layer='$layer'"  | grep -qw '$layer' ); 
+then
+    echo "Already had table $layer"
+else
+    echo "trying to create $layer"
+
+    psql <<EOF
+      DELETE FROM additional_layers WHERE (layer,source) = ('schools','derived from OSM');
+      DELETE FROM additional_layers WHERE (layer,source) = ('school zones','derived from OSM');
+      DELETE FROM additional_layers WHERE (layer,source) = ('lpr in school zones','derived from OSM');
+      INSERT INTO additional_layers (layer,source) values ('schools','derived from OSM');
+      INSERT INTO additional_layers (layer,source) values ('school zones','derived from OSM');
+      INSERT INTO additional_layers (layer,source) values ('lpr in school zones','derived from OSM');
+
+      INSERT INTO additional_polygons (layer,label,color,opacity,geom)
+	     SELECT 'schools',
+	             name,
+	             CASE
+	                 WHEN amenity = 'college'         THEN '#0000ff'
+	                 WHEN amenity = 'university'      THEN '#0000ff'
+
+	                 WHEN name ILIKE '%kidz%'         THEN '#00ff00'
+	                 WHEN name ILIKE '%preschool%'    THEN '#00ff00'
+	                 WHEN name ILIKE '%nursery%'      THEN '#00ff00'
+	                 WHEN name ILIKE '%montessori%'   THEN '#00ff00'
+	                 WHEN name ILIKE '%Elem%'         THEN '#00ff00'
+	                 WHEN name ILIKE '%k-9%'          THEN '#00ff00'
+	                 WHEN name ILIKE '%k-8%'          THEN '#00ff00'
+
+	                 WHEN name ILIKE '%intermediate%' THEN '#eeee00'
+	                 WHEN name ILIKE '%Middle%'       THEN '#eeee00'
+	                 WHEN name ILIKE '%Junior high%'  THEN '#eeee00'
+
+	                 WHEN name ILIKE '%academy%'      THEN '#ff0000'
+	                 WHEN name ILIKE '%preparatory%'  THEN '#ff0000'
+	                 WHEN name ILIKE '%high school%'  THEN '#ff0000'
+	                 WHEN name ILIKE '%high'          THEN '#ff0000'
+
+	                 WHEN name ILIKE '%college%'      THEN '#0000ff'
+	                 WHEN name ILIKE '%adult%'        THEN '#0000ff'
+
+	                 ELSE                                 '#ff00ff'
+	             END,
+	             70,
+		     ST_Multi(ST_Transform(ST_Union(way),3857))
+	      FROM planet_osm_polygon
+	      WHERE amenity in ('school','college','university')
+	      GROUP BY amenity, name, st_xmin(way)::int/10000,st_xmin(way)::int/10000
+	      ;
+
+
+      INSERT INTO additional_polygons (layer,label,color,opacity,geom)
+	     SELECT 'school zones',
+	             label || ' school zone',
+	             color,
+	             20,
+		     ST_Multi(ST_Transform(ST_Difference(ST_Buffer(geom,304.8),geom),3857))
+	      FROM additional_polygons
+	      WHERE layer='schools';
+
+      INSERT INTO additional_points (layer,label,color,geom)
+          select 'lpr in school zones',
+                 lpr.label,
+                 sch.color,
+                 lpr.geom
+          FROM (select * from additional_polygons where layer='opd_lpr') as lpr
+          JOIN (select * from additional_polygons where layer='school_zones') as sch
+            ON ST_Intersects(sch.geom,  lpr.geom);
+
+      INSERT INTO additional_points (layer,label,color,geom)
+          select 'lpr in school zones',
+                 lpr.label,
+                 sch.color,
+                 lpr.geom
+          FROM (select * from additional_points where layer='opd_lpr') as lpr
+          JOIN (select * from additional_polygons where layer='school zones') as sch
+            ON ST_Intersects(sch.geom,  lpr.geom);
+
+EOF
+
+fi
+
+sudo rm -rf /var/tmp/cache/mapcache/cache/school_zones/

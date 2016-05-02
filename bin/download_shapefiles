@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -45,9 +44,10 @@ function load_shapefile {
    fi
 
    psql <<EOF
-     INSERT INTO additional_layers (layername,source) values ('$shapefilename','$url')
-     INSERT INTO additional_polygons (layer_id,label,color,tags,geom)
-            SELECT (select id from additional_layers where layername='$shapefilename'),
+     DELETE FROM additional_layers where (layer,source) = ('$shapefilename','$url');
+     INSERT INTO additional_layers (layer,source) values ('$shapefilename','$url');
+     INSERT INTO additional_polygons (layer,label,color,tags,geom)
+            SELECT '$shapefilename',
                    'TODO-fixme',
                    null,
                    null,

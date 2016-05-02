@@ -1,10 +1,12 @@
 [
-    { "desc":"Higher Contrast"       , "name":"higher_contrast", "template":"qsgeo",  "type":"base"},
-    { "desc":"Subtle Color"          , "name":"subtlecolor",     "template":"qsgeo",  "type":"base"},
-    { "desc":"White on Black"        , "name":"white_on_black",  "template":"qsgeo",  "type":"base"},
-    { "desc":"All OSM Lines"         , "name":"all_osm_lines",   "template":"simple", "type":"overlay"},
-    { "desc":"All OSM Polygons"      , "name":"all_osm_polygons","template":"simple", "type":"overlay"},
-    { "desc":"OPD Beats"             , "name":"opd_beats",       "template":"simple", "type":"overlay"},
-    { "desc":"OPD LPR"               , "name":"opd_lpr",         "template":"simple", "type":"overlay"},
-    { "desc":"Miami Dade Beats"      , "name":"mdc_mdpd_police_grids",       "template":"simple", "type":"overlay"}
+    { "desc":"Higher Contrast"       , "name":"higher_contrast",       "template":"qsgeo",  "type":"base"},
+    { "desc":"Subtle Color"          , "name":"subtlecolor",   	       "template":"qsgeo",  "type":"base"},
+    { "desc":"White on Black"        , "name":"white_on_black",        "template":"qsgeo",  "type":"base"},
+    { "desc":"School Zones"          , "name":"school_zones",          "template":"simple", "type":"overlay"},
+    { "desc":"All OSM Lines"         , "name":"all_osm_lines",         "template":"simple", "type":"overlay"},
+    { "desc":"All OSM Polygons"      , "name":"all_osm_polygons",      "template":"simple", "type":"overlay"},
+    { "desc":"OPD Beats"             , "name":"opd_beats",             "template":"simple", "type":"overlay"},
+    { "desc":"OPD LPR"               , "name":"opd_lpr",               "template":"simple", "type":"overlay"},
+    { "desc":"LPR in School Zonze"   , "name":"lpr_in_school_zones",   "template":"simple", "type":"overlay"},
+    { "desc":"Miami Dade Beats"      , "name":"mdc_mdpd_police_grids", "template":"simple", "type":"overlay"}
 ]

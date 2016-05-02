@@ -91,7 +91,7 @@
 	       }),
 	    });
 	});
-	local_base_layers[0].setVisible(true);
+//	local_base_layers[0].setVisible(true);
 	    
 	var local_overlay_layers = overlay_layers.map( function(item,index){
 	    return new ol.layer.Tile({
@@ -106,11 +106,8 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Atlas
-// # http://openlayers.org/en/v3.15.1/examples/symbol-atlas-webgl.html?q=vector
-//
-// OR: https://github.com/openlayers/ol3/issues/5054
-//     http://openlayers.org/en/v3.14.2/examples/image-vector-layer.html
 ////////////////////////////////////////////////////////////////////////////////
+/*	
 var atlasManager = new ol.style.AtlasManager({
     // we increase the initial size so that all symbols fit into
     // a single atlas image
@@ -208,12 +205,20 @@ var atlasvector = new ol.layer.Vector({
     visible: false,
     source: vectorSource
 });
+*/
 
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 /// get more features from csv
 /// http://zeroviscosity.com/d3-js-step-by-step/step-4-loading-external-data
 
+// TODO - try atlas vectors to save RAM on webgl browsers
+// # http://openlayers.org/en/v3.15.1/examples/symbol-atlas-webgl.html?q=vector
+// OR: https://github.com/openlayers/ol3/issues/5054
+//     http://openlayers.org/en/v3.14.2/examples/image-vector-layer.html
 //
-// TODO - try if even more can load with somethign like this: http://openlayers.org/en/v3.15.1/examples/dynamic-data.html?q=clear+layer
+// TODO - try if even more can load with something like this: http://openlayers.org/en/v3.15.1/examples/dynamic-data.html?q=clear+layer
 var onerow = ''
 var i = 0;
 var lpr_features = [];
@@ -227,27 +232,16 @@ d3.csv('lpr.csv', function(error, dataset) {
         var d3857 = ol.proj.transform([d.lon,d.lat], 'EPSG:4326', 'EPSG:3857');
         geometry = new ol.geom.Point(d3857);
         feature = new ol.Feature(geometry);
-        feature.setStyle(
-          new ol.style.Style({
-	    image: symbols[i % symbolCount]
-   	  })
-        );
         i += 1;
         lpr_features.push(feature);
     });
     lpr_source = new ol.source.Vector({features: lpr_features});
-    atlasvector.setSource(lpr_source);
     heatmap.setSource(lpr_source);
     clusters.setSource(new ol.source.Cluster({ distance: 16, source:lpr_source}));
-    atlasvector.changed();
+    // atlasvector.changed();
     heatmap.changed();
     map.render();
 });
-
-
-
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -307,32 +301,18 @@ var kmlvectors = new ol.layer.Vector({
 var heatmap = new ol.layer.Heatmap({
   title: 'Heat Map',
   visible: false,
-/*
-  source: new ol.source.KML({
-    extractStyles: false,
-    projection: 'EPSG:3857',
-    // url: './ol/examples/data/kml/2012_Earthquakes_Mag5.kml'
-    url: './data/data.kml'
-  }),
-*/
-  source: new ol.source.Vector({
-    url: './data/data.kml',
-    format: new ol.format.KML({
-        extractStyles: false
-    })
-  }),
-  blur: 5,
-  radius: 5
+  source: new ol.source.Vector({features: lpr_features}),
+  blur: 10,
+  radius: 2
 });
 
 heatmap.getSource().on('addfeature', function(event) {
   // 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
   // standards-violating <magnitude> tag in each Placemark.  We extract it from
   // the Placemark's name instead.
-
-//  var name = event.feature.get('name');
-//  var magnitude = parseFloat(name.substr(2));
-//  event.feature.set('weight', magnitude - 5);
+  //  var name = event.feature.get('name');
+  //  var magnitude = parseFloat(name.substr(2));
+  //  event.feature.set('weight', magnitude - 5);
   event.feature.set('weight', 1);
 });
 
@@ -375,7 +355,6 @@ function createEarthquakeStyle(feature) {
 
 function nicecolor(num,maxFeatureCount) {
 	var opacity = 0.8;
-
 	if (num >= maxFeatureCount / 2) {
 		var brightness = 1 - (2.0 * num / maxFeatureCount - 1.0);
 		return [127 + 127 * brightness, 0,  0,opacity];
@@ -383,7 +362,6 @@ function nicecolor(num,maxFeatureCount) {
 		var brightness = 1 - (num / maxFeatureCount * 2);
 		return [255, 255*brightness,  0,opacity];
 	}
-
 	// their demo had:
 	// [255, 153, 0, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
 	if      (num < 3.3)  {return [255,255,  0,opacity];}   // "#ffff00"
@@ -480,18 +458,8 @@ var clusters = new ol.layer.Vector({
   title: 'Clusters',
   visible: false,
   source: new ol.source.Cluster({
-    distance: 14,
-/*
-    source: new ol.source.KML({
-      extractStyles: false,
-      projection: 'EPSG:3857',
-      url: './data/data.kml'
-    })
-*/
-    source: new ol.source.Vector({
-      url: './data/data.kml',
-      format: new ol.format.KML()
-    }),
+    distance: 18,
+    source: new ol.source.Vector({features: lpr_features}),
   }),
   style: styleFunction
 });
@@ -548,7 +516,7 @@ var clusters = new ol.layer.Vector({
        ];
 
 
-var external_overlays = [atlasvector,kmlvectors,heatmap,clusters,
+       var external_overlays = [kmlvectors,heatmap,clusters,
                     new ol.layer.Tile({
                         title: 'Countries',
                         visible: false,
