@@ -6,6 +6,6 @@ sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 
 # TODO --- check if it didn't and report a meaningful error
 sudo service postgresql stop
 sudo mv /var/lib/postgresql /datadisks/disk1
-sudo ln -s /datadisks/disk1 /var/lib/postgresql
+sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
 sudo service postgresql start
 

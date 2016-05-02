@@ -137,6 +137,7 @@ function load_osm_data {
 
   # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file
   echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_water" | psql -h localhost gis gis
+  echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_polygons" | psql -h localhost gis gis
 
   if [ "$map_data" == "planet" ]; then 
      wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
