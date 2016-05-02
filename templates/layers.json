@@ -7,6 +7,6 @@
     { "desc":"All OSM Polygons"      , "name":"all_osm_polygons",      "template":"simple", "type":"overlay"},
     { "desc":"OPD Beats"             , "name":"opd_beats",             "template":"simple", "type":"overlay"},
     { "desc":"OPD LPR"               , "name":"opd_lpr",               "template":"simple", "type":"overlay"},
-    { "desc":"LPR in School Zonze"   , "name":"lpr_in_school_zones",   "template":"simple", "type":"overlay"},
+    { "desc":"LPR in School Zones"   , "name":"lpr_in_school_zones",   "template":"simple", "type":"overlay"},
     { "desc":"Miami Dade Beats"      , "name":"mdc_mdpd_police_grids", "template":"simple", "type":"overlay"}
 ]

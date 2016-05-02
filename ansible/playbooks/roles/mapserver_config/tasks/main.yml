@@ -23,6 +23,12 @@
   - name: ensure apache is running (and enable it at boot)
     service: name=apache2 state=started enabled=yes
 
+# Updating CGI shouldn't need apache to restart.
+# But without doing it, an initial install gives:
+#   The requested URL /cgi-bin/mapserv was not found on this server.
+# TODO - track down why this seems to be needed.
+  - name: TODO - track down why this seems to be needed.
+    service: name=apache2 state=restarted
 
 # Now, with ansible 2.0, the synchronize module is giving the same error described here. 
 # https://groups.google.com/forum/#!topic/ansible-project/aC3WStjfoh4
