@@ -22,10 +22,14 @@ curl https://raw.githubusercontent.com/forensiclogic/mapserver_osm_gis_analytics
 
   export PGHOST=postgis-01
   ~/mapserver_osm_gis_analytics/bin/install_prerequisites
+
   [something to make the ssh keys not complain]
+
   ~/mapserver_osm_gis_analytics/bin/install_using_ansible
-  mapserver_osm_gis_analytics/bin/create_additional_layer_schema
+  ~mapserver_osm_gis_analytics/bin/create_additional_layer_schema
   ~/mapserver_osm_gis_analytics/bin/download_shapefiles
   ~/mapserver_osm_gis_analytics/bin/install_fonts
-  ./mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=tiny
-  ./mapserver_osm_gis_analytics/bin/deploy_using_ansible
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=tiny
+  ~/mapserver_osm_gis_analytics/bin/load_lpr_test_data
+  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
+  
