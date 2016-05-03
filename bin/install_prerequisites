@@ -30,9 +30,9 @@ mkdir -m 0600 -p ~/.ssh
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
 [ -f ~/.ssh/authorized_keys ] || install -m 0600 ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
 grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~/.ssh/known_hosts)
-grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.2  >> ~/.ssh/known_hosts)
+grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
+grep -q 127.0.0.2  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.2  >> ~/.ssh/known_hosts)
 grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
-
 
 cd
 
