@@ -6,23 +6,23 @@
 # 
 
 function usage {
-       echo "usage: "
+       echo "Usage: "
        echo "  bash $0 --create-database=[dbname]"
        echo "  "
-       echo "assumes:"
+       echo "Assumes:"
        echo "  port = environment varible PGPORT or 5432"
        echo "  host = environment varible PGHOST or localhost"
        echo "  user = environment variable PGUSER or gis"
        echo "  db   = environment variable PGUDATABASE or gis"
        echo "  pass = in ~/.pgpass for the host/port/username/database"
        echo "  "
-       echo "options: "
+       echo "Options: "
        echo "  --set-pgpass=[password]" # convenience function to add a row in ~/.pgpass
        echo "  --create-default-users"  # creates a 'gisadmin' superuser, and a 'gis' read-only user
        echo "  --create-db"
        echo "  --load_osm_data=(tiny|smaller|small|planet)"
        echo " "
-       echo "examples: "
+       echo "Examples: "
        echo ""
        echo "  sudo -u postgres $0 --clear-all"
        echo "  sudo -u postgres $0 --create-default-users"
@@ -31,6 +31,16 @@ function usage {
        echo "  env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --configure-database"
        echo "  env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --load-osm-data=tiny"
        echo "  nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet $0 --load-osm-data=planet &> planet.out"
+       echo ""
+       echo "Notes:"
+       echo "   --load-osm-data=tiny"
+       echo "        Loads about 5 city blocks. It uses a under a GB and loads in minutes in a tiny VM on a desktop."
+       echo "   --load-osm-data=smaller"
+       echo "        Loads dozens of cities around the SF Bay Area. It uses about a dozen GB and loads in about an hour on a mediocre desktop."
+       echo "   --load-osm-data=small"
+       echo "        Loads hundreds of major cities around the world. It uses almost 100GB and loads in many hours on a strong VM."
+       echo "   --load-osm-data=planet"
+       echo "        Loads the whole OSM database.  Uses about 1TBt and loads in days on a large physical machine."
        exit
 }
 
