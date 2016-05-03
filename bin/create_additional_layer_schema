@@ -12,14 +12,14 @@ psql << EOF
 
   CREATE TABLE additional_layers (
   	 id        	serial primary key,
-	 layer          varchar(20) UNIQUE,
+	 layer          varchar(40) UNIQUE,
 	 user_id   	int,
          source   	text
   );
 
   CREATE TABLE additional_polygons (
   	 id            bigserial,
-	 layer         varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 layer         varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label         text,
 	 color         text,
 	 outlinecolor  text,
@@ -30,7 +30,7 @@ psql << EOF
 
   CREATE TABLE additional_lines (
   	 id           bigserial,
-	 layer        varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 layer        varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label        text,
 	 color        text,
 	 outlinecolor text,
@@ -42,7 +42,7 @@ psql << EOF
 
   CREATE TABLE additional_points (
   	 id          bigserial,
-	 layer       varchar(20) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 layer       varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
 	 label       text,
 	 color       text,
 	 opacity     text,
