@@ -5,6 +5,12 @@
   roles:
     - ansible_managed
 
+- name: Admin machines
+  hosts: admin
+  become: yes
+  roles:
+    - munin_master
+
 - name: MapCache hosts (apache, mod-tilecache, mod-proxy, etc)
   hosts: mapcache
   become: yes

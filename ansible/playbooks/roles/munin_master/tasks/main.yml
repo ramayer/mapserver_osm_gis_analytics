@@ -1,0 +1,10 @@
+---
+
+  - name: write the munin config files
+    template: src={{ item }} dest=/etc/munin/munin-conf.d/{{ item }}
+    with_items:
+      - simple_munin_cluster.conf
+
+# TODO -- something like
+#   ln -s /var/cache/munin/www /var/www/mapcache/munin
+# but maybe on a different virtualhost

@@ -8,6 +8,7 @@
 mapcache-01  ansible_ssh_host=127.0.0.1
 mapserver-01 ansible_ssh_host=127.0.0.1
 postgis-01   ansible_ssh_host=127.0.0.1
+admin-01     ansible_ssh_host=127.0.0.1
 
 ######################################################################
 # groups
@@ -24,6 +25,9 @@ mapserver-01
 
 [postgis-master]
 postgis-01
+
+[admin]
+admin-01
 
 [postgis-slave]
 
