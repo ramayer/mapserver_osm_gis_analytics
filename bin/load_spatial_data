@@ -318,7 +318,8 @@ function load_osm_data {
   echo "CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE (\"natural\" = 'water' OR landuse='reservoir') AND way_area>50 * 1000 * 1000;"  | psql
   echo "CREATE MATERIALIZED VIEW simple_large_polygons AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE way_area>50 * 1000 * 1000;"  | psql
 
-  echo "CREATE INDEX simple_large_polygons__way on simple_large_polygons using GIST(way GIST_GEOMETRY_OPS);"  | psql
+  echo "CREATE INDEX simple_large_polygons__way on simple_large_polygons using GIST (way);"  | psql
+  echo "CREATE INDEX simple_large_water__way on simple_large_water using GIST (way);"  | psql
 
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
