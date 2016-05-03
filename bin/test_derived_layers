@@ -38,12 +38,14 @@ else
 	                 WHEN name ILIKE '%k-9%'          THEN '#00ff00'
 	                 WHEN name ILIKE '%k-8%'          THEN '#00ff00'
 	                 WHEN name ILIKE '%Grundschule%'  THEN '#00ff00'
+	                 WHEN name ILIKE '%Primaria%'     THEN '#00ff00'
 
 	                 WHEN name ILIKE '%intermediate%' THEN '#eeee00'
 	                 WHEN name ILIKE '%Middle%'       THEN '#eeee00'
 	                 WHEN name ILIKE '%Junior high%'  THEN '#eeee00'
 	                 WHEN name ILIKE '%Hauptschule%'  THEN '#eeee00'
 	                 WHEN name ILIKE '%Realschule%'   THEN '#eeee00'
+	                 WHEN name ILIKE '%Secundaria%'   THEN '#eeee00'
 
 
 	                 WHEN name ILIKE '%academy%'      THEN '#ff0000'
@@ -51,6 +53,8 @@ else
 	                 WHEN name ILIKE '%high school%'  THEN '#ff0000'
 	                 WHEN name ILIKE '%high'          THEN '#ff0000'
 	                 WHEN name ILIKE '%Gymnasium%'    THEN '#ff0000'
+	                 WHEN name ILIKE '%Preparatoria%' THEN '#ff0000'
+	                 WHEN name ILIKE '%bachilleres%' THEN '#ff0000'
 
 	                 WHEN name ILIKE '%college%'      THEN '#0000ff'
 	                 WHEN name ILIKE '%adult%'        THEN '#0000ff'
