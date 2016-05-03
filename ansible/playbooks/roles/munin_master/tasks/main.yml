@@ -1,9 +1,14 @@
 ---
 
-  - name: write the munin config files
-    template: src={{ item }} dest=/etc/munin/munin-conf.d/{{ item }}
-    with_items:
-      - simple_munin_cluster.conf
+- name: install some packages needed by many servers
+  apt: pkg={{ item }} state=latest
+  with_items:
+    - munin
+
+- name: write the munin config files
+  template: src={{ item }} dest=/etc/munin/munin-conf.d/{{ item }}
+  with_items:
+    - simple_munin_cluster.conf
 
 # TODO -- something like
 #   ln -s /var/cache/munin/www /var/www/mapcache/munin
