@@ -5,6 +5,7 @@
     - unzip
     - sysstat
     - jq
+    - munin-node
 
 - name: add ansible user
   user: name=ansible
@@ -53,3 +54,18 @@
   when: hostvars[item]['ansible_ssh_host'] is defined
   with_items: groups['all']
 
+
+
+- name: Set up munin
+  apt: pkg={{ item }} state=latest install_recommends=yes
+  with_items:
+    - munin-node
+    - sysstat
+
+- name: configure munin node
+  lineinfile: dest="/etc/munin/munin-node.conf" line="allow ^.*$" backup=yes
+  register: muninconf
+
+- name: restart munin-node
+  service: name=munin-node state=restarted
+  when: muninconf.changed
