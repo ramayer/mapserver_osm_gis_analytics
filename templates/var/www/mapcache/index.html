@@ -2,6 +2,7 @@
     <body>
     <H1> Map Tests </H1>
 
+    <H2>Interactive maps with cached tiles</H2>
     <ul>
         <li><a href='/test_maps.html#map=16/-13576857.04/4516084.75/0/["Subtle Color"]'>Rich details and finer than street-address granularity to pinpoint incidents more accurately.  Useful for government camera placement projects.</a>
         <li><a href='/test_maps.html#map=13/-13606020.35/4551691.27/0/["Higher Contrast"]'>A less colorful map style to make it easier to see overlays</a>
@@ -16,6 +17,14 @@
         <li><a href='/test_maps.html#map=16/-13607439.21/4549479.37/0/["White on Black","School Zones","LPR in School Zones"]'>Using such buffers to filter data, such as these LPR readings that occurred iwthin school zones.</a>
     </ul>
 
+    <H2>Uncached Maps, and Large Printable Maps</H2>
+    <ul>
+      <li><a href="/wms/subtlecolor?VERSION=1.1.1&REQUEST=GetMap&SERVICE=WMS&STYLES=&BBOX=-13678711.959745%2c4519415.734389%2c-13579343.822975%2c4618783.871160&WIDTH=3000&HEIGHT=3000&FORMAT=image%2fpng&SRS=EPSG%3a3857&LAYERS=default">A much larger tile - suitable for OPD large plotters.</a>
+      <li><a href="/wms/subtlecolor?VERSION=1.1.1&REQUEST=GetMap&SERVICE=WMS&STYLES=&BBOX=-13678711.959745%2c4519415.734389%2c-13579343.822975%2c4618783.871160&WIDTH=10000&HEIGHT=10000&FORMAT=image%2fpng&SRS=EPSG%3a3857&LAYERS=default">And even larger, for plotters that can handle very high resolution (10,000 x 10,000 pixel) images.</a>
+      <li><a href="/mapcache/wmts?service=wmts&request=GetCapabilities">Mapcache wmts capabilities</a>
+      <li><a href="/mapcache/tms/1.0.0/subtlecolor@g2/7/20/78.png">Test of a mapcache tile.</a>
+    </ul>
+
     </body>
 </html>
-    
+
