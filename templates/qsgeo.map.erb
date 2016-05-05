@@ -118,6 +118,7 @@
             OUTLINECOLOR "#{get_color(color,"outline")}"
 	    MINFEATURESIZE AUTO
 	    WRAP ' '
+	    MAXLENGTH 15
         END
         }
    end
@@ -950,7 +951,7 @@ LAYER
             FONT arial
             PARTIALS FALSE
             OUTLINEWIDTH 1
-            PRIORITY 4
+            PRIORITY 1
             SIZE 9
             MINDISTANCE 250
             ANGLE FOLLOW
@@ -970,7 +971,7 @@ LAYER
             FONT arial
             PARTIALS FALSE
             OUTLINEWIDTH 1
-            PRIORITY 4
+            PRIORITY 1
             SIZE 9
             MINDISTANCE 250
             ANGLE FOLLOW
@@ -1253,7 +1254,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,10) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1279,7 +1280,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,10) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1579,7 +1580,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,10) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1605,7 +1606,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,9) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1765,7 +1766,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,10) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1791,7 +1792,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,1) %>
+        <%= road_label("road_label",9,9) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1946,7 +1947,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,1) %>
+        <%= road_label("road_label",8,10) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1966,7 +1967,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",8,1) %>
+        <%= road_label("road_label",8,9) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2089,7 +2090,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,1) %>
+        <%= road_label("road_label",8,10) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2109,7 +2110,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",8,3) %>
+        <%= road_label("road_label",8,9) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2856,6 +2857,48 @@ LAYER
         END
     END
 END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    MAXSCALEDENOM 2000
+    <%= default_connection() %>
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where name is not null and place is null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#ffffff"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+<% if false %>
+<%
+# zoom level 13 is reasonable for showing neighborhoods like these
+# but by zoom 15 its too cluttered
+%>
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2879,11 +2922,13 @@ LAYER
             BUFFER 4
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 1
             PARTIALS FALSE
         END
     END
 END
+<% end %>
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -3106,194 +3151,21 @@ LAYER
         END
     END
 END
+
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MAXSCALEDENOM 500010 minscaledenom 250010
-    TYPE POINT # was ANNOTATION
-    NAME "places"
-    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
-    LABELITEM 'name'
-    CLASSITEM 'place'
-    CLASS
-        EXPRESSION ("[place]"="city" and "[capital]"="yes")
-        STYLE
-            SIZE 6
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        STYLE
-            SIZE 2
-            SYMBOL "citycircle"
-            COLOR "<%= get_color("citycircle","inner") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 9
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 10
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-    CLASS
-        EXPRESSION 'city'
-        STYLE
-            SIZE 5
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 9
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 9
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-    CLASS
-        EXPRESSION 'town'
-        STYLE
-            SIZE 4
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 8
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 3
-            WRAP ' '
-            BUFFER 10
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 8
-            PARTIALS FALSE
-            POSITION AUTO
-        END
-    END
-END
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 1000010 minscaledenom 500010
-    TYPE POINT # was ANNOTATION
-    NAME "places"
-    DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
-    LABELITEM 'name'
-    CLASSITEM 'place'
-    CLASS
-        EXPRESSION ("[place]"="city" and "[capital]"="yes")
-        STYLE
-            SIZE 6
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        STYLE
-            SIZE 2
-            SYMBOL "citycircle"
-            COLOR "<%= get_color("citycircle","inner") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 9
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 10
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-    CLASS
-        EXPRESSION 'city'
-        STYLE
-            SIZE 5
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 9
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 9
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-    CLASS
-        EXPRESSION 'town'
-        STYLE
-            SIZE 4
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 8
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 3
-            WRAP ' '
-            BUFFER 10
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 8
-            PARTIALS FALSE
-            POSITION AUTO
-        END
-    END
-END
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 2500010 minscaledenom 1000010
+    MAXSCALEDENOM 2500010
+    MINSCALEDENOM 250010
     TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place ,capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
-        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        EXPRESSION ("[place]"="city" and "[capital]"!="")
         STYLE
             SIZE 6
             SYMBOL "citycircle"
@@ -3339,7 +3211,7 @@ LAYER
             WRAP ' '
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 9
+            PRIORITY 5
             BUFFER 10
             PARTIALS FALSE
             POSITION auto
@@ -3364,24 +3236,26 @@ LAYER
             BUFFER 10
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 3
             PARTIALS FALSE
             POSITION AUTO
         END
     END
 END
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MAXSCALEDENOM 5000010 minscaledenom 2500010
+    MINSCALEDENOM 2500010            # zoom 7 to 5
+    MAXSCALEDENOM 20000010 
     TYPE POINT # was ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
-        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        EXPRESSION ("[place]"="city" and "[capital]"!="")
         STYLE
             SIZE 7
             SYMBOL "citycircle"
@@ -3427,79 +3301,13 @@ LAYER
             WRAP ' '
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 9
+            PRIORITY 5
             BUFFER 10
             PARTIALS FALSE
             POSITION auto
         END
     END
 END
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 10000010 minscaledenom 5000010
-    TYPE POINT # was ANNOTATION
-    NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
-    LABELITEM 'name'
-    CLASSITEM 'place'
-    CLASS
-        EXPRESSION ("[place]"="city" and "[capital]"="yes")
-        STYLE
-            SIZE 7
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        STYLE
-            SIZE 2
-            SYMBOL "citycircle"
-            COLOR "<%= get_color("citycircle","inner") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 9
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 10
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-    CLASS
-        EXPRESSION 'city'
-        STYLE
-            SIZE 5
-            SYMBOL "citycircle"
-            COLOR "<%= get_color('citycircle') %>"
-            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
-        END
-        LABEL
-            FONT arial
-            TYPE TRUETYPE
-            SIZE 8
-            COLOR "<%= get_color("place_label") %>"
-            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
-            WRAP ' '
-            #MAXLENGTH 8
-            ALIGN CENTER
-            PRIORITY 9
-            BUFFER 10
-            PARTIALS FALSE
-            POSITION auto
-        END
-    END
-END
-
-
 
 
 LAYER
