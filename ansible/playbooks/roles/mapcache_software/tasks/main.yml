@@ -24,6 +24,9 @@
       - ssl
       - status
 
+  - name: ensure apache is enabled at boot
+    service: name=apache2 enabled=yes
+
   - name: Check for https certificates
     local_action: stat path={{ lookup('env','HOME') }}/certs/etc/ssl/mapcache
     register: stat_https_certs
