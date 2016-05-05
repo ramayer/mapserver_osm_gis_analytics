@@ -47,13 +47,14 @@
 		SSLHonorCipherOrder on
 		SSLCipherSuite "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:EDH+aRSA:RSA+AES:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!CAMELLIA:!SEED:!DH"
 
-
-#		SSLCertificateChainFile /etc/ssl/maps/chain_for_apache.crt
-#		SSLCertificateFile	/etc/ssl/maps/maps.crt
-#		SSLCertificateKeyFile  /etc/ssl/maps/maps.key
-
+                {% if (stat_https_certs.stat.exists) %}
+		SSLCertificateFile	/etc/ssl/mapcache/mapcache.crt
+		SSLCertificateKeyFile   /etc/ssl/mapcache/mapcache.key
+		SSLCertificateChainFile /etc/ssl/mapcache/chain_for_apache.crt
+		{% else %}
 		SSLCertificateFile	/etc/ssl/certs/ssl-cert-snakeoil.pem
 		SSLCertificateKeyFile  /etc/ssl/private/ssl-cert-snakeoil.key
+		{% endif %}
 
 
 		<FilesMatch "\.(cgi|shtml|phtml|php)$">
