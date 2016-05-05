@@ -1081,33 +1081,10 @@ LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MINSCALEDENOM 0
-    MAXSCALEDENOM 5010
-    TYPE LINE
-    NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
-    CLASS
-        STYLE
-            WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
-            COLOR  "<%= get_color("rail") %>"
-        END
-        STYLE
-            SYMBOL rail
-            SIZE 5
-            COLOR  "<%= get_color("rail","symbol") %>"
-        END
-    END
-END
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel,route from planet_osm_line where waterway is null order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref, name, tunnel,route,railway from planet_osm_line where waterway is null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASSITEM "highway"
     CLASS
@@ -1242,6 +1219,21 @@ LAYER
 
     # End of tunnels
 
+    CLASS
+        EXPRESSION ("[railway]"!="")
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR  "<%= get_color("rail") %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR  "<%= get_color("rail","symbol") %>"
+        END
+        <%= road_label("road_label",9,8) %>
+    END
     CLASS
         EXPRESSION "motorway"
         TEXT '[ref]'
@@ -1411,7 +1403,7 @@ LAYER
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1728,7 +1720,7 @@ LAYER
     MAXSCALEDENOM 25010 minscaledenom 10010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1913,7 +1905,7 @@ LAYER
     MAXSCALEDENOM 50010 minscaledenom 25010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -2056,7 +2048,7 @@ LAYER
     MAXSCALEDENOM 100010 minscaledenom 50010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -2185,7 +2177,7 @@ LAYER
     MAXSCALEDENOM 175010 minscaledenom 100010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -2312,7 +2304,7 @@ LAYER
     MAXSCALEDENOM 250010 minscaledenom 175010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -2434,7 +2426,7 @@ LAYER
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -2558,7 +2550,7 @@ LAYER
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway='rail') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
