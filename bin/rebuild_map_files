@@ -27,6 +27,17 @@ done
 erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
 
 mkdir -p $INSTALL_DIR/var/www/mapcache
+
+if [ -f $INSTALL_DIR/var/www/mapcache/v3.15.1-dist/ol.js ];
+then
+    echo "already had openlayers"
+else
+    echo "need openlayers"
+    (cd $INSTALL_DIR/var/www/mapcache ; wget https://github.com/openlayers/ol3/releases/download/v3.15.1/v3.15.1-dist.zip)
+    (cd $INSTALL_DIR/var/www/mapcache ; unzip v3.15.1-dist.zip)
+fi
+
+
 if [ -d $INSTALL_DIR/var/www/mapcache/ol3-layerswitcher ];
 then
     echo "already had openlayers layerswitcher"

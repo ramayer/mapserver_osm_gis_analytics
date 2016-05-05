@@ -32,11 +32,15 @@
     template: src={{ item }} dest=/etc/apache2/sites-available/{{ item }}
     with_items:
       - 010-mapcache-http.conf
+    notify:
+      - restart apache
 
   - name: write the https config file
     template: src={{ item }}.j2 dest=/etc/apache2/sites-available/{{ item }}
     with_items:
       - 020-mapcache-https.conf
+    notify:
+      - restart apache
 
   - name: Enable http sites
     command: a2ensite {{ item }} creates=/etc/apache2/sites-enabled/{{ item }}
