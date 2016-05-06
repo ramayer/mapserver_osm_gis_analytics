@@ -1,7 +1,7 @@
 # create VirtualBox vm with:
 
    * 2GB RAM and
-   * 30GB disk space (20GB is not enough for the Coastlines polygons)
+   * 30GB disk space (10 GB is enough for a tiny neighborhood of a couple city blocks.  800GB is enough for the whole planet)
    * "Network Settings -> Bridged"
 
 # download Ubuntu 16.04 server
@@ -33,3 +33,13 @@
   ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
   ~/mapserver_osm_gis_analytics/bin/test_derived_layers
    
+# at this point, you should be able to go to 'http://[ip address]/' and see maps in a small neighborhood near downtown oakland.  
+
+# To see more map data try one of: 
+
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
+  
+  or 
+  
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
+  
