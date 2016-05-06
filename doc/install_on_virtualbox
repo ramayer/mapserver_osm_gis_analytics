@@ -9,12 +9,11 @@
 
 # install Ubuntu 16.04 server using all defaults except: 
     * username/password, of course
-    * ssh server
+    * ssh server should be enabled
 
-# this would be a reasonable time to shut down the VM and use VirtualBox's "clone" feature.
+# [Optional] If you want a clone of a blank Ubuntu install, this would be a reasonable time to shut down the VM and use VirtualBox's "clone" feature.
 
 # log into Ubuntu
-
 
 # make note of your IP address 
 
@@ -23,10 +22,7 @@
   git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
   ~/mapserver_osm_gis_analytics/bin/install_prerequisites
-  [enter a password for the gis user]
-
-  [something to make the ssh keys not complain]
-
+       [enter a password for the gis user]
 
   ~/mapserver_osm_gis_analytics/bin/install_using_ansible
   ~/mapserver_osm_gis_analytics/bin/create_additional_layer_schema
