@@ -43,7 +43,16 @@
   or 
   
   ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=small
+  [expect that to take overnight, and use at least [TBD] disk space]
+  
+  or
+  
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet
+  [expect that to take a well over a week, use about 40GB of RAM while working, and temporarily use at about 800MB of disk space]
+  [you don't want to run that on a small VM]
+
+# after loading more map data, 
+
   ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
   ~/mapserver_osm_gis_analytics/bin/test_derived_layers
   
-  [expect that to take overnight, and use at least [TBD] disk space]
