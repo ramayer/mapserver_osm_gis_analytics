@@ -24,7 +24,7 @@
 
   export PGHOST=postgis-01
   ~/mapserver_osm_gis_analytics/bin/install_prerequisites
-  [enter set the password for the gis user]
+  [enter a password for the gis user]
 
   [something to make the ssh keys not complain]
 
