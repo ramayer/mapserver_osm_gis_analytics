@@ -38,8 +38,15 @@
 # To see more map data try one of: 
 
   ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
+  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
+  ~/mapserver_osm_gis_analytics/bin/test_derived_layers
+  
+  [expect that to take a couple hours]
   
   or 
   
-  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=small
+  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
+  ~/mapserver_osm_gis_analytics/bin/test_derived_layers
   
+  [expect that to take overnight]
