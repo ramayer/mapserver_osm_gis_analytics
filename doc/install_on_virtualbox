@@ -38,10 +38,7 @@
 # To see more map data try one of: 
 
   ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
-  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
-  ~/mapserver_osm_gis_analytics/bin/test_derived_layers
-  
-  [expect that to take a couple hours]
+  [expect that to take a couple hours, and use at least 12GB of disk space]
   
   or 
   
@@ -49,4 +46,4 @@
   ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
   ~/mapserver_osm_gis_analytics/bin/test_derived_layers
   
-  [expect that to take overnight]
+  [expect that to take overnight, and use at least [TBD] disk space]
