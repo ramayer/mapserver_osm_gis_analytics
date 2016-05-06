@@ -26,7 +26,7 @@ sudo apt-get update
 # python-keyczar is needed for the 'accelerate: true' ansible optimization
 sudo apt-get install -y ansible git ruby jq  python-keyczar postgresql-client osm2pgsql gdal-bin libwww-perl osmctools
 
-mkdir -m 0600 -p ~/.ssh
+mkdir -m 0700 -p ~/.ssh
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
 [ -f ~/.ssh/authorized_keys ] || install -m 0600 ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
 grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~/.ssh/known_hosts)
