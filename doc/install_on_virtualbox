@@ -22,7 +22,6 @@
 
   git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
-  export PGHOST=postgis-01
   ~/mapserver_osm_gis_analytics/bin/install_prerequisites
   [enter a password for the gis user]
 
