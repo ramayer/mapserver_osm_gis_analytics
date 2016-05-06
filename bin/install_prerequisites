@@ -29,6 +29,7 @@ sudo apt-get install -y ansible git ruby jq  python-keyczar postgresql-client os
 mkdir -m 0700 -p ~/.ssh
 [ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
 [ -f ~/.ssh/authorized_keys ] || install -m 0600 ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
+[ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
 grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~/.ssh/known_hosts)
 grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
 grep -q 127.0.0.2  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.2  >> ~/.ssh/known_hosts)
