@@ -336,8 +336,8 @@ $azure vm disk attach-new -g $resourcegroup -o $premium_storage_acct "map-db-01"
 # or maybe even a RAID array of those.
 
 # Add disks for storing map tiles
-$azure vm disk attach-new -g $resourcegroup "apache-01" -z 500 
-$azure vm disk attach-new -g $resourcegroup "apache-01" -z 500 
+$azure vm disk attach-new -g $resourcegroup "mapcache-01" -z 500 
+$azure vm disk attach-new -g $resourcegroup "mapcache-01" -z 500 
 
 # TODO: for the map tiles, figure out how to automate this part: 
 #

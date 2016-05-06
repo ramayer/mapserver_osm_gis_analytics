@@ -1,0 +1,13 @@
+#!/bin/bash
+
+git clone https://github.com/Azure/azure-quickstart-templates
+sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+# assume that created /datadisks/disk1 
+# TODO --- check if it didn't and report a meaningful error
+
+if [ -d /datadisks/disk1 ]; then
+  sudo mkdir -p /datadisks/disk1/var/cache
+  sudo mv /var/cache/mapcache /datadisks/disk1/var/cache
+  sudo ln -s /datadisks/disk1/var/cache/mapcache /var/cache/mapcache
+fi
+
