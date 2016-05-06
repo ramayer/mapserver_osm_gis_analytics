@@ -26,14 +26,14 @@
       - restart apache
 
   - name: Make sure a mapcache cache directory exists
-    file: path=/var/tmp/cache/mapcache state=directory owner=www-data
+    file: path=/var/cache/mapcache state=directory owner=www-data
 
   - name: Check old map cache tiles
-    shell: ls -1 /var/tmp/cache/mapcache/
+    shell: ls -1 /var/cache/mapcache/
     register: cache_contents
 
   - name: Remove old map cache tiles
-    file: name=/var/tmp/cache/mapcache/{{ item }} state=absent
+    file: name=/var/cache/mapcache/{{ item }} state=absent
     with_items: '{{cache_contents.stdout_lines}}'
     notify:
       - restart apache
