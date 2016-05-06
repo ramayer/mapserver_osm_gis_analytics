@@ -83,6 +83,47 @@ load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/689f41305d8b46d3b708
 load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/ca807c842bca47cdac87fc880442150c_1.zip' Police_Station.shp mdc_police_stations 4326 point
 
 
+#################################################################################
+# Demographic data 
+# TODO - for production we will eventually want the national file instead https://www2.census.gov/geo/tiger/TIGER_DP/2014ACS/ACS_2014_5YR_BG.gdb.zip
+#################################################################################
+#
+# Note that instead of shapefiles, these are "ESRI Geodatabase" files.
+# http://gis.stackexchange.com/questions/83016/how-to-import-esri-geodatabase-format-gdb-into-postgis
+#
+#
+# mkdir /tmp/census
+# cd /tmp/census
+# wget https://www2.census.gov/geo/tiger/TIGER_DP/2014ACS/ACS_2014_5YR_BG_06.gdb.zip
+# ogr2ogr -f "PostgreSQL" PG:"host=localhost port=5432 dbname=census user=gis" ACS_2014_5YR_BG_06_CALIFORNIA.gdb -progress --config PG_USE_COPY YES
+# Nope - that doesn't work.
+# ERROR 1: ALTER TABLE "x25_housing_characteristics" ADD COLUMN "b25093m29" INTEGER
+# ERROR:  tables can have at most 1600 columns
+#
+# Also no luck converting it to a shapefile
+#
+#  ogr2ogr acs ACS_2014_5YR_BG_06_CALIFORNIA.gdb
+#   Warning 6: Normalized/laundered field name: 'B07202PRm10' to 'B07202PR_2'
+#   Warning 1: Creating a 256th field, but some DBF readers might only support 255 fields
+#   ... 
+#   Warning 1: Value 384825000 of field B25082e1 of feature 345 not successfully written. Possibly due to too larger number with respect to field width
+#   More than 1000 errors or warnings have been reported. No more will be reported from now.
+#
+# TODO - A different format of demographic data can be found here: 
+# http://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+# I think it's the same data, but not joined to the geospatial information.
+#
+# TODO - also look into if the counties have better demographic data
+# This may
+#   https://data.oaklandnet.com/dataset/Alameda-County-Census-Tract-Results-2010/az9z-tyn9
+#
+# https://www.census.gov/geo/maps-data/data/tiger-data.html
+# https://www2.census.gov/geo/tiger/TIGER2010DP1/
+#   http://www2.census.gov/geo/tiger/TIGER2010DP1/Tract_2010Census_DP1.zip
+
+
+
+
 # load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/1f42ddb43bfb4fc2b98a5b14f06388a0_6.zip' Municipal_Police_Grid.shp mdc_municipal_police_grid 4326
 # load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/e9f4fcf584974b9996326186467a8a3e_0.zip' Municipal_Police_Station.shp  mdc_municipal_police_stations 4326
 
