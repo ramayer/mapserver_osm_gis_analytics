@@ -4,7 +4,10 @@
    * 30GB disk space (20GB is not enough for the Coastlines polygons)
    * "Network Settings -> Bridged"
 
-# install Ubuntu 16.04 server using all defaults except:
+# download Ubuntu 16.04 server
+  * http://www.ubuntu.com/download/server 
+
+# install Ubuntu 16.04 server using all defaults except: 
     * username/password, of course
     * ssh server
 
