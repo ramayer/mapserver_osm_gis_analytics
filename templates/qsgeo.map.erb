@@ -3280,7 +3280,7 @@ LAYER
     CLASS
         EXPRESSION 'city'
         STYLE
-            SIZE 5
+            SIZE 4
             SYMBOL "citycircle"
             COLOR "<%= get_color('citycircle') %>"
             OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
@@ -3288,10 +3288,10 @@ LAYER
         LABEL
             FONT arial
             TYPE TRUETYPE
-            SIZE 8
+            SIZE 7
             COLOR "<%= get_color("place_label") %>"
             OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
-            OUTLINEWIDTH 4
+            OUTLINEWIDTH 2
             WRAP ' '
             #MAXLENGTH 8
             ALIGN CENTER
@@ -3308,7 +3308,8 @@ LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MAXSCALEDENOM 100000000010 minscaledenom 10000010
+    MINSCALEDENOM 20000010       # zoom level 4 to ?
+    MAXSCALEDENOM 80000010
     TYPE POINT # was ANNOTATION
     NAME "places"
     DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
