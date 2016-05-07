@@ -553,10 +553,11 @@ END
 
 
 #  This was copy&pasted from above, with the only differences being
-#         DATA "way from (<%= sql.sub('planet_osm_polygon','simple_large_polygons') %>) as foo using unique osm_id using srid=900913"
+#         DATA "sway from (<%= sql.sub('planet_osm_polygon','simple_large_polygons') %>) as foo using unique osm_id using srid=900913"
 #         MINSCALEDENOM 220000
-#
 #  Until it can be updated, it's probably best to not edit here, and just copy&paste the above.
+#
+#  It gets painfully slow to render this at anything beyond "MAXSCALEDENOM 500010" without pre-computing cached tiles.
 
 LAYER
     STATUS ON
@@ -565,10 +566,11 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-     DATA "way from (<%= sql.sub('planet_osm_polygon','simple_large_polygons') %>) as foo using unique osm_id using srid=900913"
+    DATA "sway from (<%= sql.sub('planet_osm_polygon','simple_large_polygons').sub(' way,',' sway,') %>) as foo using unique osm_id using srid=900913"
     LABELITEM "nicelabel"
     PROCESSING "LABEL_NO_CLIP=ON"
     MINSCALEDENOM 220000
+    MAXSCALEDENOM 2000010
     CLASS
         EXPRESSION ("[nature]"="water" or "[nature]"="bay" or "[nature]"="pond" or "[landuse]"="pond" or "[landuse]"="basin" or "[landuse]"='reservoir' or "[waterway]"='riverbank' or "[waterway]"='stream' or "[amenity]"='fountain')
         STYLE
