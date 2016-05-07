@@ -25,8 +25,15 @@
     notify:
       - restart apache
 
-  - name: Make sure a mapcache cache directory exists
-    file: path=/var/cache/mapcache state=directory owner=www-data
+  #
+  # On Azure,  we're making a symlink to their default large data disk
+  # location, so this ansible task fails.
+  #
+  # TODO: see if there's a rule that says it's OK if this directory
+  # is actually a symlink to a real directory.
+  #
+  #   - name: Make sure a mapcache cache directory exists
+  #     file: path=/var/cache/mapcache state=directory owner=www-data
 
   - name: Check old map cache tiles
     shell: ls -1 /var/cache/mapcache/
