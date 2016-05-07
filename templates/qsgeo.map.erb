@@ -2684,7 +2684,7 @@ LAYER
     CLASS
         EXPRESSION "trunk"
         STYLE
-            WIDTH 1
+            WIDTH 0.3
             COLOR "<%= get_color("road_2") %>"
         END
     END
@@ -2701,7 +2701,7 @@ LAYER
     MINSCALEDENOM 5000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk') order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
