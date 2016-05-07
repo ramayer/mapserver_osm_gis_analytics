@@ -1,0 +1,315 @@
+map-db
+    description: Computer
+    width: 64 bits
+    capabilities: smbios-2.3 vsyscall32
+  *-core
+       description: Motherboard
+       physical id: 0
+     *-memory
+          description: System memory
+          physical id: 0
+          size: 55GiB
+     *-cpu
+          product: Intel(R) Xeon(R) CPU E5-2660 0 @ 2.20GHz
+          vendor: Intel Corp.
+          physical id: 1
+          bus info: cpu@0
+          width: 64 bits
+          capabilities: fpu fpu_exception wp vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss ht syscall nx x86-64 constant_tsc rep_good nopl eagerfpu pni pclmulqdq ssse3 cx16 sse4_1 sse4_2 popcnt aes xsave avx hypervisor lahf_lm xsaveopt
+     *-pci
+          description: Host bridge
+          product: 440BX/ZX/DX - 82443BX/ZX/DX Host bridge (AGP disabled)
+          vendor: Intel Corporation
+          physical id: 100
+          bus info: pci@0000:00:00.0
+          version: 03
+          width: 32 bits
+          clock: 33MHz
+        *-isa
+             description: ISA bridge
+             product: 82371AB/EB/MB PIIX4 ISA
+             vendor: Intel Corporation
+             physical id: 7
+             bus info: pci@0000:00:07.0
+             version: 01
+             width: 32 bits
+             clock: 33MHz
+             capabilities: isa bus_master
+             configuration: latency=0
+        *-ide
+             description: IDE interface
+             product: 82371AB/EB/MB PIIX4 IDE
+             vendor: Intel Corporation
+             physical id: 7.1
+             bus info: pci@0000:00:07.1
+             version: 01
+             width: 32 bits
+             clock: 33MHz
+             capabilities: ide bus_master
+             configuration: driver=ata_piix latency=0
+             resources: irq:0 ioport:1f0(size=8) ioport:3f6 ioport:170(size=8) ioport:376 ioport:ffa0(size=16)
+        *-bridge UNCLAIMED
+             description: Bridge
+             product: 82371AB/EB/MB PIIX4 ACPI
+             vendor: Intel Corporation
+             physical id: 7.3
+             bus info: pci@0000:00:07.3
+             version: 02
+             width: 32 bits
+             clock: 33MHz
+             capabilities: bridge
+             configuration: latency=0
+        *-display
+             description: VGA compatible controller
+             product: Hyper-V virtual VGA
+             vendor: Microsoft Corporation
+             physical id: 8
+             bus info: pci@0000:00:08.0
+             version: 00
+             width: 32 bits
+             clock: 33MHz
+             capabilities: vga_controller bus_master rom
+             configuration: driver=hyperv_fb latency=0
+             resources: irq:11 memory:f8000000-fbffffff
+     *-scsi:0
+          physical id: 2
+          logical name: scsi1
+          capabilities: emulated
+        *-cdrom
+             description: DVD reader
+             physical id: 0.0.0
+             bus info: scsi@1:0.0.0
+             logical name: /dev/cdrom
+             logical name: /dev/dvd
+             logical name: /dev/sr0
+             capabilities: audio dvd
+             configuration: status=ready
+     *-scsi:1
+          physical id: 3
+          logical name: scsi2
+        *-disk
+             description: SCSI Disk
+             physical id: 0.0.0
+             bus info: scsi@2:0.0.0
+             logical name: /dev/sda
+             size: 29GiB (31GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=000abbdf
+           *-volume
+                description: EXT4 volume
+                vendor: Linux
+                physical id: 1
+                bus info: scsi@2:0.0.0,1
+                logical name: /dev/sda1
+                logical name: /
+                version: 1.0
+                serial: c5b35922-0954-4761-8e50-8c8613c17f3e
+                size: 29GiB
+                capacity: 29GiB
+                capabilities: primary bootable journaled extended_attributes large_files huge_files dir_nlink recover extents ext4 ext2 initialized
+                configuration: created=2015-11-16 23:38:18 filesystem=ext4 label=cloudimg-rootfs lastmountpoint=/ modified=2016-04-01 22:59:26 mount.fstype=ext4 mount.options=rw,relatime,discard,data=ordered mounted=2016-04-01 22:59:30 state=mounted
+     *-scsi:2
+          physical id: 4
+          logical name: scsi5
+        *-disk:0
+             description: SCSI Disk
+             physical id: 0.0.7
+             bus info: scsi@5:0.0.7
+             logical name: /dev/sdj
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=d7f0206f
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.7,1
+                logical name: /dev/sdj1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:1
+             description: SCSI Disk
+             physical id: 0.0.8
+             bus info: scsi@5:0.0.8
+             logical name: /dev/sdk
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=2b86e4a0
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.8,1
+                logical name: /dev/sdk1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:2
+             description: SCSI Disk
+             physical id: 0.0.9
+             bus info: scsi@5:0.0.9
+             logical name: /dev/sdl
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=0f65eb50
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.9,1
+                logical name: /dev/sdl1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:3
+             description: SCSI Disk
+             physical id: 0.0.a
+             bus info: scsi@5:0.0.10
+             logical name: /dev/sdm
+             size: 200GiB (214GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=30f04b2c
+           *-volume
+                description: EXT4 volume
+                vendor: Linux
+                physical id: 1
+                bus info: scsi@5:0.0.10,1
+                logical name: /dev/sdm1
+                logical name: /mnt/ssd
+                version: 1.0
+                serial: c823ae99-eea8-42b8-8b2e-ac4f43c71576
+                size: 199GiB
+                capacity: 199GiB
+                capabilities: primary journaled extended_attributes large_files huge_files dir_nlink recover extents ext4 ext2 initialized
+                configuration: created=2016-04-22 03:56:54 filesystem=ext4 lastmountpoint=/mnt/ssd modified=2016-04-22 03:57:13 mount.fstype=ext4 mount.options=rw,relatime,data=ordered mounted=2016-04-22 03:57:13 state=mounted
+        *-disk:4
+             description: SCSI Disk
+             physical id: 0.0.0
+             bus info: scsi@5:0.0.0
+             logical name: /dev/sdc
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=31d492e6
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.0,1
+                logical name: /dev/sdc1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:5
+             description: SCSI Disk
+             physical id: 0.0.1
+             bus info: scsi@5:0.0.1
+             logical name: /dev/sdd
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=5fef4899
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.1,1
+                logical name: /dev/sdd1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:6
+             description: SCSI Disk
+             physical id: 0.0.2
+             bus info: scsi@5:0.0.2
+             logical name: /dev/sde
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=d49e7ab8
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.2,1
+                logical name: /dev/sde1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:7
+             description: SCSI Disk
+             physical id: 0.0.3
+             bus info: scsi@5:0.0.3
+             logical name: /dev/sdf
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=b11a2130
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.3,1
+                logical name: /dev/sdf1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:8
+             description: SCSI Disk
+             physical id: 0.0.4
+             bus info: scsi@5:0.0.4
+             logical name: /dev/sdg
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=ed876d6f
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.4,1
+                logical name: /dev/sdg1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:9
+             description: SCSI Disk
+             physical id: 0.0.5
+             bus info: scsi@5:0.0.5
+             logical name: /dev/sdh
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=ffbcdcbe
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.5,1
+                logical name: /dev/sdh1
+                capacity: 99GiB
+                capabilities: primary multi
+        *-disk:10
+             description: SCSI Disk
+             physical id: 0.0.6
+             bus info: scsi@5:0.0.6
+             logical name: /dev/sdi
+             size: 100GiB (107GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=28fd81d4
+           *-volume
+                description: Linux raid autodetect partition
+                physical id: 1
+                bus info: scsi@5:0.0.6,1
+                logical name: /dev/sdi1
+                capacity: 99GiB
+                capabilities: primary multi
+     *-scsi:3
+          physical id: 5
+          logical name: scsi3
+        *-disk
+             description: SCSI Disk
+             physical id: 0.1.0
+             bus info: scsi@3:0.1.0
+             logical name: /dev/sdb
+             size: 112GiB (120GB)
+             capabilities: partitioned partitioned:dos
+             configuration: logicalsectorsize=512 sectorsize=4096 signature=c993d909
+           *-volume
+                description: EXT4 volume
+                vendor: Linux
+                physical id: 1
+                bus info: scsi@3:0.1.0,1
+                logical name: /dev/sdb1
+                logical name: /mnt
+                version: 1.0
+                serial: bf267254-a6fb-46ec-b6b3-f30c9095bb10
+                size: 111GiB
+                capacity: 111GiB
+                capabilities: primary journaled extended_attributes large_files huge_files dir_nlink recover extents ext4 ext2 initialized
+                configuration: created=2016-04-01 22:59:51 filesystem=ext4 lastmountpoint=/mnt modified=2016-04-01 22:59:52 mount.fstype=ext4 mount.options=rw,relatime,data=ordered mounted=2016-04-01 22:59:52 state=mounted
+  *-network
+       description: Ethernet interface
+       physical id: 1
+       logical name: eth0
+       serial: 00:0d:3a:31:b4:93
+       capabilities: ethernet physical
+       configuration: broadcast=yes driver=hv_netvsc firmware=N/A ip=10.1.3.4 link=yes multicast=yes
