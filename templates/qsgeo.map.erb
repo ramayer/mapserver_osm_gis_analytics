@@ -2764,7 +2764,7 @@ LAYER
     NAME "buildings"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null) or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null and building !='no') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 60000
