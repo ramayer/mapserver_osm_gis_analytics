@@ -1,7 +1,7 @@
 # create VirtualBox vm with:
 
    * 2GB RAM and
-   * 30GB disk space (20GB is not enough for the Coastlines polygons)
+   * 30GB disk space (10 GB is enough for a tiny neighborhood of a couple city blocks.  800GB is enough for the whole planet)
    * "Network Settings -> Bridged"
 
 # download Ubuntu 16.04 server
@@ -9,12 +9,11 @@
 
 # install Ubuntu 16.04 server using all defaults except: 
     * username/password, of course
-    * ssh server
+    * ssh server should be enabled
 
-# this would be a reasonable time to shut down the VM and use VirtualBox's "clone" feature.
+# [Optional] If you want a clone of a blank Ubuntu install, this would be a reasonable time to shut down the VM and use VirtualBox's "clone" feature.
 
 # log into Ubuntu
-
 
 # make note of your IP address 
 
@@ -22,12 +21,8 @@
 
   git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
-  export PGHOST=postgis-01
   ~/mapserver_osm_gis_analytics/bin/install_prerequisites
-  [enter a password for the gis user]
-
-  [something to make the ssh keys not complain]
-
+       [enter a password for the gis user]
 
   ~/mapserver_osm_gis_analytics/bin/install_using_ansible
   ~/mapserver_osm_gis_analytics/bin/create_additional_layer_schema
@@ -38,3 +33,26 @@
   ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
   ~/mapserver_osm_gis_analytics/bin/test_derived_layers
    
+# at this point, you should be able to go to 'http://[ip address]/' and see maps in a small neighborhood near downtown oakland.  
+
+# To see more map data try one of: 
+
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=smaller
+  [expect that to take a couple hours, and use at least 12GB of disk space]
+  
+  or 
+  
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=small
+  [expect that to take overnight, and use at least [TBD] disk space]
+  
+  or
+  
+  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet
+  [expect that to take a well over a week, use about 40GB of RAM while working, and temporarily use at about 800MB of disk space]
+  [you don't want to run that on a small VM]
+
+# after loading more map data, 
+
+  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
+  ~/mapserver_osm_gis_analytics/bin/test_derived_layers
+  
