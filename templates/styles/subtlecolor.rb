@@ -3,9 +3,10 @@
 $map_colors = {
 
   industrial:  {color:'#f0f0f0'},
+  country:     {color:'#f0f0f0', outline:'#444444'},
   land:        {color:'#f0f0f0', outline:'#aaaaaa'},
   residential: {color:'#f0f0f0'},
-  parking:     {color:'#bbbbbb', outline:'#666666'},   # should be noticably darker than 'building'
+  parking:     {color:'#eeddbb', outline:'#666666'},   # should be noticably different from 'building'
 
   park:        {color:'#d5e2bc'},
   grass:       {color:'#dadead'},

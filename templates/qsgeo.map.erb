@@ -94,6 +94,7 @@
             ANGLE FOLLOW
             COLOR "#{get_color(color)}"
             OUTLINECOLOR "#{get_color(color,"outline")}"
+	    OUTLINEWIDTH 1.5
             # minfeaturesize doesn't work well on roads, because
 	    # some are made up of such tiny segments
             #MINFEATURESIZE AUTO
@@ -238,8 +239,8 @@ LAYER
     DATA "way from (select way,osm_id from planet_osm_line where admin_level='2') as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
-            WIDTH 3
-            COLOR "<%= get_color("land","outline") %>"
+            WIDTH 2
+            COLOR "<%= get_color("country","outline") %>"
         END
     END
 END
@@ -571,257 +572,57 @@ LAYER
     PROCESSING "LABEL_NO_CLIP=ON"
     MINSCALEDENOM 220000
     MAXSCALEDENOM 2000010
-    CLASS
-        EXPRESSION ("[nature]"="water" or "[nature]"="bay" or "[nature]"="pond" or "[landuse]"="pond" or "[landuse]"="basin" or "[landuse]"='reservoir' or "[waterway]"='riverbank' or "[waterway]"='stream' or "[amenity]"='fountain')
-        STYLE
-            COLOR "<%= get_color("water") %>"
-        END
-	<%= poly_label('water_label',7,5) %>
-    END
-    CLASS
-        EXPRESSION ("[amenity]"="swimming_pool" or "[leisure]"="swimming_pool")
-        STYLE
-            COLOR "<%= get_color('water') %>"
-        END
-	<%= poly_label('water_label',7,1) %>
-    END
-    CLASS
-        EXPRESSION ("[leisure]"="water_park" or "[tourism]"="zoo" or "[tourism]"="theme_park")
-        STYLE
-            COLOR "<%= get_color('tourism') %>"
-        END
-	<%= poly_label('water_label',7,2) %>
-    END
 
-    CLASS
-        EXPRESSION ("[amenity]"="hospital" or "[amenity]"="doctors" )
-        STYLE
-            COLOR "<%= get_color('hospital') %>"
-        END
-	<%= poly_label('place_label',7,7) %>
-    END
-    CLASS
-        EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
-        STYLE
-            COLOR "<%= get_color('school') %>"
-        END
-	<%= poly_label('place_label',8,8) %>
-    END
-    CLASS
-        EXPRESSION ("[aeroway]"="aerodrome")
-        STYLE
-            COLOR "#ffeeff"
-        END
-	<%= poly_label('place_label',7,5) %>
-    END
-    CLASS
-        EXPRESSION ("[amenity]"="parking" or "[amenity]"="bicycle_parking")
-        STYLE
-            COLOR "<%= get_color('parking') %>"
-        END
-	<%= poly_label('place_label',7,5) %>
-    END
-     
-    CLASS
-        EXPRESSION ("[leisure]"="park")
-        STYLE
-            COLOR "<%= get_color('park') %>"
-        END
-	<%= poly_label('place_label',7,5) %>
-    END
-    CLASS
-        EXPRESSION ("[amenity]"="theater" or "[leisure]"="garden" or "[leisure]"="common" or "[leisure]"="sports_centre" or "[leisure]"="fairgrounds" or "[leisure]"="dog_park")
-        STYLE
-            COLOR "<%= get_color('grass') %>"
-        END
-	<%= poly_label('place_label',7,5) %>
-    END
-    CLASS
-         EXPRESSION ('[nature]'='wood' or '[landuse]'="forest" or '[nature]'='ridge' or '[boundary]'='national_park')
-         STYLE
-             COLOR "<%= get_color("forest") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-    CLASS
-         EXPRESSION ('[landuse]'="railway")
-         STYLE
-             COLOR "<%= get_color("parking") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-    CLASS
-         EXPRESSION ('[nature]'='marsh' or '[nature]'='wetland')
-         STYLE
-             COLOR "<%= get_color("mud") %>"
-             OUTLINECOLOR "<%= get_color("mud","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-    CLASS
-         EXPRESSION ('[nature]'='mud' or '[leisure]'='brownfield' or '[landuse]'='brownfield' or '[landuse]'='landfill' or '[landuse]'='salt_pond')
-         STYLE
-             COLOR "<%= get_color("mud") %>"
-             OUTLINECOLOR "<%= get_color("mud","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
      CLASS
          EXPRESSION (length('[boundary]') > 0)
          STYLE
-             # Do not fill these.  Emerald Bay State Park's polygon
-	     # would fill Emerald Bay if we do.
-	     #
-             # Similar for osm_id -3945021 ... Don Edwards Bay north of the Dumbarton Bridge
-	     #
-	     # TODO - find why 160032399 / Biscayne National Park is still covering the water.
              OUTLINECOLOR "<%= get_color("forest","outline") %>"
              OUTLINEWIDTH 1
          END
  	 <%= poly_label('place_label',8,10) %>
      END
 
-    CLASS
-         EXPRESSION ('[landuse]'='military')
-         STYLE
-             COLOR "<%= get_color("military") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-   CLASS
-	# hmm, the island in the middle of lake elisabeth in fremont
-	# claims to be rock (according to OSM tags), even though
-	# it's covered with trees
-         EXPRESSION ('[nature]'='rock' or '[landuse]'='quarry' or '[nature]'='rocks')
-         STYLE
-             COLOR "<%= get_color("sand") %>"
-             OUTLINECOLOR "<%= get_color("sand","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-    CLASS
-         EXPRESSION ('[nature]'='sand' or '[nature]'='beach')
-         STYLE
-             COLOR "<%= get_color("sand") %>"
-             OUTLINECOLOR "<%= get_color("sand","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[leisure]'='recreation_ground')
-         STYLE
-             COLOR "<%= get_color("forest") %>"
-             OUTLINECOLOR "<%= get_color("forest","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[leisure]'='nature_reserve')
-         STYLE
-             COLOR "<%= get_color("forest") %>"
-             OUTLINECOLOR "<%= get_color("forest","outline") %>"
-             OUTLINEWIDTH 1
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[highway]'='pedestrian')
-        STYLE
-            COLOR "<%= get_color("grass") %>"
-            OUTLINECOLOR "<%= get_color("forest") %>"
-        END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     # Consider styling these based on "leisure" or "historic" or "surface" instead.
-     CLASS
-         EXPRESSION ('[highway]'='pedestrian')
-         STYLE
-             COLOR "<%= get_color("parking") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[leisure]'='track' or "[leisure]"='pitch' or "[leisure]"='golf_course')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[tourism]'='picnic_site')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[tourism]'='camp_site')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[tourism]'='attraction')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[leisure]'='playground' or '[landuse]'='recreation_ground' or '[landuse]'='village_green')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[landuse]'='orchard' or '[landuse]'='vineyard' or '[landuse]'='plant_nursery' or '[landuse]'='conservation' or '[landuse]'='cemetery')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[nature]'='heath' or '[nature]'='scrub' or '[nature]'='scree' or '[nature]'='grassland')
-         STYLE
-             COLOR "<%= get_color("grass") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
-     CLASS
-         EXPRESSION ('[amenity]'='place_of_worship')
-         STYLE
-             COLOR "<%= get_color("hospital") %>"
-             OUTLINECOLOR "<%= get_color("forest") %>"
-         END
- 	 <%= poly_label('place_label',7,5) %>
-     END
+    <%= poly_class('nature'  ,%W{water bay pond}					  ,'water'   ,nil) %>
+    <%= poly_class('landuse' ,%W{pond basin reservoir}       				  ,'water'   ,nil) %>
+    <%= poly_class('waterway',%W{riverbank stream}           				  ,'water'   ,nil) %>
+    <%= poly_class('amenity' ,%W{fountain swimming_pool}    				  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{swimming_pool}	     				  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{water_park}						  ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo}  		     				  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}	     		  ,'hospital',nil) %>
+    <%= poly_class('amenity' , %W{school college university} 		                  ,'school'  ,nil) %>
+    <%= poly_class('aeroway' , %W{aerodrome}                 				  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{parking bicycle_parking}  				  ,'parking' ,nil ) %>
+    <%= poly_class('landuse' , %W{railway}                 				  ,'parking' ,nil ) %>
+    <%= poly_class('leisure' , %W{park}                    			          ,'park'    ,nil ) %>
+
+    <%= poly_class('leisure' , %W{garden common sports_centre fairgrounds dog_park}       ,'grass'    ,nil ) %>
+    <%= poly_class('amenity' , %W{theater}                                                ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{wood ridge}                                             ,'forest'   ,nil ) %>
+    <%= poly_class('landuse' , %W{forest}                                                 ,'forest'   ,nil ) %>
+    <%= poly_class('boundary', %W{national_park}                                          ,nil        ,'forest' ) %>
+
+    <%= poly_class('nature'  , %W{marsh wetland mud}                                    ,'mud'      ,nil ) %>
+    <%= poly_class('leisure' , %W{brownfield}                                           ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{brownfield landfill salt_pond}                        ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{military}                                             ,'military' ,nil ) %>
+    <%= poly_class('nature'  , %W{sand beach rock rocks}                                ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{quarry}                                               ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{grass farm greenfield allotments meadow field}        ,'grass'    ,nil ) %>
+    <%= poly_class('leisure' , %W{recreation_ground}                                    ,'forest'   ,nil ) %>
+    <%= poly_class('leisure' , %W{nature_reserve}                                       ,'forest'   ,nil ) %>
+    <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
+    <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
+    <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
+    <%= poly_class('leisure' , %W{playground}                                           ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{heath scrub scree grassland}                          ,'grass'    ,nil ) %>
+
+
+     # Intentionally not coloring these; because different cities and
+     # counties are very inconsistent in how they use them.
+
      CLASS
          EXPRESSION ('[landuse]'='farmland' or '[landuse]'='farmyard')
  	 <%= poly_label('place_label',7,5) %>
@@ -833,8 +634,6 @@ LAYER
  	 <%= poly_label('place_label',7,5) %>
      END
 
-     # Intentionally not coloring these; because different cities and
-     # counties are very inconsistent in how they use them.
      CLASS
          EXPRESSION ('[landuse]'='residential' or '[landuse]'='industrial' or '[amenity]'='trailer_park' or '[amenity]'='marketplace' or '[amenity]'='restaurant' or '[landuse]'='institutional')
  	 <%= poly_label('place_label',7,5) %>
@@ -858,7 +657,9 @@ LAYER
 	 #TEXT "[osm_id] L:[landuse] N:[nature] T:[tourism] A:[amenity]"
  	 <%= poly_label('place_label',7,5) %>
      END
+
 END
+
 
 
 
@@ -1005,7 +806,7 @@ LAYER
     NAME "airport_aeroways"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,aeroway,ref,name from planet_osm_polygon where aeroway is not null and aeroway != 'aerodrome') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,aeroway,ref,name, CASE WHEN aeroway = 'runway' THEN 'runway' else '' END AS runway from planet_osm_polygon where aeroway is not null and aeroway != 'aerodrome') as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     MAXSCALEDENOM 110000
     CLASSITEM "aeroway"
@@ -1014,7 +815,7 @@ LAYER
             COLOR "<%= get_color('parking') %>"
             OUTLINECOLOR "<%= get_color('parking','outline') %>"
         END
-	text '[aeroway] [ref] [name]'
+	text '[runway] [ref] [name]'
         LABEL
           TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
           MAXSCALEDENOM 110000
@@ -1234,7 +1035,7 @@ LAYER
             SIZE 5
             COLOR  "<%= get_color("rail","symbol") %>"
         END
-        <%= road_label("road_label",9,8) %>
+        <%= road_label("road_label",9,4) %>
     END
     CLASS
         EXPRESSION "motorway"
@@ -1248,7 +1049,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,10) %>
+        <%= road_label("road_label",9,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1274,7 +1075,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,10) %>
+        <%= road_label("road_label",9,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1311,7 +1112,7 @@ LAYER
             WIDTH 13
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",8,4) %>
+        <%= road_label("road_label",8,3) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1336,7 +1137,7 @@ LAYER
             WIDTH 12
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",8,3) %>
+        <%= road_label("road_label",8,2) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1574,7 +1375,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,10) %>
+        <%= road_label("road_label",9,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1600,7 +1401,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,9) %>
+        <%= road_label("road_label",9,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1637,7 +1438,7 @@ LAYER
             WIDTH 13
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",8,4) %>
+        <%= road_label("road_label",8,3) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1662,7 +1463,7 @@ LAYER
             WIDTH 12
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",8,3) %>
+        <%= road_label("road_label",8,2) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1760,7 +1561,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,10) %>
+        <%= road_label("road_label",9,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1786,7 +1587,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",9,9) %>
+        <%= road_label("road_label",9,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1823,7 +1624,7 @@ LAYER
             WIDTH 8
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,4) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1848,7 +1649,7 @@ LAYER
             WIDTH 7
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",7,3) %>
+        <%= road_label("road_label",7,2) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1941,7 +1742,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,10) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1961,7 +1762,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",8,9) %>
+        <%= road_label("road_label",8,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -1989,7 +1790,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,4) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -2008,7 +1809,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",7,3) %>
+        <%= road_label("road_label",7,2) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -2018,7 +1819,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",7,2) %>
+        <%= road_label("road_label",7,1) %>
     END
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
@@ -2084,7 +1885,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,10) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2104,7 +1905,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",8,9) %>
+        <%= road_label("road_label",8,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2132,7 +1933,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,4) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -2213,7 +2014,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,8) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2233,7 +2034,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",7,7) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2253,7 +2054,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,4) %>
+        <%= road_label("road_label",7,3) %>
     END
     CLASS
         EXPRESSION "primary_link"
@@ -2340,7 +2141,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,8) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2360,7 +2161,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",7,7) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2380,6 +2181,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
+        <%= road_label("road_label",6,3) %>
     END
     CLASS
         EXPRESSION "primary_link"
@@ -2462,7 +2264,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,8) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -2482,7 +2284,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",7,7) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         EXPRESSION "trunk_link"
@@ -2502,7 +2304,6 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",6,6) %>
     END
     CLASS
         EXPRESSION "primary_link"
@@ -2591,7 +2392,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,8) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2602,7 +2403,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
         END
-        <%= road_label("road_label",7,3) %>
+        <%= road_label("road_label",7,4) %>
     END
     CLASS
         TEXT '[name]'
@@ -2632,7 +2433,7 @@ LAYER
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2641,7 +2442,7 @@ LAYER
             WIDTH 2
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,1) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2670,7 +2471,7 @@ LAYER
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway','trunk') order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway','trunk') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2679,7 +2480,7 @@ LAYER
             WIDTH 1
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,1) %>
+        <%= road_label("road_label",8,5) %>
     END
     CLASS
         EXPRESSION "trunk"
@@ -2701,7 +2502,7 @@ LAYER
     MINSCALEDENOM 5000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2728,7 +2529,7 @@ LAYER
 
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_line where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "ref"
     CLASSITEM "highway"
     CLASS
@@ -2801,9 +2602,9 @@ LAYER
     END
     CLASS
         STYLE
-            COLOR "<%= get_color("building","offset") %>"
-            # OUTLINECOLOR "<%= get_color("building","offset") %>"
-            # OUTLINEWIDTH 0.5
+            COLOR "<%= get_color("building") %>"
+            OUTLINECOLOR "<%= get_color("building","offset") %>"
+            OUTLINEWIDTH 0.5
         END
     END
 END
@@ -2956,7 +2757,7 @@ LAYER
         LABEL
             FONT arial
             TYPE TRUETYPE
-            SIZE 8
+            SIZE 7
             COLOR "<%= get_color("place_label") %>"
             OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 3
@@ -2964,7 +2765,7 @@ LAYER
             BUFFER 4
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 7
             PARTIALS FALSE
         END
     END
@@ -3010,7 +2811,7 @@ LAYER
             BUFFER 10
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 7
             PARTIALS FALSE
             POSITION AUTO
         END
@@ -3028,7 +2829,7 @@ LAYER
             BUFFER 4
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 6
             PARTIALS FALSE
         END
     END
@@ -3139,7 +2940,7 @@ LAYER
             BUFFER 10
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 8
+            PRIORITY 7
             PARTIALS FALSE
             POSITION AUTO
         END
@@ -3205,7 +3006,7 @@ LAYER
             WRAP ' '
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 5
+            PRIORITY 9
             BUFFER 10
             PARTIALS FALSE
             POSITION auto
@@ -3230,7 +3031,7 @@ LAYER
             BUFFER 10
             #MAXLENGTH 8
             ALIGN CENTER
-            PRIORITY 3
+            PRIORITY 8
             PARTIALS FALSE
             POSITION AUTO
         END
@@ -3296,7 +3097,7 @@ LAYER
             #MAXLENGTH 8
             ALIGN CENTER
             PRIORITY 5
-            BUFFER 10
+            BUFFER 9
             PARTIALS FALSE
             POSITION auto
         END
