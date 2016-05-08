@@ -1,19 +1,26 @@
 <IfModule mod_ssl.c>
 
 	<VirtualHost _default_:443>
-		ServerName mapcache.example.com
-		ServerAlias maps*
-		ServerAlias 192*
 
+		ServerName   mapcache.example.com
+		ServerAlias  mapcache*
+		ServerAdmin  webmaster@localhost
+		DocumentRoot "/var/www/mapcache"
+		ErrorLog     ${APACHE_LOG_DIR}/mapcache.error.log
+		CustomLog    ${APACHE_LOG_DIR}/mapcache.access.log combined
+	
+		################################################################
+		# SSL Options
+		################################################################		
 		SSLEngine on
 		Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains; preload"
 		SSLProtocol all -SSLv2 -SSLv3
 		SSLHonorCipherOrder on
 		SSLCipherSuite "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:EDH+aRSA:RSA+AES:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!CAMELLIA:!SEED:!DH"
 	
-	        {% if (stat_https_certs.stat.exists) %}
+		{% if (stat_https_certs.stat.exists) %}
 		SSLCertificateFile	/etc/ssl/mapcache/mapcache.crt
-		SSLCertificateKeyFile   /etc/ssl/mapcache/mapcache.key
+		SSLCertificateKeyFile	/etc/ssl/mapcache/mapcache.key
 		SSLCertificateChainFile /etc/ssl/mapcache/chain_for_apache.crt
 		{% else %}
 		SSLCertificateFile	/etc/ssl/certs/ssl-cert-snakeoil.pem
@@ -24,34 +31,19 @@
 				nokeepalive ssl-unclean-shutdown \
 				downgrade-1.0 force-response-1.0
 		BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
-
 	
-	        ServerAdmin webmaster@localhost
-		DocumentRoot    "/var/www/mapcache"
-		# ErrorLog ${APACHE_LOG_DIR}/maps.error.log
-		# CustomLog ${APACHE_LOG_DIR}/maps.access.log combined
-	
+		################################################################
+		# Let browsers cache map tiles for a week.
+		# Long enough to feel fast, but short enough
+		# that they'll see new neighborhoods soon enough.
+		################################################################
 		ExpiresActive on
 		ExpiresDefault "now plus 1 week"
 		FileETag MTime Size
 	
-		<IfModule mod_alias.c>
-			<IfModule mod_cgi.c>
-				  Define ENABLE_USR_LIB_CGI_BIN
-			</IfModule>
-			<IfModule mod_cgid.c>
-				Define ENABLE_USR_LIB_CGI_BIN
-			</IfModule>
-			<IfDefine ENABLE_USR_LIB_CGI_BIN>
-				ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
-				<Directory "/usr/lib/cgi-bin">
-					AllowOverride None
-					Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
-					Require all granted
-				</Directory>
-			</IfDefine>
-		</IfModule>
-	
+		################################################################
+		# MapCache - for cached tiles
+		################################################################
 		<IfModule mapcache_module>
 			<Directory "/etc/mapcache/">
 				Require all granted
@@ -59,23 +51,11 @@
 			MapCacheAlias /mapcache "/etc/mapcache/mapcache.xml"
 		</IfModule>
 	
-		<FilesMatch "\.(cgi|shtml|phtml|php)$">
-				SSLOptions +StdEnvVars
-		</FilesMatch>
-	
-		<Directory /usr/lib/cgi-bin>
-				SSLOptions +StdEnvVars
-		</Directory>
-	
-	
-	        # http://www.meteo.fr/cic/meetings/gis-ogc/pres2411/Pres24_2/apache-tricks.pdf
-	        # This allows:
-	        # http://192.168.0.118/wms/subtlecolor?VERSION=1.1.1&REQUEST=GetMap&SERVICE=WMS&STYLES=&BBOX=-13678711.959745%2c4519415.734389%2c-13579343.822975%2c4618783.871160&WIDTH=1300&HEIGHT=1000&FORMAT=image%2fpng&SRS=EPSG%3a3857&LAYERS=default&
-	
-	        RewriteEngine on
-	        RewriteRule ^/wms/(.*) /cgi-bin/mapserv?map=/etc/mapserver/$1.map [PT,QSA]
-	        ProxyPass        "/wms" "http://mapserv-01/cgi-bin/mapserv"
-	        ProxyPassReverse "/wms" "http://mapserv-01/cgi-bin/mapserv"
+		################################################################
+		# Proxy requests for non-cached tiles to an app server.
+		################################################################
+		ProxyPass	 "/mapserv" "http://mapserv-01:10080/mapserv"
+		ProxyPassReverse "/mapserv" "http://mapserv-01:10080/mapserv"
 
 	</VirtualHost>
 

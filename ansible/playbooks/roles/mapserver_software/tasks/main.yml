@@ -19,6 +19,7 @@
     notify:
       - restart apache
     with_items:
+      - rewrite
       - cgid
 
   - name: write the apache config files
