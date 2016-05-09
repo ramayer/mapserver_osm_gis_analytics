@@ -11,6 +11,8 @@ mkdir -p $fontdir
 
 sudo apt-get -y install ttf-dejavu-extra
 
+[ -f ~/toner-carto/fonts/Arial-Unicode-Bold.ttf ] || (cd; git clone https://github.com/forensiclogic/toner-carto.git)
 [ -f $mapdir/fonts.lst ] || cp $PROJECT_DIR/etc/mapserver/map/fonts.lst $mapdir/fonts.lst
-[ -f $fontdir/'Arial-Unicode-Bold.ttf' ] || cp $PROJECT_DIR/etc/mapserver/map/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
+[ -f $fontdir/'Arial-Unicode-Bold.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
+[ -f $fontdir/'Arial-Unicode-Regular.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Regular.ttf $fontdir/Arial-Unicode-Regular.ttf
 [ -f $fontdir/'DejaVuSansCondensed.ttf' ] || cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* $fontdir

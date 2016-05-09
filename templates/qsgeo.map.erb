@@ -103,7 +103,25 @@
         }
    end
 
+   def minor_highways
+    return %Q{(
+    	   SELECT way, osm_id ,highway,ref, name, coalesce(name,ref) AS nicename, tunnel
+	   FROM planet_osm_line
+           WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link')
+	   ORDER by z_order
+	   ) as highways
+    }.gsub(/\s+/," ")
+   end
 
+   def major_highways
+    return %Q{(
+    	   SELECT way, osm_id ,highway,ref, name, coalesce(name,ref) AS nicename, tunnel
+	   FROM planet_osm_roads
+           WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link')
+	   ORDER by z_order
+	   ) as highways
+    }.gsub(/\s+/," ")
+   end
 
    def poly_label(color,size,priority)
       %Q{
@@ -230,19 +248,35 @@ LAYER
     END
 END
 
+
 LAYER
     TYPE LINE
     STATUS ON 
     GROUP "default"
     NAME "Country_borders"
     <%= default_connection() %>
-    DATA "way from (select way,osm_id from planet_osm_line where admin_level='2') as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,admin_level from planet_osm_line where admin_level = '2') as foo using unique osm_id using srid=900913"
+    CLASSITEM "admin_level"
     CLASS
+	EXPRESSION ('[admin_level]'='2')
         STYLE
             WIDTH 2
             COLOR "<%= get_color("country","outline") %>"
         END
     END
+<% if false %>
+    CLASS
+	EXPRESSION ('[admin_level]'='4')
+ 	STYLE
+            COLOR "<%= get_color("country","outline") %>"
+	    WIDTH 1.0
+            LINECAP round #[butt|round|square|triangle]
+            LINEJOIN miter #[round|miter|bevel]
+            LINEJOINMAXSIZE 3
+            PATTERN 40 17 0 17 0 17 0 17 END
+        END # STYLE
+    END
+<% end %>
 END
 
 
@@ -371,7 +405,7 @@ END
 	       waterway,
 	       boundary,
 	       \"natural\" as nature,
-	       coalesce(name,sport,amenity) as nicelabel
+	       coalesce(name,sport) as nicelabel
         FROM planet_osm_polygon
    	WHERE amenity is not null
 	   OR aeroway='aerodrome'
@@ -400,12 +434,12 @@ END
       outlinecolor = outlinecolorname ? get_color(outlinecolorname,'outline') :
       		     color ? darken(color,32) : nil
 
-
       outlineelem  = outlinecolor ? %Q{OUTLINEWIDTH 1 OUTLINECOLOR "#{outlinecolor}"} : ""
 
       %Q{
          CLASS
             EXPRESSION (#{expressions})
+	    MINFEATURESIZE 20 
 	    STYLE
 		#{colorelem}	
 		#{outlineelem}
@@ -416,7 +450,7 @@ END
 		PARTIALS FALSE
 		OUTLINEWIDTH 1
 		PRIORITY 4
-		SIZE 8
+		SIZE 7
 		MINDISTANCE 100
 		COLOR "#000000"
 		OUTLINECOLOR "#ffffff"
@@ -1035,7 +1069,7 @@ LAYER
             SIZE 5
             COLOR  "<%= get_color("rail","symbol") %>"
         END
-        <%= road_label("road_label",9,4) %>
+        <%= road_label("road_label",9,6) %>
     END
     CLASS
         EXPRESSION "motorway"
@@ -1049,7 +1083,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,5) %>
+        <%= road_label("road_label",10,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1179,7 +1213,7 @@ LAYER
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
-            PATTERN 2 3 END
+            PATTERN 3 2 END
         END
         <%= road_label("road_label",7,1) %>
     END
@@ -1375,7 +1409,7 @@ LAYER
             WIDTH 15
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,5) %>
+        <%= road_label("road_label",10,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1505,7 +1539,7 @@ LAYER
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
-            PATTERN 2 3 END
+            PATTERN 3 2 END
         END
         <%= road_label("road_label",7,1) %>
     END
@@ -1514,7 +1548,7 @@ END
 
 # The third most zoomed in road and rail layers - scaledenom 10010 to 25010
 # About the size of an elementary school neighborhood.
-# Used for zoom level 15 tiles.
+# zoom 15
 
 LAYER
     STATUS ON GROUP "default"
@@ -1561,7 +1595,7 @@ LAYER
             WIDTH 10
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",9,5) %>
+        <%= road_label("road_label",10,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1680,7 +1714,7 @@ LAYER
     CLASS
         EXPRESSION ('[highway]'='unclassified' or '[highway]'='service' or '[highway]'='road')
         STYLE
-            WIDTH 3
+            WIDTH 1
             COLOR "<%= get_color("road_5") %>"
         END
         <%= road_label("road_label",6,1) %>
@@ -1688,10 +1722,10 @@ LAYER
     CLASS
         EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
         STYLE
-            WIDTH 2
+            WIDTH 1
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
-            PATTERN 2 3 END
+            PATTERN 3 2 END
         END
         <%= road_label("road_label",7,1) %>
     END
@@ -1699,7 +1733,7 @@ END
 
 
 # The fourth most zoomed in road and rail layers - scaledenom 25010 to 50010
-# Zoom level=14
+# Zoom 14
 # a small town will fit on a page.
 LAYER
     STATUS ON GROUP "default"
@@ -1737,17 +1771,17 @@ LAYER
         EXPRESSION "motorway"
         TEXT '[ref]'
         STYLE
-            WIDTH 8
+            WIDTH 7
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,5) %>
+        <%= road_label("road_label",10,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
         STYLE
-            WIDTH 4
+            WIDTH 6
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_1") %>"
@@ -1757,7 +1791,7 @@ LAYER
         EXPRESSION "trunk"
         TEXT '[ref]'
         STYLE
-            WIDTH 8
+            WIDTH 7
             OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
@@ -1767,19 +1801,10 @@ LAYER
     CLASS
         EXPRESSION "trunk_link"
         STYLE
-            WIDTH 4
+            WIDTH 7
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             COLOR "<%= get_color("road_2") %>"
-        END
-    END
-    CLASS
-        EXPRESSION "primary_link"
-        STYLE
-            WIDTH 7
-            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
-            OUTLINEWIDTH 1
-            COLOR "<%= get_color("road_3") %>"
         END
     END
     CLASS
@@ -1790,7 +1815,16 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",7,3) %>
+        <%= road_label("road_label",8,3) %>
+    END
+    CLASS
+        EXPRESSION "primary_link"
+        STYLE
+            WIDTH 6
+            OUTLINECOLOR "<%= get_color("road_3","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_3") %>"
+        END
     END
     CLASS
         EXPRESSION "secondary_link"
@@ -1809,7 +1843,7 @@ LAYER
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_4") %>"
         END
-        <%= road_label("road_label",7,2) %>
+        <%= road_label("road_label",8,2) %>
     END
     CLASS
         EXPRESSION "tertiary"
@@ -1822,26 +1856,35 @@ LAYER
         <%= road_label("road_label",7,1) %>
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION "residential"
         STYLE
             WIDTH 2
+            OUTLINEWIDTH 0.5
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            COLOR "<%= get_color("road_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION ('[highway]'='unclassified' or '[highway]'='service' or '[highway]'='road')
+        STYLE
+            WIDTH 1
             COLOR "<%= get_color("road_5") %>"
         END
     END
     CLASS
         EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
         STYLE
-            WIDTH 2
+            WIDTH 1
             COLOR "<%= get_color('footway') %>"
             LINECAP BUTT
-            PATTERN 2 3 END
+            PATTERN 3 2 END
         END
         <%= road_label("road_label",7,1) %>
     END
 END
 
 # The fifth most zoomed in road and rail layers - scaledenom 50010 to 100010
-# zoom = 13
+# zoom 13
 # A small town can almost fit in a map tile, and a large city on a page.
 
 LAYER
@@ -1885,7 +1928,7 @@ LAYER
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
         END
-        <%= road_label("road_label",8,5) %>
+        <%= road_label("road_label",9,5) %>
     END
     CLASS
         EXPRESSION "motorway_link"
@@ -1963,7 +2006,7 @@ LAYER
         END
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION ('[highway]'='residential')
         STYLE
             WIDTH 1
             COLOR "<%= get_color("road_5") %>"
@@ -1972,7 +2015,7 @@ LAYER
 END
 
 # The sixth most zoomed in road and rail layers - scaledenom 100010 to 250010
-#  zoom level 12 - east palo alto is about a map tile
+# zoom 12 - east palo alto is about a map tile
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1999,7 +2042,7 @@ LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MAXSCALEDENOM 250010 minscaledenom 100010
+    MAXSCALEDENOM 175010 minscaledenom 100010
     TYPE LINE
     NAME "roadsclose"
     DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
@@ -2049,7 +2092,7 @@ LAYER
         TEXT '[name]'
         EXPRESSION "primary"
         STYLE
-            WIDTH 1
+            WIDTH 1.5
             OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
@@ -2059,7 +2102,7 @@ LAYER
     CLASS
         EXPRESSION "primary_link"
         STYLE
-            WIDTH 1
+            WIDTH 1.5
             OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
@@ -2086,12 +2129,14 @@ LAYER
     CLASS
         EXPRESSION "tertiary"
         STYLE
-            WIDTH 2
+            WIDTH 1
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            OUTLINEWIDTH 1
             COLOR "<%= get_color("road_4") %>"
         END
     END
     CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
+        EXPRESSION ('[highway]'='residential')
         STYLE
             WIDTH 0.5
             COLOR "<%= get_color("road_5") %>"
@@ -2099,7 +2144,8 @@ LAYER
     END
 END
 
-# zoom level 11 - palo alto is about a map tile
+# zoom 11 - palo alto is about a map tile
+<% if false %>
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2122,21 +2168,23 @@ LAYER
         END
     END
 END
+<% end %>
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     <%= default_connection() %>
-    MAXSCALEDENOM 250010 minscaledenom 100010
+    MAXSCALEDENOM 250010 minscaledenom 175010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "name"
+    DATA "way from <%= minor_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
         TEXT '[ref]'
         STYLE
-            WIDTH 3
+            WIDTH 4
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
@@ -2146,7 +2194,7 @@ LAYER
     CLASS
         EXPRESSION "motorway_link"
         STYLE
-            WIDTH 3
+            WIDTH 4
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_1") %>"
@@ -2156,7 +2204,7 @@ LAYER
         EXPRESSION "trunk"
         TEXT '[ref]'
         STYLE
-            WIDTH 2
+            WIDTH 3
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
@@ -2166,7 +2214,7 @@ LAYER
     CLASS
         EXPRESSION "trunk_link"
         STYLE
-            WIDTH 2
+            WIDTH 3
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             COLOR "<%= get_color("road_2") %>"
@@ -2176,17 +2224,16 @@ LAYER
         TEXT '[name]'
         EXPRESSION "primary"
         STYLE
-            WIDTH 1
+            WIDTH 2
             OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
         END
-        <%= road_label("road_label",6,3) %>
     END
     CLASS
         EXPRESSION "primary_link"
         STYLE
-            WIDTH 1
+            WIDTH 2
             OUTLINECOLOR "<%= get_color("road_3","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_3") %>"
@@ -2195,7 +2242,16 @@ LAYER
     CLASS
         EXPRESSION "secondary"
         STYLE
-            WIDTH 1
+            WIDTH 1.5
+            OUTLINECOLOR "<%= get_color("road_4","outline") %>"
+            OUTLINEWIDTH 1
+            COLOR "<%= get_color("road_4") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "secondary_link"
+        STYLE
+            WIDTH 1.5
             OUTLINECOLOR "<%= get_color("road_4","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_4") %>"
@@ -2208,43 +2264,15 @@ LAYER
             COLOR "<%= get_color("road_5") %>"
         END
     END
-    CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
-        STYLE
-            WIDTH 0.3
-            COLOR "<%= get_color("road_5") %>"
-        END
-    END
 END
 
-
+# Zoom 10
 # The seventh most zoomed in road and rail layers - scaledenom 250010 to 500010
-# Zoom level 10 - the greater SF bay area doesn't quite fit a page.  San Francisco fits on a tile
+# The greater SF bay area doesn't quite fit a page.  San Francisco fits on a tile
 # In some parts of the country we would really like to show minor roads; but in urban
 # areas they get quite busy.
 # Similar issue to those discussed here: http://www.imagico.de/map/osm_populated_en.php
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 500010 minscaledenom 250010
-    TYPE LINE
-    NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
-    CLASS
-        STYLE
-            WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
-            COLOR  "<%= get_color("rail") %>"
-        END
-        STYLE
-            SYMBOL rail
-            SIZE 5
-            COLOR  "<%= get_color("rail","symbol") %>"
-        END
-    END
-END
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2252,14 +2280,14 @@ LAYER
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "roadsclose"
-    DATA "way from (select way, osm_id ,highway,ref, name, coalesce(name,ref) as nicename, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "name"
+    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
         TEXT '[ref]'
         STYLE
-            WIDTH 2
+            WIDTH 3
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             COLOR "<%= get_color("road_1") %>"
@@ -2269,7 +2297,7 @@ LAYER
     CLASS
         EXPRESSION "motorway_link"
         STYLE
-            WIDTH 2
+            WIDTH 3
             OUTLINECOLOR "<%= get_color("road_1","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_1") %>"
@@ -2279,7 +2307,7 @@ LAYER
         EXPRESSION "trunk"
         TEXT '[nicename]'  # consider [ref]
         STYLE
-            WIDTH 1
+            WIDTH 2
             OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             OUTLINEWIDTH 1
             COLOR "<%= get_color("road_2") %>"
@@ -2289,7 +2317,7 @@ LAYER
     CLASS
         EXPRESSION "trunk_link"
         STYLE
-            WIDTH 1
+            WIDTH 2
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("road_2","outline") %>"
             COLOR "<%= get_color("road_2") %>"
@@ -2332,42 +2360,13 @@ LAYER
         EXPRESSION "tertiary"
         STYLE
             WIDTH 0.5
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service' or '[highway]'='road')
-        STYLE
-            WIDTH 0.3
-            COLOR "<%= get_color("road_5") %>"
+            COLOR "#ff0000" # "<%= get_color("road_4") %>"
         END
     END
 END
 
 # The eight most zoomed in road and rail layers - scaledenom 500010 to 1000010
 # Zoom level 9  - the SF bay area can fit on a page.   San Jose can fit on a tile.
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 1000010 minscaledenom 500010
-    TYPE LINE
-    NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
-    CLASS
-        STYLE
-            WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
-            COLOR  "<%= get_color("rail") %>"
-        END
-        STYLE
-            SYMBOL rail
-            SIZE 5
-            COLOR  "<%= get_color("rail","symbol") %>"
-        END
-    END
-END
 
 # Note - the where clause here helps a lot!
 #    msDrawMap(): Layer 24 (roadsclose_08), 1.618s
@@ -2379,9 +2378,10 @@ LAYER
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "roadsclose"
-    # DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway is not null order by z_order) as foo using unique osm_id using srid=900913"
-    DATA "way from (select way, osm_id ,highway,ref, name, tunnel from planet_osm_line where highway in ('motorway','trunk','primary','secondary') order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "name"
+
+    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
@@ -2433,8 +2433,10 @@ LAYER
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway','trunk','primary') order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "ref"
+
+    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
@@ -2471,8 +2473,10 @@ LAYER
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway','trunk') order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "ref"
+
+    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
@@ -2502,8 +2506,10 @@ LAYER
     MINSCALEDENOM 5000010
     TYPE LINE
     NAME "roadsfar"
-    DATA "way from (select way, osm_id ,highway,ref from planet_osm_roads where highway in ('motorway') order by z_order) as foo using unique osm_id using srid=900913"
-    LABELITEM "ref"
+
+    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
     CLASSITEM "highway"
     CLASS
         EXPRESSION "motorway"
@@ -2565,7 +2571,7 @@ LAYER
     NAME "buildings"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null and building !='no') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null and building !='no') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ORDER by way_area desc ) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 60000

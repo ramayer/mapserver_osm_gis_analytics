@@ -86,6 +86,7 @@
 	    });
 	});
 //	local_base_layers[0].setVisible(true);
+
 	    
 	var local_overlay_layers = overlay_layers.map( function(item,index){
 	    return new ol.layer.Tile({
@@ -489,7 +490,19 @@ var clusters = new ol.layer.Vector({
                             // serverType: 'geoserver'
                         })
                     }),
-
+		    new ol.layer.Tile({
+			preload: Infinity,
+			type: 'base',
+			title: 'composited wms layer',
+			visible: false,
+			source: new ol.source.TileWMS({
+				url: '/mapcache/',
+				params: {
+		                    'VERSION': '1.1.1',
+		                    'LAYERS': 'subtlecolor,opd_lpr,opd_beats'
+                                }
+			})
+		    }),
                     new ol.layer.Tile({
                         title: 'Satellite',
                         type: 'base',

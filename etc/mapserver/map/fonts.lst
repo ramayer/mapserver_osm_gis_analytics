@@ -12,7 +12,6 @@ okarial /usr/share/fonts/truetype/unifont/unifont.ttf
 dejavu /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed.ttf
 dejavu-bold /usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf
 
-
-arial fonts/Arial-Unicode-Bold.ttf
+arial fonts/Arial-Unicode-Regular.ttf
 arialbold fonts/Arial-Unicode-Bold.ttf
 
