@@ -4,12 +4,41 @@
   apt: pkg={{ item }} state=latest
   with_items:
     - munin
+    - libcgi-fast-perl
+    - libapache2-mod-fcgid
 
 - name: write the munin config files
-  template: src={{ item }} dest=/etc/munin/munin-conf.d/{{ item }}
+  template: src=etc/munin/{{ item }} dest=/etc/munin/{{ item }}
   with_items:
-    - simple_munin_cluster.conf
+    - munin-conf.d/simple_munin_cluster.conf
+    - apache24.conf
+    - apache.conf
 
-# TODO -- something like
+- name: write the munin config files to the appache mods 
+  template: src=etc/munin/apache24.conf dest=/etc/apache2/sites-available/munin.conf
+
+- name: Apache | Enable munin
+  command: a2ensite {{ item }} creates=/etc/apache2/sites-enabled/{{ item }}.load
+  notify:
+    - restart apache
+  with_items:
+    - munin
+
+# TODO -- either something like ...
+#
+# - name: configure munin.conf
+#   lineinfile:
+#      dest: /etc/munin/munin.conf
+#      line: 'htmldir /var/cache/munin/www'
+#      state: present
+#      create: yes
+#      regexp: '^htmldir '
+#
+# ... or ...
+#
 #   ln -s /var/cache/munin/www /var/www/mapcache/munin
-# but maybe on a different virtualhost
+#
+# ... or ...
+#
+# TODO - https://www.digitalocean.com/community/tutorials/how-to-install-the-munin-monitoring-tool-on-ubuntu-14-04
+#
