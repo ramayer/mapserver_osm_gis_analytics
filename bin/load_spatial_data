@@ -148,6 +148,7 @@ function load_osm_data {
   # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file
   echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_water" | psql
   echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_polygons" | psql
+  echo "DROP MATERIALIZED VIEW IF EXISTS planet_admin_boundaries" | psql
 
   if [ "$map_data" == "planet" ]; then 
      wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
@@ -325,13 +326,39 @@ function load_osm_data {
   # TODO - temporarily creating redundant indexes on the simplified and original geometries
   # TODO - remove them after all code refers to the simplified geometries instead
 
+# Hopefully the following index will help this query:
+#
+# explain analyze select "nicelabel","boundary","nature","landuse","waterway","amenity","leisure","tourism","aeroway","highway",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id, name, amenity, aeroway, landuse, leisure, military, sport, tourism, highway, waterway, boundary, "natural" as nature, coalesce(name,sport) as nicelabel FROM planet_osm_polygon WHERE amenity is not null OR aeroway='aerodrome' OR landuse is not null OR waterway is not null OR leisure is not null OR tourism is not null OR "natural" is not null OR highway is not null ORDER by way_area desc ) as foo where way && ST_GeomFromText('POLYGON((605878.104702143 6671920.66941414,605878.104702143 6771212.36915685,705169.804444857 6771212.36915685,705169.804444857 6671920.66941414,605878.104702143 6671920.66941414))',900913);
+#
+#
+#                                                                                                                       QUERY PLAN                                                                                                                        
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Subquery Scan on foo  (cost=3271839.37..3275522.73 rows=184168 width=346) (actual time=45296.591..45985.614 rows=189822 loops=1)
+#   ->  Sort  (cost=3271839.37..3272299.79 rows=184168 width=343) (actual time=45296.424..45506.181 rows=189822 loops=1)
+#         Sort Key: planet_osm_polygon.way_area DESC
+#         Sort Method: external merge  Disk: 71120kB
+#         ->  Bitmap Heap Scan on planet_osm_polygon  (cost=79158.85..3226774.27 rows=184168 width=343) (actual time=468.130..44620.895 rows=189822 loops=1)
+#               Recheck Cond: (way && '010300002031BF0D000100000005000000F0849B356C7D224168AED72A8C735941F0849B356C7D22410D44A01783D459414132E09B238525410D44A01783D459414132E09B2385254168AED72A8C735941F0849B356C7D224168AED72A8C735941'::geometry)
+#               Filter: ((amenity IS NOT NULL) OR (aeroway = 'aerodrome'::text) OR (landuse IS NOT NULL) OR (waterway IS NOT NULL) OR (leisure IS NOT NULL) OR (tourism IS NOT NULL) OR ("natural" IS NOT NULL) OR (highway IS NOT NULL))
+#               Rows Removed by Filter: 1090449
+#               Heap Blocks: exact=48572
+#               ->  Bitmap Index Scan on planet_osm_polygon_index  (cost=0.00..79112.81 rows=1163768 width=0) (actual time=450.157..450.157 rows=1280271 loops=1)
+#                     Index Cond: (way && '010300002031BF0D000100000005000000F0849B356C7D224168AED72A8C735941F0849B356C7D22410D44A01783D459414132E09B238525410D44A01783D459414132E09B2385254168AED72A8C735941F0849B356C7D224168AED72A8C735941'::geometry)
+# Planning time: 26.681 ms
+# Execution time: 46037.147 ms
+#(13 rows)
+
+  echo "CREATE INDEX medium_polygons on planet_osm_polygon using GIST(way) where ((amenity IS NOT NULL) OR (aeroway = 'aerodrome'::text) OR (landuse IS NOT NULL) OR (waterway IS NOT NULL) OR (leisure IS NOT NULL) OR (tourism IS NOT NULL) OR (\"natural\" IS NOT NULL) OR (highway IS NOT NULL))" | psql
 
 
   echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
   echo 'create index "planet_osm_point(place)" on planet_osm_point(place);' | psql
   
-  echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
+  # echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
+  echo "create index planet_osm_roads_admin_boundary on planet_osm_roads(name) where boundary='administrative' and admin_level in ('2','3','4');" | psql
+
+  echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
 
   
   # TODO: consider if those should be partial indexes instead.
