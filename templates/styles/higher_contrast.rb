@@ -4,7 +4,8 @@ $map_colors = {
 
   industrial:  {color:'#f0f0f0'},
   land:        {color:'#f0f0f0', outline:'#aaaaaa'},
-  country:     {color:'#f0f0f0', outline:'#444444'},
+  country:     {color:'#f0f0f0', outline:'#888888'},
+  state:       {color:'#f0f0f0', outline:'#cccccc'},
   residential: {color:'#f0f0f0'},
   parking:     {color:'#d0d0d0', outline:'#666666'},   # should be noticably darker than 'building'
 
