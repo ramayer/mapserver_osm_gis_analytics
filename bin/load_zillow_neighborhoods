@@ -4,7 +4,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/default_environment.sh
 
 
-mkdir $GIS_DATA_DIR/zillow
+mkdir -p $GIS_DATA_DIR/zillow
 cd $GIS_DATA_DIR/zillow
 
 echo "see http://www.zillow.com/howto/api/neighborhood-boundaries.htm for more info"
@@ -54,13 +54,12 @@ wget -x -p http://www.zillow.com/static/shp/ZillowNeighborhoods-VA.zip
 wget -x -p http://www.zillow.com/static/shp/ZillowNeighborhoods-WA.zip
 wget -x -p http://www.zillow.com/static/shp/ZillowNeighborhoods-WI.zip
 
-mkdir /tmp/zillow
-cd /tmp/zillow
+mkdir -p $GIS_DATA_DIR/zillow/tmp
 
-for i in /u06/data/zillow/www.zillow.com/static/shp/ZillowNeighborhoods-* ;do unzip $i; done;
+for i in $GIS_DATA_DIR/zillow/www.zillow.com/static/shp/ZillowNeighborhoods-* ;do unzip $i; done;
 
 shp2pgsql -p -s 4326 -I ZillowNeighborhoods-CA.shp zillow_neighborhoods | psql
 for i in *.shp; do
     # guess - is 4326 the right projecition
-    shp2pgsql -a -s 4326 $i zillow_neighborhoods | psql -q gis fliadmin
+    shp2pgsql -a -s 4326 $i zillow_neighborhoods | psql -q gis
 done;
