@@ -54,8 +54,11 @@
 		################################################################
 		# Proxy requests for non-cached tiles to an app server.
 		################################################################
-		ProxyPass	 "/mapserv" "http://mapserv-01:10080/mapserv"
-		ProxyPassReverse "/mapserv" "http://mapserv-01:10080/mapserv"
+		ProxyPass	 "/mapserv" "http://localhost:20080/mapserv"
+		ProxyPassReverse "/mapserv" "http://localhost:20080/mapserv"
+
+		ProxyPass	 "/haproxy" "http://localhost:30080/haproxy"
+		ProxyPassReverse "/haproxy" "http://localhost:30080/haproxy"
 
 	</VirtualHost>
 

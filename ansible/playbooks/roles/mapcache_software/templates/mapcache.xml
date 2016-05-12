@@ -33,7 +33,7 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
       </params>
     </getmap>
     <http>
-      <url>http://mapserver-01/cgi-bin/mapserv/</url>
+      <url>http://localhost:20080/cgi-bin/mapserv/</url>
       <connection_timeout>30</connection_timeout>
     </http>
   </source>
@@ -47,7 +47,7 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
       </params>
     </getmap>
     <http>
-      <url>http://mapserver-01/cgi-bin/mapserv/</url>
+      <url>http://localhost:20080/cgi-bin/mapserv/</url>
       <connection_timeout>30</connection_timeout>
     </http>
   </source>

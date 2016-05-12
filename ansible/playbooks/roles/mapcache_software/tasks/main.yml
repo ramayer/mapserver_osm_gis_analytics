@@ -9,6 +9,7 @@
       - libproj-dev
       - libapache2-mod-mapcache
       - mapcache-tools
+      - haproxy
 
   - name: Apache | Enable module | Enable $module
     command: a2enmod {{ item }} creates=/etc/apache2/mods-enabled/{{ item }}.load
@@ -26,6 +27,14 @@
 
   - name: ensure apache is enabled at boot
     service: name=apache2 enabled=yes
+
+  - name: ensure haproxy is enabled at boot
+    service: name=haproxy enabled=yes
+
+  - name: write the haproxy config file
+    template: src=etc/haproxy/haproxy.cfg dest=/etc/haproxy/haproxy.cfg
+    notify:
+      - restart haproxy
 
   - name: Check for https certificates
     local_action: stat path={{ lookup('env','HOME') }}/certs/etc/ssl/mapcache
@@ -68,6 +77,7 @@
 
   - name: Make maps template
     template: src=index.html dest=/var/www/mapcache/index.html mode=755
+
 
   # Seems an ansible bug -- if I use 
   #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
