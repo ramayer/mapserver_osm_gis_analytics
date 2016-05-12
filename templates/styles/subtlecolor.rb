@@ -27,6 +27,7 @@ $map_colors = {
   tourism:     {color:'#ddbbff', outline:"#ccaaff"},
   school:      {color:'#ffffcc'},
   water:       {color:'#99b3cc'},
+  ferry:       {color:'#7793cc', label:'#5573cc'},
 
   building:    {color:'#d8d8d0', offset:'#a8a8a0'},
   citycircle:  {color:'#ddcdcd', outline:'#000000', inner:'#000000'},

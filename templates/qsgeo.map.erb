@@ -106,7 +106,7 @@
 
    def all_highways
     # nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
-	nicename = %Q{CASE WHEN highway='motorway' and (ref is not null) THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
+	nicename = %Q{CASE WHEN highway='motorway' THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
     return %Q{(
            SELECT way, osm_id ,highway,ref, railway, route, name, #{nicename} AS nicename, tunnel
        FROM planet_osm_line
@@ -116,23 +116,25 @@
     }.gsub(/\s+/," ")
    end
 
+   # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql put tertiary roads there.
    def minor_highways
     nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
     return %Q{(
            SELECT way, osm_id ,highway,ref, name, #{nicename} AS nicename, tunnel
        FROM planet_osm_line
-           WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link')
+           WHERE highway in ('motorway','trunk','primary','secondary','tertiary')
        ORDER by z_order
        ) as highways
     }.gsub(/\s+/," ")
    end
 
-   def major_highways
+   def major_highways(types=['motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link'])
+    type_string = types.map{|t| "'#{t}'"}.join(",")
     nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
     return %Q{(
            SELECT way, osm_id ,highway,ref, name, #{nicename} AS nicename, tunnel
        FROM planet_osm_roads
-           WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link')
+           WHERE highway in (#{type_string})
        ORDER by z_order
        ) as highways
     }.gsub(/\s+/," ")
@@ -319,6 +321,10 @@ END
 
 
 
+
+# This layer can take over 30 seconds on our production server at zoom level 9 if it uses planet_osm_line
+# Seems most of the boundaries are also in planet_osm_roads?
+
 LAYER
     TYPE LINE
     STATUS ON 
@@ -326,7 +332,7 @@ LAYER
     NAME "country borders zoom 8+"
     MAXSCALEDENOM 1000010
     <%= default_connection() %>
-    DATA "way from (select way,osm_id,admin_level,name from planet_osm_line where admin_level in ('2','4')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id,admin_level,name from planet_osm_roads where admin_level in ('2','4')) as foo using unique osm_id using srid=900913"
     CLASSITEM "admin_level"
     CLASS
     EXPRESSION ('[admin_level]'='2')
@@ -615,7 +621,7 @@ LAYER
     <%= poly_class('amenity' ,%W{fountain swimming_pool}                      ,'water'   ,nil) %>
     <%= poly_class('leisure' , %W{swimming_pool}                          ,'water'   ,nil) %>
     <%= poly_class('leisure' , %W{water_park}                         ,'tourism' ,nil) %>
-    <%= poly_class('tourism' , %W{zoo}                                ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                             ,'tourism' ,nil) %>
     <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                  ,'hospital',nil) %>
     <%= poly_class('amenity' , %W{school college university}                          ,'school'  ,nil) %>
     <%= poly_class('aeroway' , %W{aerodrome}                                  ,'tourism' ,nil) %>
@@ -725,7 +731,7 @@ LAYER
     <%= poly_class('amenity' ,%W{fountain swimming_pool}                      ,'water'   ,nil) %>
     <%= poly_class('leisure' , %W{swimming_pool}                          ,'water'   ,nil) %>
     <%= poly_class('leisure' , %W{water_park}                         ,'tourism' ,nil) %>
-    <%= poly_class('tourism' , %W{zoo}                                ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                             ,'tourism' ,nil) %>
     <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                  ,'hospital',nil) %>
     <%= poly_class('amenity' , %W{school college university}                          ,'school'  ,nil) %>
     <%= poly_class('aeroway' , %W{aerodrome}                                  ,'tourism' ,nil) %>
@@ -750,7 +756,7 @@ LAYER
     <%= poly_class('leisure' , %W{nature_reserve}                                       ,'forest'   ,nil ) %>
     <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
     <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
-    <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
+    <%= poly_class('tourism' , %W{picnic_site camp_site}                               ,'forest'    ,nil ) %>
     <%= poly_class('leisure' , %W{playground}                                           ,'grass'    ,nil ) %>
     <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
     <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
@@ -1007,6 +1013,58 @@ LAYER
     END
 END
 
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 0
+    TYPE LINE
+    NAME "routes"
+    DATA "way from (select * from planet_osm_line where route is not null) as l using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "route"
+    CLASS
+        EXPRESSION ("[route]"="ferry")
+        STYLE
+	    WIDTH 1
+            COLOR "<%= get_color('ferry')%>"
+            PATTERN 1 1 END
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('ferry','label')%>"
+            OUTLINECOLOR "<%= get_color('water') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+    CLASS
+        LABEL
+	    MAXSCALEDENOM 10000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('road_label')%>"
+            OUTLINECOLOR "<%= get_color('road_label','outline') %>"
+	    OUTLINEWIDTH 1
+        END
+    END
+END
+
+
+
 ################################################################################
 ################################################################################
 ################################################################################
@@ -1194,7 +1252,7 @@ LAYER
 
 
     CLASS
-        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track')
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway']='steps')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
@@ -1213,7 +1271,7 @@ LAYER
     MAXSCALEDENOM 5010 minscaledenom 0
     TYPE LINE
     NAME "other_lines"
-    DATA "way from (select * from planet_osm_line where waterway is null and highway is null order by z_order) as foo using unique osm_id using srid=900913"
+    DATA "way from (select * from planet_osm_line where waterway is null and route is null and highway is null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASS
         EXPRESSION (length('[name]') > 0)
@@ -1242,7 +1300,7 @@ LAYER
     MAXSCALEDENOM 10010 minscaledenom 5010
     TYPE LINE
     NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail','monorail','miniature')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
             WIDTH 2
@@ -1416,7 +1474,7 @@ LAYER
 
 
     CLASS
-        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway']='steps')
         STYLE
             WIDTH 2
             COLOR "<%= get_color('footway') %>"
@@ -1481,7 +1539,7 @@ LAYER
     <%= road_class('tertiary_link'   , 5  , 0,0) %>
 
     CLASS
-        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway']='steps')
         STYLE
             WIDTH 1
             COLOR "<%= get_color('footway') %>"
@@ -1546,7 +1604,7 @@ LAYER
     <%= road_class('tertiary_link'   , 5  , 0,0) %>
 
     CLASS
-        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[highway]'='path' or '[highway]'='track')
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway']='steps')
         STYLE
             WIDTH 1
             COLOR "<%= get_color('footway') %>"
@@ -1657,30 +1715,6 @@ LAYER
 END
 
 # zoom 11 - palo alto is about a map tile
-<% if false %>
-LAYER
-    STATUS ON GROUP "default"
-    PROJECTION "init=epsg:3857" END
-    <%= default_connection() %>
-    MAXSCALEDENOM 250010 minscaledenom 175010
-    TYPE LINE
-    NAME "railways"
-    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
-    CLASS
-        STYLE
-            WIDTH 2
-            OUTLINEWIDTH 1
-            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
-            COLOR  "<%= get_color("rail") %>"
-        END
-        STYLE
-            SYMBOL rail
-            SIZE 5
-            COLOR  "<%= get_color("rail","symbol") %>"
-        END
-    END
-END
-<% end %>
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1692,13 +1726,11 @@ LAYER
     LABELITEM "nicename"
 
     CLASSITEM "highway"
-
     <%= road_class('motorway'        , 4  , 9,5) %>
     <%= road_class('trunk'           , 2  , 9,4) %>
     <%= road_class('primary'         , 2  , 0,0) %>
     <%= road_class('secondary'       , 1  , 0,0) %>
     <%= road_class('tertiary'        , 0  , 0,0) %>
-    <%= road_class('unclassified'    , 0  , 0,0) %>
 END
 
 # Zoom 10
@@ -1707,7 +1739,6 @@ END
 # In some parts of the country we would really like to show minor roads; but in urban
 # areas they get quite busy.
 # Similar issue to those discussed here: http://www.imagico.de/map/osm_populated_en.php
-
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1715,7 +1746,7 @@ LAYER
     MAXSCALEDENOM 500010 minscaledenom 250010
     TYPE LINE
     NAME "roads 10"
-    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary tertiary}) %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 3  , 8,5) %>
@@ -1738,7 +1769,7 @@ LAYER
     MAXSCALEDENOM 1000010 minscaledenom 500010
     TYPE LINE
     NAME "roads 9"
-    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary tertiary}) %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 3  , 8,5) %>
@@ -1759,7 +1790,7 @@ LAYER
     MAXSCALEDENOM 2500010 minscaledenom 1000010
     TYPE LINE
     NAME "roads 8"
-    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary}) %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 3  , 8,5) %>
@@ -1783,8 +1814,8 @@ LAYER
     MAXSCALEDENOM 5000010 minscaledenom 2500010
     TYPE LINE
     NAME "roads 7"
-    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
-    LABELITEM "ref"   # Full names of freeways don't fit at this zoom level, so don't use "nicename".
+    DATA "way from <%= major_highways(%W{motorway trunk primary}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 1  , 8,5) %>
     <%= road_class('trunk'           , 0  , 0,0) %>
@@ -1803,7 +1834,7 @@ LAYER
     TYPE LINE
     NAME "roads 6"
 
-    DATA "way from <%= major_highways %> using unique osm_id using srid=900913"
+    DATA "way from <%= major_highways(%W{motorway}) %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
 
     CLASSITEM "highway"

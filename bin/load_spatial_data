@@ -351,14 +351,66 @@ function load_osm_data {
   echo "CREATE INDEX medium_polygons on planet_osm_polygon using GIST(way) where ((amenity IS NOT NULL) OR (aeroway = 'aerodrome'::text) OR (landuse IS NOT NULL) OR (waterway IS NOT NULL) OR (leisure IS NOT NULL) OR (tourism IS NOT NULL) OR (\"natural\" IS NOT NULL) OR (highway IS NOT NULL))" | psql
 
 
-  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
-  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
-  echo 'create index "planet_osm_point(place)" on planet_osm_point(place);' | psql
-  
-  # echo "create index planet_osm_line_country_borders on planet_osm_line(name) where admin_level = '2';" | psql
-  echo "create index planet_osm_roads_admin_boundary on planet_osm_roads(name) where boundary='administrative' and admin_level in ('2','3','4');" | psql
+  # Instead of doing a bitmap merge like this...
+  # echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
+  # which can take a long time.
+  # That index actually even made things worse -- since scanning the index for highways like this: 
+  # ->  Bitmap Index Scan on "planet_osm_line(highway)"  (cost=0.00..216950.50 rows=10907314 width=0) (actual time=2189.536..2189.536 rows=11505845 loops=1)
+  # was is often slower than brute-force filtering all the results of the geospatial where clause.
+  #
+  # The following partial indexes may be better.
+  #
+  # explain analyze select "highway","nicename",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id ,highway,ref, name, CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END AS nicename, tunnel FROM planet_osm_line WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link') ORDER by z_order ) as highways where way && ST_GeomFromText('POLYGON((1486432.67054764 6574081.27320914,1486432.67054764 6673372.97295186,1585724.37029036 6673372.97295186,1585724.37029036 6574081.27320914,1486432.67054764 6574081.27320914))',900913);
+  #
+  # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql put tertiary roads there.
+  echo 'create index "planet_osm_line__major_highways" on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');' | psql
+  echo 'create index "planet_osm_line__all_highways" on planet_osm_line using GIST(way) where highway is not null;' | psql
 
-  echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
+
+
+  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
+
+
+  # echo 'create index "planet_osm_point(place)" on planet_osm_point(place);' | psql
+  # 
+  # That index was intended to help queries like
+  # 
+  #  explain analyze select "place","name","capital",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo where way && ST_GeomFromText('POLYGON((4962903.37249963 -1298817.98462188,4962903.3724 9963 5055850.79889488,11317572.1560164 5055850.79889488,11317572.1560164 -1298817.98462188,4962903.37249963 -1298817.98462188))',900913);
+  # which would do a bitmap-and of the 40000 rows found in by the "place" index and the 2,570,112 rows found by the geospatial index
+  # Must faster to create a specialized geometry index with just the places: 
+  echo "create index "planet_osm_point__cities" on planet_osm_point using GIST(way) where place in ('town','city')" | psql 
+  # Much better!!!!
+  # 
+  # gis=# explain analyze select "place","name","capital",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo where way && ST_GeomFromText('POLYGON((4962903.37249963 -1298817.98462188,4962903.37249963 5055850.79889488,11317572.1560164 5055850.79889488,11317572.1560164 -1298817.98462188,4962903.37249963 -1298817.98462188))',900913);
+  # QUERY PLAN
+  # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # Bitmap Heap Scan on planet_osm_point  (cost=965.98..984.81 rows=1441 width=66) (actual time=4.882..11.616 rows=917 loops=1)
+  # Recheck Cond: ((way && '010300002031BF0D000100000005000000B008D7D795EE5241F62D10FC81D133C1B008D7D795EE5241FE1721B35A4953411B16FE8428966541FE1721B35A4953411B16FE8428966541F62D10FC81D133C1B008D7D795EE5241F62D10FC81D133C1'::geometry) AND (place = ANY ('{town,city}'::text[])) AND (place = 'city'::text))
+  # Heap Blocks: exact=831
+  # ->  BitmapAnd  (cost=965.98..965.98 rows=2 width=0) (actual time=4.710..4.710 rows=0 loops=1)
+  # ->  Bitmap Index Scan on planet_osm_point__cities  (cost=0.00..105.89 rows=2882 width=0) (actual time=2.472..2.472 rows=9537 loops=1)
+  # Index Cond: (way && '010300002031BF0D000100000005000000B008D7D795EE5241F62D10FC81D133C1B008D7D795EE5241FE1721B35A4953411B16FE8428966541FE1721B35A4953411B16FE8428966541F62D10FC81D133C1B008D7D795EE5241F62D10FC81D133C1'::geometry)
+  # ->  Bitmap Index Scan on "planet_osm_point(place)"  (cost=0.00..859.11 rows=46206 width=0) (actual time=1.544..1.544 rows=8096 loops=1)
+  # Index Cond: (place = 'city'::text)
+  # Planning time: 0.562 ms
+  # Execution time: 11.815 ms
+  # (10 rows)
+
+
+
+  # One of the slowest queries remaining is processing waterways.    This partial index makes it much faster.
+  echo "create index "planet_osm_line__waterways" on planet_osm_line using GIST(way) where waterway is not null" | psql 
+
+
+
+
+  # This query is slow at zoom level 9 going to planet_osm_line.
+  # explain analyze select "admin_level",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,admin_level,name from planet_osm_line where admin_level in ('2','4')) as foo where way && ST_GeomFromText('POLYGON((-11039188.4990014 3441042.13934157,-11039188.4990014 3838208.93831143,-10642021.7000316 3838208.93831143,-10642021.7000316 3441042.13934157,-11039188.4990014 3441042.13934157))',900913);
+
+ echo "CREATE INDEX planet_osm_line_admin_boundary on planet_osm_roads using GIST(way) where admin_level in ('2','4')" | psql
+
+
+ echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
 
   
   # TODO: consider if those should be partial indexes instead.
