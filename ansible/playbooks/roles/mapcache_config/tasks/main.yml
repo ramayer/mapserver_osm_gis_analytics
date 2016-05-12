@@ -39,11 +39,15 @@
     shell: ls -1 /var/cache/mapcache/
     register: cache_contents
 
-  - name: Remove old map cache tiles
-    file: name=/var/cache/mapcache/{{ item }} state=absent
+  - name: Tell user to remove old map cache tiles
+    debug: msg="consider removing /var/cache/mapcache/{{ item }}"
     with_items: '{{cache_contents.stdout_lines}}'
-    notify:
-      - restart apache
+
+#  - name: Remove old map cache tiles
+#    file: name=/var/cache/mapcache/{{ item }} state=absent
+#    with_items: '{{cache_contents.stdout_lines}}'
+#    notify:
+#      - restart apache
 
 # WARNING - WITH SOME VERSIONS OF ANSIBLE, THE "/." AT THE END OF THE LINE
 # IS LOST IF YOU USE THE "~".
