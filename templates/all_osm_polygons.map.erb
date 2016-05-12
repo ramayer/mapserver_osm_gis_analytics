@@ -88,7 +88,8 @@ LAYER
     TYPE LINE
     STATUS ON 
     GROUP "default"
-    NAME "Beats"
+    NAME "Polygons"
+    MAXSCALEDENOM 100010
     <%= default_connection() %>
     DATA "<%= sql %>"
     <%
@@ -118,7 +119,7 @@ LAYER
         color='#ff0000'
     %>
     CLASS
-        MAXSCALEDENOM 100000
+        MAXSCALEDENOM 100010
         STYLE
 		 COLOR [color]
 		 OPACITY 10
