@@ -68,15 +68,14 @@ else
 	      GROUP BY amenity, name, st_xmin(way)::int/10000,st_xmin(way)::int/10000
 	      ;
 
-
       INSERT INTO additional_polygons (layer,label,color,opacity,geom)
 	     SELECT 'school zones',
 	             label || ' school zone',
 	             color,
 	             20,
-		     ST_Multi(ST_Transform(ST_Difference(ST_Buffer(geom,304.8),geom),3857))
+ 		     ST_Multi(ST_Difference(ST_Buffer(geom,304.8),geom))
 	      FROM additional_polygons
-	      WHERE layer='schools';
+	      WHERE layer='schools' and ST_isvalid(geom);
 
       INSERT INTO additional_points (layer,label,color,geom)
           select 'lpr in school zones',
@@ -98,6 +97,28 @@ else
 
 EOF
 
+# TODO report this bug
+#   ERROR:  GEOSDifference: TopologyException: Input geom 1 is invalid: Self-intersection at or near point 429083.64189366973 5406516.1215057513 at 429083.64189366973 5406516.1215057513
+# which occurs when the expession
+# 		     ST_Multi(ST_Difference(ST_Buffer(geom,304.8),geom))
+# is used on schools instead of 
+#                    ST_Multi(ST_Buffer(geom,304.8),geom)
+# create table debug_another_broken_poly as select st_union(way) as geom from planet_osm_polygon where osm_id in (76015175,76015844,76016259,76015799);
+
+# gis=# create table debug_5 as select name,
+#                      array_agg(osm_id)::text as c,
+#                      ST_Multi(ST_Transform(ST_Union(way),3857)) as geom
+#               FROM planet_osm_polygon
+#               WHERE osm_id in (76015175,76015844,76016259,76015799)
+#               GROUP BY amenity, name, st_xmin(way)::int/10000,st_xmin(way)::int/10000;
+# 
+# gis=# select 		     ST_Multi(ST_Difference(ST_Buffer(geom,304.8),geom)) from debug_5;
+# ERROR:  GEOSDifference: TopologyException: Input geom 1 is invalid: Self-intersection at or near point 429083.64189366973 5406516.1215057513 at 429083.64189366973 5406516.1215057513
+
+
+
+# for the shading --- see http://wistia.com/blog/heatmaps-for-colorblindness
+
+
 fi
 
-sudo rm -rf /var/tmp/cache/mapcache/cache/school_zones/
