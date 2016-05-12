@@ -40,6 +40,13 @@
      # sudo mkswap /mnt/swap/10GB
      # sudo swapon /mnt/swap/10GB
 
+ select st_extent(way) from planet_osm_polygon where osm_id=-2833530;
+
+ ... take those results, and run: 
+
+ sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t subtlecolor -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66
+ 
+
 * Make the map as big as
   http://13.91.253.215/
 
@@ -83,3 +90,13 @@
   to workaround
   https://github.com/forensiclogic/mapserver_osm_gis_analytics/commit/cd304f71e4fb2ad0934dc961b5cbca34653c7c0c
   https://github.com/ansible/ansible-modules-core/issues/3136
+
+
+
+* Probe the hardware for more sane values than the defaults. 
+  Perhaps: 
+  alter system set work_mem='100MB';
+  alter system set max_wal_size='10GB';
+  alter system set shared_buffers='1024MB';
+
+  
