@@ -48,6 +48,16 @@ while getopts "$optspec" optchar; do
                     opt=${OPTARG%=$val}
                     resourcegroup=$val
                     ;;
+                azure-acct=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_acct=$val
+                    ;;
+                azure-region=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_region=$val
+                    ;;
                 *)
                     if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
                         echo "Unknown option --${OPTARG}" >&2
