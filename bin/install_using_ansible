@@ -15,5 +15,6 @@ else
    ansible_hosts_file=$HOME/mapserver_osm_gis_analytics/ansible/hosts.minimal
 fi
 
+cd $PROJECT_DIR/ansible/playbooks   # to find ansible.cfg
 
-ansible-playbook -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml
+ansible-playbook -vvv -f 10 -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml

@@ -95,3 +95,15 @@ app_vm_size=Standard_D1_v2
 db_vm_size=Standard_DS12
 
 $azure vm create $resourcegroup "mapserv-"$now   $azure_region "Linux"   -z $app_vm_size -N $nic_name -u gisadmin -Q $linuximg --ssh-publickey-file $azure_public_key    
+
+
+# TODO --- test this script.
+#       The following worked on our old environment.   Hopefully this script duplicates that behavior.
+#
+# 2014  now=`date +'%Y%m%d%T' | perl -pe 's/://g'`
+# 2015  azure network nic create maps-prod-4 $now westus --subnet-vnet-name "fli-vnet" --subnet-name "fli-app-subnet"
+# 2016  azure vm create maps-prod-4 "mapserv-"$now   westus Linux -z $app_vm_size -N $now -u fliadmin -Q $linuximg  --ssh-publickey-file $azure_public_key
+#
+# 2017  now=`date +'%Y%m%d%T' | perl -pe 's/://g'`
+# 2018  azure network nic create maps-prod-4 $now westus --subnet-vnet-name "fli-vnet" --subnet-name "fli-app-subnet"
+3 2019  azure vm create maps-prod-4 "mapserv-"$now   westus Linux -z $app_vm_size -N $now -u fliadmin -Q $linuximg  --ssh-publickey-file $azure_public_key

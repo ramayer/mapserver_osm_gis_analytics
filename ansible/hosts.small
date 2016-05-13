@@ -8,6 +8,10 @@
 mapcache-01  ansible_ssh_host=10.1.1.4
 mapserver-01 ansible_ssh_host=10.1.2.4
 mapserver-02 ansible_ssh_host=10.1.2.5
+mapserver-03 ansible_ssh_host=10.1.2.6
+mapserver-04 ansible_ssh_host=10.1.2.7
+mapserver-05 ansible_ssh_host=10.1.2.8
+
 postgis-01   ansible_ssh_host=10.1.3.4
 admin-01     ansible_ssh_host=127.0.0.1
 
@@ -19,6 +23,9 @@ admin-01     ansible_ssh_host=127.0.0.1
 mapcache-01
 mapserver-01
 mapserver-02
+mapserver-03
+mapserver-04
+mapserver-05
 postgis-01
 admin-01
 
@@ -28,6 +35,9 @@ mapcache-01
 [mapserver]
 mapserver-01
 mapserver-02
+mapserver-03
+mapserver-04
+mapserver-05
 
 [postgis-master]
 postgis-01
