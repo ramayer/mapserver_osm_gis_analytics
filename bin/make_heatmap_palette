@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+puts "create table palette (name text, idx int, color text);"
+puts "insert into palette (name,idx,color) values "
+
+puts (0..255).map{|x|
+	 "('green_to_red',#{x},'#%02x%02x%02x%02x')" % [x, 255-x, 0, 127]
+ }.join(",\n")
+
+puts ";"
