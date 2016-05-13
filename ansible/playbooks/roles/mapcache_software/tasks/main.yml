@@ -44,28 +44,20 @@
     template: src={{ item }} dest=/etc/apache2/sites-available/{{ item }}
     with_items:
       - 010-mapcache-http.conf
-    notify:
-      - restart apache
 
   - name: write the https config file
     template: src={{ item }}.j2 dest=/etc/apache2/sites-available/{{ item }}
     with_items:
       - 020-mapcache-https.conf
-    notify:
-      - restart apache
 
   - name: Enable http sites
     command: a2ensite {{ item }} creates=/etc/apache2/sites-enabled/{{ item }}
     with_items:
       - 010-mapcache-http.conf
       - 020-mapcache-https.conf
-    notify:
-      - restart apache
 
   - name: Disable default sites
     command: a2dissite {{ item }} removes=/etc/apache2/sites-enabled/{{ item }}
-    notify:
-      - restart apache
     with_items:
       - 000-default.conf
 
@@ -74,10 +66,6 @@
     with_items:
       - /etc/mapcache
       - /var/www/mapcache
-
-  - name: Make maps template
-    template: src=index.html dest=/var/www/mapcache/index.html mode=755
-
 
   # Seems an ansible bug -- if I use 
   #    synchronize: src=roles/mapcache/files/var/www/test_maps/. dest=/var/www/mapcache/test_maps/.
@@ -88,9 +76,6 @@
 
   - name: Put a temporary mapcache config file in /etc/mapcache/mapcache.xml
     command: creates=/etc/mapcache/mapcache.xml  cp /usr/share/doc/libapache2-mod-mapcache/examples/mapcache.xml /etc/mapcache/mapcache.xml
-
-  - name: Make sure a mapcache directory exists
-    file: path=/var/tmp/cache/mapcache state=directory owner=www-data group=ansible owner=ansible
 
   - name: Make sure certs directory exists
     file: dest=/etc/ssl/mapcache mode=755 state=directory owner={{ lookup('env','USER') }}
