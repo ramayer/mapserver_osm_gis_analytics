@@ -35,6 +35,8 @@ function usage {
        echo "Notes:"
        echo "   --load-osm-data=tiny"
        echo "        Loads about 5 city blocks. It uses a under a GB and loads in minutes in a tiny VM on a desktop."
+       echo "   --bbox=-121.98,37.54,-121.94,37.57    --load-osm-data=tiny"
+       echo "        Loads about 5 city blocks. It uses a under a GB and loads in minutes in a tiny VM on a desktop."
        echo "   --load-osm-data=smaller"
        echo "        Loads dozens of cities around the SF Bay Area. It uses about a dozen GB and loads in about an hour on a mediocre desktop."
        echo "   --load-osm-data=small"
@@ -56,6 +58,7 @@ tmpdir=$HOME/tmp
 gis_data_dir=$tmpdir/gisdata
 osm_data=none
 create_db=false
+bbox=-122.26463,37.79822,-122.24828,37.81079
 
 if [ -d "/mnt/gisdata" ] ; then
    tmpdir=/mnt/gisdata/tmp
@@ -310,7 +313,8 @@ function load_osm_data {
      #    37.81079 -122.26463,-122.24828 37.79822
      # or the missing roads in NRH
      #    32.85531 -97.25333 -97.24225 32.84897
-     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
+     echo GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox"
+     GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox" > lake_merrit.osm
      osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
   fi
 
@@ -459,6 +463,9 @@ case $i in
     --load-osm-data=*)
        map_data=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
        load_osm_data map_data
+    ;;
+    --bbox=*)
+       bbox=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
     ;;
     *)
       usage

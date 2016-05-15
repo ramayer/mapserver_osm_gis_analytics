@@ -18,6 +18,7 @@ $map_colors = {
   land:        {color:'#ffffff', outline:'#aaaaaa'},
   parking:     {color:'#eeddbb', outline:'#666666'},   # should be noticably different from 'building'
 
+  tree:        {color:'#143306'},
   park:        {color:'#d5e2bc'},
   grass:       {color:'#dadead'},
   forest:      {color:'#c5d2ac', outline:"#b5c29c"},
@@ -28,6 +29,7 @@ $map_colors = {
   school:      {color:'#ffffcc'},
   water:       {color:'#99b3cc'},
   ferry:       {color:'#7793cc', label:'#5573cc'},
+  barrier:     {color:'#888888', label:'#444444', outline:'#cccccc'},
 
   building:    {color:'#d8d8d0', offset:'#a8a8a0'},
   citycircle:  {color:'#ddcdcd', outline:'#000000', inner:'#000000'},

@@ -10,9 +10,15 @@ fontdir=$INSTALL_DIR/etc/mapserver/fonts
 mkdir -p $fontdir
 
 sudo apt-get -y install ttf-dejavu-extra
+sudo apt-get install fonts-ancient-scripts fonts-symbola
 
 [ -f ~/toner-carto/fonts/Arial-Unicode-Bold.ttf ] || (cd; git clone https://github.com/forensiclogic/toner-carto.git)
-[ -f $mapdir/fonts.lst ] || cp $PROJECT_DIR/etc/mapserver/map/fonts.lst $mapdir/fonts.lst
 [ -f $fontdir/'Arial-Unicode-Bold.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
 [ -f $fontdir/'Arial-Unicode-Regular.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Regular.ttf $fontdir/Arial-Unicode-Regular.ttf
 [ -f $fontdir/'DejaVuSansCondensed.ttf' ] || cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* $fontdir
+[ -f $fontdir/'Unidings_hint.ttf' ] || cp /usr/share/fonts/truetype/ancient-scripts/Unidings_hint.ttf $fontdir
+[ -f $fontdir/'Symbola_hint.ttf' ] || cp /usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf $fontdir
+
+# Nice icons here: 
+# http://www.fileformat.info/info/unicode/font/fontlist.htm?text=%F0%9F%8F%9E+-+Unicode+Character+%27NATIONAL+PARK%27+%28U%2B1F3DE%29
+cp $PROJECT_DIR/etc/mapserver/map/fonts.lst $mapdir/fonts.lst

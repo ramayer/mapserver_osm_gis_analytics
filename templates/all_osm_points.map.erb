@@ -87,7 +87,7 @@ LAYER
     <%= default_connection() %>
     TYPE POINT # was ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place, capital, name from planet_osm_point where name is not null) as foo using unique osm_id using srid=900913"
+    DATA "way from (select * from planet_osm_point) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -96,7 +96,7 @@ LAYER
             SYMBOL "citycircle"
             COLOR "#ff0000"
         END
-        TEXT "[place] [name]" 
+        TEXT "[osm_id] [place] [name] [amenity] [natural] [leisure] [tourism]" 
         LABEL
             FONT arial
             TYPE TRUETYPE
