@@ -1,0 +1,1 @@
+ansible-playbook  -i ~/.ansible/hosts ~/mapserver_osm_gis_analytics/ansible/playbooks/clear_caches.yaml
