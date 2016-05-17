@@ -2298,7 +2298,7 @@ LAYER
 END
 
 # consider    SIZEUNITS meters
-<% iconsize = 15 %>
+<% iconsize = 10 %>
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -2310,7 +2310,24 @@ LAYER
     DATA "way from (select way,osm_id ,place, capital, name,\"natural\",amenity,highway,leisure,power from planet_osm_point) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
-    # consider apt-cache search unidings
+
+    CLASS
+        EXPRESSION ('[natural]'='tree')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "tree"
+            COLOR '<%= get_color("tree") %>'
+        END
+    END
+    CLASS
+        EXPRESSION ('[power]'='tower')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "power_tower"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
     CLASS
         EXPRESSION ('[name]' != '')
         TEXT  ('[name]')
