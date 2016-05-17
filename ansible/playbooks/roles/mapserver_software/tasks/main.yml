@@ -9,9 +9,12 @@
       - libproj9
       - libproj-dev
       - gdal-bin   # ogr2ogr
+      - ruby-pg    # querying the road network
 
     # php5-mapscript seems to be no longer available on Ubuntu 16.04
     #  - php5-mapscript
+    #
+    #  - ruby-json isn't needed?
 
 
   - name: Apache | Enable module | Enable $module

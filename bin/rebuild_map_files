@@ -26,6 +26,7 @@ done
 
 erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
 
+
 mkdir -p $INSTALL_DIR/var/www/mapcache
 
 if [ -f $INSTALL_DIR/var/www/mapcache/v3.15.1-dist/ol.js ];
@@ -49,3 +50,5 @@ fi
 erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
 install $PROJECT_DIR/templates/var/www/mapcache/index.html $INSTALL_DIR/var/www/mapcache/index.html
 
+mkdir -p $INSTALL_DIR/usr/lib/cgi-bin
+erb $PROJECT_DIR/templates/usr/lib/cgi-bin/map_data.cgi.erb > $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi.erb

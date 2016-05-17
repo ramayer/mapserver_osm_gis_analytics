@@ -111,3 +111,13 @@
   crime icons:
   https://thenounproject.com/term/crime/8847/
   http://www.flaticon.com/packs/criminal-minds🔫
+
+
+
+* Need gis_convenience_functions gem on app server: 
+
+  git clone https://github.com/ramayer/gis_convenience_functions.git
+  cd gis_convenience_functions/
+  env GIS_PORT=5432 GIS_HOST='postgis-01' GIS_PASSWORD='changeme' rake test
+  gem build gis_convenience_functions.gemspec 
+  sudo gem install gis_convenience_functions
