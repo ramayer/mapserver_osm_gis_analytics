@@ -16,15 +16,15 @@ $map_colors = {
   country:     {color:'#ffffff', outline:'#888888'},
   state:       {color:'#ffffff', outline:'#cccccc'},
   land:        {color:'#ffffff', outline:'#aaaaaa'},
-  parking:     {color:'#eeddbb', outline:'#666666'},   # should be noticably different from 'building'
+  parking:     {color:'#f0e8e0', outline:'#666666'},   # should be noticably different from 'building'
 
   tree:        {color:'#143306'},
   park:        {color:'#d5e2bc'},
   grass:       {color:'#dadead'},
   forest:      {color:'#c5d2ac', outline:"#b5c29c"},
-  sand:        {color:'#eecc99', outline:"#ccaa77"},
-  mud:         {color:'#eedd99', outline:"#ccbb77"},
-  military:    {color:'#888888', outline:"#444444"},
+  sand:        {color:'#f5e9c6', outline:"#ccaa77"},
+  mud:         {color:'#eeddbb', outline:"#ccbb77"},
+  military:    {color:'#999999', outline:"#666666"},
   tourism:     {color:'#ddbbff', outline:"#ccaaff"},
   school:      {color:'#ffffcc'},
   water:       {color:'#99b3cc'},
@@ -40,12 +40,6 @@ $map_colors = {
   rail:        {color:'#ffffff', outline:'#A5A5A4',symbol:'#A5A5A4'},
 
   oneway:      {color:'#887755'},
-  road_1:      {color:'#ccbb88', outline:'#887755'},
-  road_2:      {color:'#ddcc99', outline:'#887755'},
-  road_3:      {color:'#eeddaa', outline:'#887755'},
-  road_4:      {color:'#ffeecc', outline:'#887755'},
-  road_5:      {color:'#cccccc'},
-
 
   # The old pallete was based on beige's  like #ddccaa
   # motorway:     {color:'#aa9977', outline:'#ded5c2'},
