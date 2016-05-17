@@ -937,7 +937,7 @@ LAYER
             WIDTH 5
         END
         LABEL
-			MAXSCALEDENOM 25010
+	    MAXSCALEDENOM 25010
             TYPE TRUETYPE
             FONT arial
             PARTIALS FALSE
@@ -1129,6 +1129,29 @@ LAYER
     DATA "way from (select *,coalesce(name,man_made) as nicename from planet_osm_line where man_made is not null) as l using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "man_made"
+
+    CLASS
+        EXPRESSION "pipeline"
+        STYLE
+	    WIDTH 2
+	    COLOR "<%= get_color('barrier') %>"
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('barrier','label')%>"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+
     CLASS
         STYLE
 	    WIDTH 5
@@ -1179,6 +1202,7 @@ LAYER
     DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
+
     CLASS
         EXPRESSION ("[highway]"="motorway" and "[tunnel]"="yes")
         STYLE
@@ -1355,6 +1379,9 @@ LAYER
 END
 
 
+#
+# TODO -- occasionally turn this bright red to see what new Line Types OSM added
+# 
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
@@ -1365,12 +1392,14 @@ LAYER
     DATA "way from (select * from planet_osm_line where man_made is null and waterway is null and route is null and highway is null and railway is null order by z_order) as foo using unique osm_id using srid=900913"
     LABELITEM "name"
     CLASS
+	# TEXT "[osm_id] [name]"
         EXPRESSION (length('[name]') > 0)
         STYLE
             WIDTH 1
-            COLOR "#ff0000"
+            COLOR "#888888"
+	    PATTERN 8 4 0 4 4 4 0 4 END
         END
-        <%= road_label("road_label",6,1) %>
+        <%= road_label("road_label",7,1) %>
     END
 END
 
@@ -1678,13 +1707,12 @@ LAYER
     LABELITEM "nicename"
     CLASSITEM "highway"
 
-
-    <%= road_class('motorway'        , 8  ,10,5) %>
-    <%= road_class('trunk'           , 7  , 9,5) %>
-    <%= road_class('primary'         , 6  , 8,4) %>
-    <%= road_class('secondary'       , 5  , 8,3) %>
-    <%= road_class('tertiary'        , 4  , 7,2) %>
-    <%= road_class('unclassified'    , 4  , 0,0) %>
+    <%= road_class('motorway'        , 7  ,10,5) %>
+    <%= road_class('trunk'           , 6  , 9,5) %>
+    <%= road_class('primary'         , 5  , 8,4) %>
+    <%= road_class('secondary'       , 4  , 8,3) %>
+    <%= road_class('tertiary'        , 3  , 7,2) %>
+    <%= road_class('unclassified'    , 2  , 0,0) %>
     <%= road_class('residential'     , 2  , 0,0) %>
     <%= road_class('road'            , 1  , 0,0) %>
     <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
@@ -1720,15 +1748,15 @@ LAYER
     DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
-            WIDTH 2
+            WIDTH 1
             OUTLINEWIDTH 1
             OUTLINECOLOR  "<%= get_color("rail","outline") %>"
-            COLOR  "<%= get_color("rail") %>"
+            COLOR "<%= get_color("rail") %>"
         END
         STYLE
             SYMBOL rail
-            SIZE 5
-            COLOR  "<%= get_color("rail","symbol") %>"
+            SIZE 3
+            COLOR "<%= get_color("rail","symbol") %>"
         END
     END
 END
@@ -1743,12 +1771,12 @@ LAYER
     LABELITEM "nicename"
     CLASSITEM "highway"
 
-    <%= road_class('motorway'        , 7  , 9,5) %>
-    <%= road_class('trunk'           , 6  , 9,4) %>
-    <%= road_class('primary'         , 5  , 7,3) %>
-    <%= road_class('secondary'       , 4  , 7,2) %>
-    <%= road_class('tertiary'        , 3  , 7,1) %>
-    <%= road_class('unclassified'    , 2  , 0,0) %>
+    <%= road_class('motorway'        , 6  , 9,5) %>
+    <%= road_class('trunk'           , 5  , 7,4) %>
+    <%= road_class('primary'         , 4  , 7,3) %>
+    <%= road_class('secondary'       , 3  , 7,2) %>
+    <%= road_class('tertiary'        , 2  , 7,1) %>
+    <%= road_class('unclassified'    , 1  , 0,0) %>
     <%= road_class('residential'     , 1  , 0,0) %>
     <%= road_class('road'            , 1  , 0,0) %>
     <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
@@ -1772,14 +1800,14 @@ LAYER
     DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
     CLASS
         STYLE
-            WIDTH 2
+            WIDTH 1
             OUTLINEWIDTH 1
             OUTLINECOLOR  "<%= get_color("rail","outline") %>"
             COLOR  "<%= get_color("rail") %>"
         END
         STYLE
             SYMBOL rail
-            SIZE 5
+            SIZE 3
             COLOR  "<%= get_color("rail","symbol") %>"
         END
     END
@@ -1796,7 +1824,7 @@ LAYER
     CLASSITEM "highway"
 
     <%= road_class('motorway'        , 4  , 9,5) %>
-    <%= road_class('motorway_link'	 , 2  , 0,0) %> # or else you can't see CA 85 x US 101
+    <%= road_class('motorway_link'   , 2  , 0,0) %> # or else you can't see CA 85 x US 101
     <%= road_class('trunk'           , 3  , 7,4) %>
     <%= road_class('primary'         , 2.5, 0,0) %>
     <%= road_class('secondary'       , 2  , 0,0) %>
@@ -1818,7 +1846,7 @@ LAYER
 
     CLASSITEM "highway"
     <%= road_class('motorway'        , 4  , 9,5) %>
-    <%= road_class('trunk'           , 2  , 9,4) %>
+    <%= road_class('trunk'           , 2  , 7,4) %>
     <%= road_class('primary'         , 2  , 0,0) %>
     <%= road_class('secondary'       , 1  , 0,0) %>
     <%= road_class('tertiary'        , 0  , 0,0) %>
@@ -1864,7 +1892,7 @@ LAYER
     LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 3  , 8,5) %>
-    <%= road_class('trunk'           , 2  , 7,4) %>
+    <%= road_class('trunk'           , 2  , 0,0) %>
     <%= road_class('primary'         , 1  , 0,0) %>
     <%= road_class('secondary'       , 0  , 0,0) %>
     <%= road_class('tertiary'        , 0  , 0,0) %>
@@ -2206,6 +2234,7 @@ LAYER
             SYMBOL "tree"
             COLOR '<%= get_color("tree") %>'
         END
+	TEXT "[name]"
         LABEL
             FONT arial
             TYPE TRUETYPE
@@ -2236,6 +2265,7 @@ LAYER
             COLOR "<%= get_color("place_label") %>"
             OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             PRIORITY 1
+	    BUFFER 15
             PARTIALS FALSE
             POSITION AUTO
         END
@@ -2259,6 +2289,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 
@@ -2280,6 +2311,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 
@@ -2301,6 +2333,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 
@@ -2322,6 +2355,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 
@@ -2343,6 +2377,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 
@@ -2368,6 +2403,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 END
@@ -2473,6 +2509,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 15
         END
     END
 END
@@ -2483,7 +2520,7 @@ LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
     MINSCALEDENOM 2500
-    MAXSCALEDENOM 10000
+    MAXSCALEDENOM 5000
     <%= default_connection() %>
     TYPE POINT # was ANNOTATION
     NAME "places"
@@ -2512,6 +2549,7 @@ LAYER
             PRIORITY 1
             PARTIALS FALSE
             POSITION AUTO
+	    BUFFER 10
         END
     END
 END
@@ -2890,7 +2928,7 @@ LAYER
     MAXSCALEDENOM 20000010 
     TYPE POINT # was ANNOTATION
     NAME "places"
-    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo using unique osm_id using srid=900913"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city') order by population desc) as foo using unique osm_id using srid=900913"
     LABELITEM 'name'
     CLASSITEM 'place'
     CLASS
@@ -2915,10 +2953,8 @@ LAYER
             OUTLINEWIDTH 4
             WRAP ' '
             MAXLENGTH 12
-            #MAXLENGTH 8
-            ALIGN CENTER
             PRIORITY 10
-            BUFFER 10
+            BUFFER 5
             PARTIALS FALSE
             POSITION auto
         END
@@ -2939,11 +2975,9 @@ LAYER
             OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
             OUTLINEWIDTH 2
             WRAP ' '
+            BUFFER 5
             MAXLENGTH 12
-            #MAXLENGTH 8
-            ALIGN CENTER
             PRIORITY 5
-            BUFFER 9
             PARTIALS FALSE
             POSITION auto
         END
