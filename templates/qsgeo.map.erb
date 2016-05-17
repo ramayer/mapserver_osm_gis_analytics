@@ -19,30 +19,7 @@
        {minscaledenom:10000010 , maxscaledenom:20000010 ,   zoom:5},
     ]
 
-   original_colors = {
-       forest_color:         '#CCDEAD',          # forest
-       grass_color:      '#DADEAD',          # grass
-       hospital_color:           '#E6C8C3',          # hospital
-       industrial_color:     '#E3E2DF',          # airport, military, railways, brownfield, commercial, cemetary, parking
-       land_color_1:         '#ffffff',          # basic polygons
-       land_outline_color_1:     '#aaaaaa',      # state outline
-       oneway_color:         '#9A9ACA',          # the arrows on one-way roads
-       park_color:               '#B5D29C',          # golf course, park, recreation_ground, cemetary (other zoom)
-       rail_color:               '#ffffff',          # rail
-       rail_outline_color:       '#A5A5A4',          # rail
-       rail_symbol_color:        '#A5A5A4',          # rail
-       residential_color:    '#EDEAE2',          # 'residential'
-       road_color_1:         '#aa9977',          # major highways                - motorway
-       road_color_2:         '#ddccaa',          # oregon expressway, etc        - trunk
-       road_color_3:         '#eeddbb',          # el camino, alma, hwy 9, etc.  - primary
-       road_color_4:         '#ffeecc',          # the inside of smaller roads - Stevenson and all smalll roads.
-       road_color_5:         '#aaaaaa',          # roads zoomed out so they're just 1px wide
-       road_outline_color_3:     '#eeddbb',          # el camino, alma, hwy 9, etc.
-       school_color:         '#DED1AB',          # school, college, university
-       water_color:          '#99b3cc',          # water
-   }
-
-   $colors = $map_options ? original_colors.merge($map_options) :  original_colors
+   $colors = $map_options
 
    def database_username()
        ENV["PGUSER"] || 'gis'
@@ -130,7 +107,7 @@
 
    def major_highways(types=['motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link'])
     type_string = types.map{|t| "'#{t}'"}.join(",")
-    nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
+    nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') WHEN highway='motorway' THEN coalesce(ref,name) ELSE coalesce(name,ref) END}
     return %Q{(
            SELECT way, osm_id ,highway,ref, name, #{nicename} AS nicename, tunnel
        FROM planet_osm_roads
@@ -154,7 +131,7 @@
             MINDISTANCE 250
             ANGLE FOLLOW
             COLOR "#{get_color('road_label')}"
-            OUTLINECOLOR "#{get_color(highway)}"
+            OUTLINECOLOR "#{get_color(road_type)}"
             OUTLINEWIDTH 2
          END
        }
@@ -445,6 +422,12 @@ SYMBOL
     #GAP -3
 END
 
+SYMBOL
+  NAME "hatch"
+  TYPE hatch
+END
+
+
 # TODO - PATTERN in a SYMBOL is deprecated and no longer works.
 # See: http://mapserver.org/mapfile/symbology/construction.html#sym-construction
 
@@ -493,7 +476,7 @@ END
 
    # consider 'wetland'='saltmarsh' too.
 
-   sql = %q{
+   polysql = %q{
         SELECT way,
            osm_id,
            name,
@@ -508,6 +491,7 @@ END
            waterway,
            boundary,
            \"natural\" as nature,
+	   power,
            coalesce(name,sport) as nicelabel
         FROM planet_osm_polygon
     WHERE amenity is not null
@@ -518,6 +502,7 @@ END
        OR tourism is not null
        OR \"natural\" is not null
        OR highway is not null
+       OR power is not null
         ORDER by way_area desc 
    }.gsub(/\s+/," ")
 
@@ -530,7 +515,8 @@ END
 
   def poly_class(tag,values,colorname,outlinecolorname)
       style = ''
-      expressions  = values.map{|v| %Q{"[#{tag}]"="#{v}"}}.join(" or ")
+      hatchelem  = ''
+      expressions  = tag ? values.map{|v| %Q{"[#{tag}]"="#{v}"}}.join(" or ") : values
       color    = colorname && get_color(colorname)
       darker       = color && darken(color,32)
       colorelem    = color ? %Q{COLOR "#{color}"} : ""
@@ -539,16 +525,31 @@ END
 
       outlineelem  = outlinecolor ? %Q{OUTLINEWIDTH 1 OUTLINECOLOR "#{outlinecolor}"} : ""
 
-	  labelcolor = (colorname == 'water') ? get_color('water_label') : get_color('land_label')
+      labelcolor = (colorname == 'water') ? get_color('water_label') : get_color('land_label')
+      labeloutlinecolor = (colorname == 'water') ? get_color('water_label','outline') : get_color('land_label','outline')
+
+      if (outlinecolor && !color)
+         hatchelem = %Q{
+      	   STYLE
+	       SYMBOL "hatch"
+	       COLOR "#{outlinecolor}"
+	       SIZE 5
+	       WIDTH 0.5
+	       ANGLE 45
+	       PATTERN 10 5 5 5 END
+	   END # STYLE
+         }
+      end
 
       %Q{
          CLASS
             EXPRESSION (#{expressions})
         MINFEATURESIZE 20 
         STYLE
-        #{colorelem}    
-        #{outlineelem}
-            END
+           #{colorelem}    
+           #{outlineelem}
+        END
+	#{hatchelem}
         LABEL
         TYPE TRUETYPE
         FONT arial
@@ -558,12 +559,11 @@ END
         SIZE 7
         MINDISTANCE 100
         COLOR "#{labelcolor}"
-        OUTLINECOLOR "#ffffff"
+        OUTLINECOLOR "#{labeloutlinecolor}"
         MINFEATURESIZE AUTO
         WRAP ' '
         MAXLENGTH 12
         END
-
      END
       }
   end
@@ -598,39 +598,28 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "way from (<%= sql %>) as foo using unique osm_id using srid=900913"
+    DATA "way from (<%= polysql %>) as foo using unique osm_id using srid=900913"
     LABELITEM "nicelabel"
     PROCESSING "LABEL_NO_CLIP=ON"
     MAXSCALEDENOM 220000
 
-     CLASS
-         EXPRESSION (length('[boundary]') > 0)
-         STYLE
-             OUTLINECOLOR "<%= get_color("forest","outline") %>"
-             OUTLINEWIDTH 1
-         END
-     <%= poly_label('place_label',8,10) %>
-     END
-
-    <%= poly_class('nature'  ,%W{water bay pond}                      ,'water'   ,nil) %>
-    <%= poly_class('landuse' ,%W{pond basin reservoir}                        ,'water'   ,nil) %>
-    <%= poly_class('waterway',%W{riverbank stream}                            ,'water'   ,nil) %>
-    <%= poly_class('amenity' ,%W{fountain swimming_pool}                      ,'water'   ,nil) %>
-    <%= poly_class('leisure' , %W{swimming_pool}                          ,'water'   ,nil) %>
-    <%= poly_class('leisure' , %W{water_park}                         ,'tourism' ,nil) %>
-    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                             ,'tourism' ,nil) %>
-    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                  ,'hospital',nil) %>
-    <%= poly_class('amenity' , %W{school college university}                          ,'school'  ,nil) %>
-    <%= poly_class('aeroway' , %W{aerodrome}                                  ,'tourism' ,nil) %>
-    <%= poly_class('amenity' , %W{parking bicycle_parking}                    ,'parking' ,nil ) %>
-    <%= poly_class('landuse' , %W{railway}                                ,'parking' ,nil ) %>
-    <%= poly_class('leisure' , %W{park}                                       ,'park'    ,nil ) %>
+    <%= poly_class('nature'  ,%W{water bay pond}                                          ,'water'   ,nil) %>
+    <%= poly_class('landuse' ,%W{pond basin reservoir}                     		  ,'water'   ,nil) %>
+    <%= poly_class('waterway',%W{riverbank stream}                        		  ,'water'   ,nil) %>
+    <%= poly_class('amenity' ,%W{fountain swimming_pool}                   		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{swimming_pool}                         		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{water_park}                      			  ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                   	  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                      ,'hospital',nil) %>
+    <%= poly_class('amenity' , %W{school college university}                              ,'school'  ,nil) %>
+    <%= poly_class('aeroway' , %W{aerodrome}                                              ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{parking bicycle_parking}                                ,'parking' ,nil ) %>
+    <%= poly_class('landuse' , %W{railway}                                                ,'parking' ,nil ) %>
 
     <%= poly_class('leisure' , %W{garden common sports_centre fairgrounds dog_park}       ,'grass'    ,nil ) %>
     <%= poly_class('amenity' , %W{theater}                                                ,'grass'    ,nil ) %>
     <%= poly_class('nature'  , %W{wood ridge}                                             ,'forest'   ,nil ) %>
     <%= poly_class('landuse' , %W{forest}                                                 ,'forest'   ,nil ) %>
-    <%= poly_class('boundary', %W{national_park}                                          ,nil        ,'forest' ) %>
 
     <%= poly_class('nature'  , %W{marsh wetland mud}                                    ,'mud'      ,nil ) %>
     <%= poly_class('leisure' , %W{brownfield}                                           ,'mud'      ,nil ) %>
@@ -640,7 +629,6 @@ LAYER
     <%= poly_class('landuse' , %W{quarry}                                               ,'sand'     ,nil ) %>
     <%= poly_class('landuse' , %W{grass farm greenfield allotments meadow field}        ,'grass'    ,nil ) %>
     <%= poly_class('leisure' , %W{recreation_ground}                                    ,'forest'   ,nil ) %>
-    <%= poly_class('leisure' , %W{nature_reserve}                                       ,'forest'   ,nil ) %>
     <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
     <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
     <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
@@ -648,7 +636,13 @@ LAYER
     <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
     <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
     <%= poly_class('nature'  , %W{heath scrub scree grassland}                          ,'grass'    ,nil ) %>
-
+    <%= poly_class('power'   , %W{station line compensator yes transformer substation generator sub_station plant converter switchgear}                                              ,'military' ,nil ) %>
+    <%= poly_class('name'    , ['Emerald Bay State Park',
+    			        'D.L. Bliss State Park'
+    			       ]                                                          ,nil        ,'forest' ) %>
+    <%= poly_class('leisure' , %W{park}                                                   ,'park'      ,nil ) %>
+    <%= poly_class('boundary', %W{national_park protected_area}                           ,nil        ,'forest' ) %>
+    <%= poly_class('leisure',  %W{nature_reserve}                                         ,nil        ,'forest' ) %>
 
      # Intentionally not coloring these; because different cities and
      # counties are very inconsistent in how they use them.
@@ -694,7 +688,8 @@ END
 
 
 #  This was copy&pasted from above, with the only differences being
-#         DATA "sway from (<%= sql.sub('planet_osm_polygon','simple_large_polygons') %>) as foo using unique osm_id using srid=900913"
+#         DATA 
+#  and
 #         MINSCALEDENOM 220000
 #  Until it can be updated, it's probably best to not edit here, and just copy&paste the above.
 #
@@ -707,40 +702,29 @@ LAYER
     NAME "landuse_layer3"
     TYPE POLYGON
     <%= default_connection() %>
-    DATA "sway from (<%= sql.sub('planet_osm_polygon','simple_large_polygons').sub(' way,',' sway,') %>) as foo using unique osm_id using srid=900913"
+    DATA "sway from (<%= polysql.sub('planet_osm_polygon','simple_large_polygons').sub(' way,',' sway,') %>) as foo using unique osm_id using srid=900913"
     LABELITEM "nicelabel"
     PROCESSING "LABEL_NO_CLIP=ON"
     MINSCALEDENOM 220000
     MAXSCALEDENOM 2000010
 
-     CLASS
-         EXPRESSION (length('[boundary]') > 0)
-         STYLE
-             OUTLINECOLOR "<%= get_color("forest","outline") %>"
-             OUTLINEWIDTH 1
-         END
-     <%= poly_label('place_label',8,10) %>
-     END
-
-    <%= poly_class('nature'  ,%W{water bay pond}                      ,'water'   ,nil) %>
-    <%= poly_class('landuse' ,%W{pond basin reservoir}                        ,'water'   ,nil) %>
-    <%= poly_class('waterway',%W{riverbank stream}                            ,'water'   ,nil) %>
-    <%= poly_class('amenity' ,%W{fountain swimming_pool}                      ,'water'   ,nil) %>
-    <%= poly_class('leisure' , %W{swimming_pool}                          ,'water'   ,nil) %>
-    <%= poly_class('leisure' , %W{water_park}                         ,'tourism' ,nil) %>
-    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                             ,'tourism' ,nil) %>
-    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                  ,'hospital',nil) %>
-    <%= poly_class('amenity' , %W{school college university}                          ,'school'  ,nil) %>
-    <%= poly_class('aeroway' , %W{aerodrome}                                  ,'tourism' ,nil) %>
-    <%= poly_class('amenity' , %W{parking bicycle_parking}                    ,'parking' ,nil ) %>
-    <%= poly_class('landuse' , %W{railway}                                ,'parking' ,nil ) %>
-    <%= poly_class('leisure' , %W{park}                                       ,'park'    ,nil ) %>
+    <%= poly_class('nature'  ,%W{water bay pond}                                          ,'water'   ,nil) %>
+    <%= poly_class('landuse' ,%W{pond basin reservoir}                     		  ,'water'   ,nil) %>
+    <%= poly_class('waterway',%W{riverbank stream}                        		  ,'water'   ,nil) %>
+    <%= poly_class('amenity' ,%W{fountain swimming_pool}                   		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{swimming_pool}                         		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{water_park}                      			  ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                   	  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                      ,'hospital',nil) %>
+    <%= poly_class('amenity' , %W{school college university}                              ,'school'  ,nil) %>
+    <%= poly_class('aeroway' , %W{aerodrome}                                              ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{parking bicycle_parking}                                ,'parking' ,nil ) %>
+    <%= poly_class('landuse' , %W{railway}                                                ,'parking' ,nil ) %>
 
     <%= poly_class('leisure' , %W{garden common sports_centre fairgrounds dog_park}       ,'grass'    ,nil ) %>
     <%= poly_class('amenity' , %W{theater}                                                ,'grass'    ,nil ) %>
     <%= poly_class('nature'  , %W{wood ridge}                                             ,'forest'   ,nil ) %>
     <%= poly_class('landuse' , %W{forest}                                                 ,'forest'   ,nil ) %>
-    <%= poly_class('boundary', %W{national_park}                                          ,nil        ,'forest' ) %>
 
     <%= poly_class('nature'  , %W{marsh wetland mud}                                    ,'mud'      ,nil ) %>
     <%= poly_class('leisure' , %W{brownfield}                                           ,'mud'      ,nil ) %>
@@ -750,15 +734,20 @@ LAYER
     <%= poly_class('landuse' , %W{quarry}                                               ,'sand'     ,nil ) %>
     <%= poly_class('landuse' , %W{grass farm greenfield allotments meadow field}        ,'grass'    ,nil ) %>
     <%= poly_class('leisure' , %W{recreation_ground}                                    ,'forest'   ,nil ) %>
-    <%= poly_class('leisure' , %W{nature_reserve}                                       ,'forest'   ,nil ) %>
     <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
     <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
-    <%= poly_class('tourism' , %W{picnic_site camp_site}                               ,'forest'    ,nil ) %>
+    <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
     <%= poly_class('leisure' , %W{playground}                                           ,'grass'    ,nil ) %>
     <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
     <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
     <%= poly_class('nature'  , %W{heath scrub scree grassland}                          ,'grass'    ,nil ) %>
-
+    <%= poly_class('power'   , %W{station line compensator yes transformer substation generator sub_station plant converter switchgear}                                              ,'military' ,nil ) %>
+    <%= poly_class('name'    , ['Emerald Bay State Park',
+    			        'D.L. Bliss State Park'
+    			       ]                                                          ,nil        ,'forest' ) %>
+    <%= poly_class('leisure' , %W{park}                                                   ,'park'      ,nil ) %>
+    <%= poly_class('boundary', %W{national_park protected_area}                           ,nil        ,'forest' ) %>
+    <%= poly_class('leisure',  %W{nature_reserve}                                         ,nil        ,'forest' ) %>
 
      # Intentionally not coloring these; because different cities and
      # counties are very inconsistent in how they use them.
@@ -776,17 +765,17 @@ LAYER
 
      CLASS
          EXPRESSION ('[landuse]'='residential' or '[landuse]'='industrial' or '[amenity]'='trailer_park' or '[amenity]'='marketplace' or '[amenity]'='restaurant' or '[landuse]'='institutional')
-     <%= poly_label('place_label',7,5) %>
+         <%= poly_label('place_label',7,5) %>
      END
      CLASS
          EXPRESSION ('[landuse]'='special_use' or '[landuse]'='commercial' or '[landuse]'='construction' or '[landuse]'='retail' or '[landuse]'='public_facility' or '[amenity]'='fire_station')
-     <%= poly_label('place_label',7,5) %>
+         <%= poly_label('place_label',7,5) %>
      END
 
      # Silly layers
      CLASS
          EXPRESSION ('[landuse]'='greenhouse_horticulture')
-     <%= poly_label('place_label',7,5) %>
+         <%= poly_label('place_label',7,5) %>
      END
 
      CLASS
@@ -1089,10 +1078,11 @@ LAYER
     MAXSCALEDENOM 50010 minscaledenom 0
     TYPE LINE
     NAME "barriers"
-    DATA "way from (select *,coalesce(name,barrier) as nicename from planet_osm_line where barrier is not null) as l using unique osm_id using srid=900913"
+    DATA "way from (select *,coalesce(name,barrier) as nicename from planet_osm_line where barrier is not null or power is not null) as l using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "route"
     CLASS
+	EXPRESSION ("[barrier]"  != "")
         STYLE
 	    WIDTH 1
             COLOR "<%= get_color('barrier')%>"
@@ -1109,6 +1099,27 @@ LAYER
             MINDISTANCE 250
             ANGLE FOLLOW
             COLOR "<%= get_color('barrier','label')%>"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+    CLASS
+	EXPRESSION ("[power]"  != "")
+        STYLE
+	    WIDTH 1
+            COLOR "#880000"
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "#880000"
             OUTLINECOLOR "<%= get_color('barrier','outline') %>"
 	    OUTLINEWIDTH 2
         END
@@ -1206,7 +1217,7 @@ LAYER
             COLOR "<%= get_color("motorway") %>"
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("motorway","outline") %>"
-	    PATTERN 8 12 END
+	    PATTERN 4 12 END
         END
         <%= road_label("road_label",7,1) %>
     END
@@ -1325,11 +1336,11 @@ LAYER
     CLASS
         EXPRESSION ("[tunnel]"="yes")
         STYLE
-            WIDTH 5
+            WIDTH 4
             COLOR "<%= get_color("motorway") %>"
             OUTLINEWIDTH 1
             OUTLINECOLOR "<%= get_color("motorway","outline") %>"
-	    PATTERN 8 12 END
+	    PATTERN 4 12 END
         END
         <%= road_label("road_label",7,1) %>
     END
@@ -1402,6 +1413,18 @@ LAYER
     DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
+
+    CLASS
+        EXPRESSION ("[tunnel]"="yes")
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("motorway") %>"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 4 12 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
 
     <%= road_class('motorway'        ,10  ,10,5) %>
     <%= road_class('trunk'           , 9  , 9,5) %>
@@ -1673,8 +1696,8 @@ LAYER
     LABELITEM "nicename"
     CLASSITEM "highway"
     <%= road_class('motorway'        , 3  , 8,5) %>
-    <%= road_class('trunk'           , 2  , 0,0) %>
-    <%= road_class('primary'         , 0  , 0,0) %>
+    <%= road_class('trunk'           , 1  , 0,0) %>
+    <%= road_class('primary'         , 0.5, 0,0) %>
     <%= road_class('secondary'       , 0  , 0,0) %>
 END
 

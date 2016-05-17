@@ -1,4 +1,4 @@
-load File.join(File.dirname(__FILE__), 'white_roads.rb')
+load File.join(File.dirname(__FILE__), 'black_on_white.rb')
 
 $old_map_colors = $map_colors
 
