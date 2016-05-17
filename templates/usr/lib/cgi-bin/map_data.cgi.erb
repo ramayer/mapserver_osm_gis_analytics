@@ -62,8 +62,17 @@ class GisConvenienceFunctions
     interesting_distance ||= @five_hundred_feet
     #  Consider "name IS NOT NULL or leisure='pitch' or sport='basketball'"
     sql = %Q{
-        SELECT osm_id, name, amenity, admin_level, boundary, sport, leisure, building, operator,
-               array_to_json(hstore_to_array(tags)) as json_tags,
+        SELECT "osm_id", "access", "addr:housename", "addr:housenumber", "addr:interpolation", "admin_level",
+               "aerialway", "aeroway", "amenity", "area", "barrier", "bicycle", "brand", "bridge", "boundary",
+               "building", "construction", "covered", "culvert", "cutting", "denomination", "disused",
+               "embankment", "foot", "generator:source", "harbour", "highway", "historic", "horse",
+               "intermittent", "junction", "landuse", "layer", "leisure", "lock", "man_made", "military",
+               "motorcar", "name", "natural", "office", "oneway", "operator", "place", "population",
+               "power", "power_source", "public_transport", "railway", "ref", "religion", "route",
+               "service", "shop", "sport", "surface", "toll", "tourism", "tower:type", "tracktype",
+               "tunnel", "water", "waterway", "wetland", "width", "wood", "z_order", "way_area",
+               "tags", "way",
+               hstore_to_json(tags) as json_tags,
                ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
                ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
           FROM planet_osm_polygon geom
@@ -83,7 +92,7 @@ class GisConvenienceFunctions
     interesting_distance ||= @five_hundred_feet
     sql = %Q{
         SELECT *,
-               array_to_json(hstore_to_array(tags)) as json_tags,
+               hstore_to_json(tags) as json_tags,
                ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
                ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
           FROM planet_osm_point geom
@@ -102,7 +111,7 @@ class GisConvenienceFunctions
     interesting_distance ||= @five_hundred_feet
     sql = %Q{
         SELECT *,
-               array_to_json(hstore_to_array(tags)) as json_tags,
+               hstore_to_json(tags) as json_tags,
                ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
                ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
           FROM planet_osm_line geom
@@ -198,10 +207,21 @@ end
 cgi = CGI.new
 
 lat,lon = cgi['q'].split(',').map{|x| x.to_f}
-gcf = GisConvenienceFunctions.new('gis','gis','localhost',5432,'<%= ENV["PGPASSWORD"] %>')
+gcf = GisConvenienceFunctions.new('gis','gis','localhost',5432,'changeme')
 crg = gcf.nearby_landmarks(lon,lat)
+
+polys = gcf.nearby_polygons(lon,lat)
+poly_txt = polys.map{|x|
+    if x['json_tags']
+        x = x.merge(JSON::parse(x['json_tags']))
+    end
+    interesting_keys = (x.keys - ['osm_id','name','json_tags','tags'])
+    %Q{<b>#{x['osm_id']}:#{x['name']}</b><br>}+
+    interesting_keys.map{|k| "<b>#{k}:</b>#{x[k]}"}.join("<br>")
+}.join("<hr>")
 
 puts cgi.header
 
-puts "<!DOCTYPE html>\n<html>hi #{cgi['q']} ==> #{crg} </html>"
+puts "<!DOCTYPE html>\n<html>#{poly_txt}</html>"
+
 

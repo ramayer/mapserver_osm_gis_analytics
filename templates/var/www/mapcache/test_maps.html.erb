@@ -751,11 +751,9 @@ var clusters = new ol.layer.Vector({
 	var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
 	    coordinate, 'EPSG:3857', 'EPSG:4326'));
 	content.innerHTML = '<code>' + hdms + '</code>';
-        $.get('/cgi-bin/hello_world.cgi?q='+evtcrd[0]+','+evtcrd[1],function(data) { $("#popup-content").html(data)});
+        $.get('/map_data?q='+evtcrd[0]+','+evtcrd[1],function(data) { $("#popup-content").html(data)});
 	overlay.setPosition(coordinate);
     });
-
-
 
       </script>
 </body>

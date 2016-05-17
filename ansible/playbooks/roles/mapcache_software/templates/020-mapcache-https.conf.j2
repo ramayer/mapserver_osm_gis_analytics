@@ -60,6 +60,9 @@
 		ProxyPass	 "/haproxy" "http://localhost:30080/haproxy"
 		ProxyPassReverse "/haproxy" "http://localhost:30080/haproxy"
 
+		ProxyPass	 "/map_data" "http://localhost:20080/map_data"
+		ProxyPassReverse "/map_data" "http://localhost:20080/map_data"
+
 	</VirtualHost>
 
 </IfModule>
