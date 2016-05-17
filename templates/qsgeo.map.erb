@@ -453,11 +453,7 @@ END
 #     TYPE SIMPLE
 #     #PATTERN 1 1 END
 # END
-SYMBOL
-    NAME "tunnel"
-    TYPE SIMPLE
-    # PATTERN 2 2 END
-END
+
 SYMBOL
     NAME "dash"
     TYPE SIMPLE
@@ -1204,136 +1200,16 @@ LAYER
     CLASSITEM "highway"
 
     CLASS
-        EXPRESSION ("[highway]"="motorway" and "[tunnel]"="yes")
+        EXPRESSION ("[tunnel]"="yes")
         STYLE
-            WIDTH 15
-            SYMBOL "tunnel"
+            WIDTH 5
+            COLOR "<%= get_color("motorway") %>"
             OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 8 12 END
         END
-        STYLE
-            WIDTH 15
-            COLOR "<%= get_color("road_1") %>"
-        END
+        <%= road_label("road_label",7,1) %>
     END
-    CLASS
-        EXPRESSION ("[highway]"="motorway_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_1") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="trunk" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 15
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 15
-            COLOR "<%= get_color("road_2") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="trunk_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_2") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="primary_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_3") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="primary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 13
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 13
-            COLOR "<%= get_color("road_3") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="secondary_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="secondary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 12
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 12
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="tertiary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 11
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 11
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION (('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service') and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-
-    # End of tunnels
 
     CLASS
         EXPRESSION ("[railway]"!="")
@@ -1445,137 +1321,18 @@ LAYER
     DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
     LABELITEM "nicename"
     CLASSITEM "highway"
-    CLASS
-        EXPRESSION ("[highway]"="motorway" and "[tunnel]"="yes")
-        STYLE
-            WIDTH 15
-            SYMBOL "tunnel"
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
-        END
-        STYLE
-            WIDTH 15
-            COLOR "<%= get_color("road_1") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="motorway_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("road_1","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_1") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="trunk" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 15
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 15
-            COLOR "<%= get_color("road_2") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="trunk_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_2") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="primary_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_3") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="primary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 13
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 13
-            COLOR "<%= get_color("road_3") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="secondary_link" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 10
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-            OUTLINEWIDTH 1
-        END
-        STYLE
-            WIDTH 10
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="secondary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 12
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 12
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION ("[highway]"="tertiary" and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 11
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 11
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
-    CLASS
-        EXPRESSION (('[highway]'='unclassified' or '[highway]'='residential' or '[highway]'='service') and "[tunnel]"="yes")
-        STYLE
-            SYMBOL "tunnel"
-            WIDTH 8
-            OUTLINEWIDTH 1
-            OUTLINECOLOR "<%= get_color("tunnel","outline") %>"
-        END
-        STYLE
-            WIDTH 8
-            COLOR "<%= get_color("road_4") %>"
-        END
-    END
 
-    # end of tunnels
+    CLASS
+        EXPRESSION ("[tunnel]"="yes")
+        STYLE
+            WIDTH 5
+            COLOR "<%= get_color("motorway") %>"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 8 12 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
 
     <%= road_class('motorway'        ,13  ,10,5) %>
     <%= road_class('trunk'           ,12  , 9,5) %>
@@ -1632,6 +1389,9 @@ LAYER
         END
     END
 END
+
+
+
 LAYER
     STATUS ON GROUP "default"
     PROJECTION "init=epsg:3857" END
