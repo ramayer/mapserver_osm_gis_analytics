@@ -207,7 +207,7 @@ end
 cgi = CGI.new
 
 lat,lon = cgi['q'].split(',').map{|x| x.to_f}
-gcf = GisConvenienceFunctions.new('gis','gis','localhost',5432,'changeme')
+gcf = GisConvenienceFunctions.new('gis','gis',"<%= ENV['PGHOST'] %>","<%= ENV['PGPORT'] %>","<%= ENV['PGPASSWORD'] %>")
 crg = gcf.nearby_landmarks(lon,lat)
 
 polys = gcf.nearby_polygons(lon,lat)
