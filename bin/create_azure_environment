@@ -14,7 +14,7 @@ mkdir -p ~/.azure/
 
 function show_usage {
     echo "usage:" >&2
-    echo "     $0 --environment=[singlevm,3tier,3tier-with-redundancy] --resource-group=<group> --azure-acct=<acct>" --azure-region=<region> >&2
+    echo "     $0 --environment=[singlevm,3tier,3tier-with-redundancy] --resource-group=<group> --azure-acct=<acct> --azure-region=<region> ">&2
     echo "note:" >&2
     echo "  --environment=singlevm" >&2
     echo "    A single virtual machine capable of loading about one matro-extract area from mapzen.com."
