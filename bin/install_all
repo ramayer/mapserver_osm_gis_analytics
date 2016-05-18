@@ -5,9 +5,9 @@ source $DIR/default_environment.sh
 
 $PROJECT_DIR/bin/install_prerequisites
 $PROJECT_DIR/bin/install_using_ansible
-$PROJECT_DIR/bin/download_shapefiles
-$PROJECT_DIR/bin/install_fonts
 $PROJECT_DIR/bin/create_additional_layer_schema
+$PROJECT_DIR/bin/install_fonts
+$PROJECT_DIR/bin/download_shapefiles
 $PROJECT_DIR/bin/load_spatial_data --load-osm-data=tiny
 $PROJECT_DIR/bin/load_lpr_test_data
 $PROJECT_DIR/bin/deploy_using_ansible
