@@ -20,8 +20,10 @@
       {{ lookup('env','INSTALL_DIR') }}/etc/mapserver/.
       ansible@{{ inventory_hostname }}:/etc/mapserver/.
 
-  - name: Install mapserver config files and shapefiles
-    synchronize: src={{ lookup('env','INSTALL_DIR') }}/usr/lib/cgi-bin/map_data.cgi  dest=/usr/lib/cgi-bin/map_data.cgi
+  - name: Install cgi component
+    template: src={{ lookup('env','INSTALL_DIR') }}/usr/lib/cgi-bin/map_data.cgi  dest=/usr/lib/cgi-bin/map_data.cgi
+
+  - file: path=/usr/lib/cgi-bin/map_data.cgi mode="u=rwx,g=rx,o=rx"
 
   - name: ensure apache is running (and enable it at boot)
     service: name=apache2 state=started enabled=yes
