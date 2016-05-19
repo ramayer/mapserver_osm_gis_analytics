@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+mkdir -p $INSTALL_DIR/var/www/mapcache/images
+cd $INSTALL_DIR/var/www/mapcache/images
+wget -nc 'https://s-media-cache-ak0.pinimg.com/736x/7b/b8/64/7bb86468885fe43d2ab47ecaed1fd57d.jpg'
+convert 7bb86468885fe43d2ab47ecaed1fd57d.jpg mugshot1.png
+
+wget -nc 'http://2.bp.blogspot.com/_XU9x8G7khv0/TKOIgBoUI7I/AAAAAAAAQxk/kkPW62mXBjg/s400/timallen78mug1.jpg'
+convert timallen78mug1.jpg mugshot2.png
+
+psql <<EOF
+ 
+
+          delete from user_points;
+     	  insert into user_points (symbol,size,label,geom) select 'https://maps.google.com/mapfiles/ms/micons/blue.png'		     ,30, name, st_transform(way,4326) from planet_osm_point where amenity='restaurant' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,geom) select 'https://maps.google.com/mapfiles/ms/micons/coffeehouse.png'       ,30, name, st_transform(way,4326) from planet_osm_point where amenity='cafe' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,color,opacity,geom) select 'circle'					     ,15, name, '#ff0000',50, st_transform(way,4326) from planet_osm_point where amenity is null and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+
+     	  insert into user_points (symbol,size,label,geom) select 'http://localhost/images/mugshot1.png'		             ,50, name, st_transform(way,4326) from planet_osm_point where amenity='car_sharing' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,geom) select 'http://localhost/images/mugshot2.png'		             ,50, name, st_transform(way,4326) from planet_osm_point where amenity='place_of_worship' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+
+EOF

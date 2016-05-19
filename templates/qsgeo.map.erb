@@ -836,10 +836,6 @@ LAYER
     END
 END
 
-
-
-
-
 # Try
 #     SIZEUNITS meters
 # This scales nicely. Consider using SIZEUNITS for everything (roads in meters, etc).
@@ -1833,7 +1829,7 @@ END
 ################################################################################
 
 SYMBOL
-    NAME "citycircle"
+    NAME "circle"
     TYPE ELLIPSE
     POINTS 1 1 END
     FILLED TRUE
@@ -1888,15 +1884,17 @@ END
 #
 # &#9281;   == chair   <-- surely there's a better one somewhere
 
-
-
 # &#128137; == syringe -- good for drug crimes?
-
-
 
 # &#128673; == aerial tramway (ski lift)
 
 # &#128658; == "fire engine"
+
+# Probably want to avoid these due to questionable licensing.
+# http://stackoverflow.com/questions/31197596/google-map-api-marker-icon-url
+#
+# https://github.com/gravitystorm/openstreetmap-carto/tree/master/symbols
+# http://wiki.openstreetmap.org/wiki/Map_Icons/Map_Icons_Collection
 
 SYMBOL
  NAME "traffic_light"

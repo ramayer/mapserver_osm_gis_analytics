@@ -587,6 +587,7 @@ var clusters = new ol.layer.Vector({
                                 }
 			})
 		    }),
+
                     new ol.layer.Tile({
                         title: 'Satellite',
                         type: 'base',
@@ -597,6 +598,24 @@ var clusters = new ol.layer.Vector({
 
 
        var external_overlays = [kmlvectors,heatmap,clusters,
+		       // Consider:
+		       // "tile_map_edge_buffer" "256"  
+		       // in the .map file instead of a gutter here.
+		       // If we do that, we need to use mode=tile, and send
+		       // tile requests instead.
+		    new ol.layer.Tile({
+			preload: Infinity,
+			title: 'uncached user-generated layer',
+			visible: false,
+ 		        source: new ol.source.TileWMS({
+		                gutter: 200,
+				url: '/mapserv/user_layers',
+				params: {
+		                    'VERSION': '1.1.1',
+		                    'LAYERS': 'default'
+                                }
+			})
+		    }),
                     new ol.layer.Tile({
                         title: 'State Overlay',
                         visible: false,

@@ -14,5 +14,6 @@
     { "desc":"Miami Dade Beats"      , "name":"mdc_mdpd_police_grids", "template":"simple", "type":"overlay"},
     { "desc":"Census ZCTA"           , "name":"census_zcta",           "template":"simple", "type":"overlay"},
     { "desc":"SpotCrime"             , "name":"spotcrime",             "template":"simple", "type":"overlay"},
-    { "desc":"Zillow Neighborhoods"  , "name":"zillow_neighborhoods",  "template":"simple", "type":"overlay"}
+    { "desc":"Zillow Neighborhoods"  , "name":"zillow_neighborhoods",  "template":"simple", "type":"overlay"},
+    { "desc":"User Layers"           , "name":"user_layers",           "template":"simple", "type":"overlay"}
 ]
