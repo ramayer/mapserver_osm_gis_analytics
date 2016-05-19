@@ -10,64 +10,78 @@ psql << EOF
   DROP TABLE IF EXISTS user_points   CASCADE;
 
   CREATE TABLE user_points (
-  	 id             bigserial,
+         id             bigserial,
 
          userid         text,
-         layer          text,
-         feature        text,
          session        text,      
+         feature        int,
 
-	 label          text,
-         angle          double precision,
-	 color          text,
-         opacity        int,
-         outlinecolor   text,
-         outlinewidth   text,
-         size           double precision,
-         symbol         text,
+         symbol             text,
+         size               double precision,
+         angle              double precision,
+         color              text,
+         opacity            int,
+         outlinecolor       text,
+         outlinewidth       text,
+         label              text,
+         labelsize          double precision,
+         labelcolor         text,
+         labeloutlinecolor  text,
+         labelpriority      int,
+         labelshadowx       double precision,
+         labelshadowy       double precision,
 
-	 geom           geometry(Point,4326)
+         centeredlabel      text,
+ 
+         dttm           timestamp default now(),
+         geom           geometry(Point,4326)
   );
 
   CREATE TABLE user_lines (
-  	 id             bigserial,
+         id             bigserial,
 
          userid         text,
-         layer          text,
-         feature        text,
          session        text,      
+         feature        int,
 
-	 label          text,
+         label          text,
          angle          double precision,
-	 color          text,
+         color          text,
          opacity        int,
          outlinecolor   text,
          outlinewidth   text,
          size           double precision,
          symbol         text,
  
-	 geom	      geometry(LineString,4326)
+         dttm           timestamp default now(),
+         geom           geometry(LineString,4326)
   );
 
 
   CREATE TABLE user_polygons (
-  	 id            bigserial,
+         id            bigserial,
 
          userid         text,
-         layer          text,
-         feature        text,
          session        text,      
+         feature        int,
 
-	 label          text,
-         angle          double precision,
-	 color          text,
-         opacity        int,
-         outlinecolor   text,
-         outlinewidth   text,
-         size           double precision,
-         symbol         text,
+         symbol             text,
+         size               double precision,
+         angle              double precision,
+         color              text,
+         opacity            int,
+         outlinecolor       text,
+         outlinewidth       text,
+         label              text,
+         labelsize          double precision,
+         labelcolor         text,
+         labeloutlinecolor  text,
+         labelpriority      int,
+         labelshadowx       double precision,
+         labelshadowy       double precision,
  
-	 geom	       geometry(MultiPolygon,4326)
+         dttm           timestamp default now(),
+         geom           geometry(MultiPolygon,4326)
   );
 
 
@@ -75,9 +89,8 @@ psql << EOF
   CREATE INDEX "user_lines(geom)"    ON user_lines using GIST (geom);
   CREATE INDEX "user_polygons(geom)" ON user_polygons using GIST (geom);
 
-  CREATE INDEX "user_points(layer)"   ON user_points(layer);
-  CREATE INDEX "user_lines(layer)"    ON user_lines(layer);
-  CREATE INDEX "user_polygons(layer)" ON user_polygons(layer);
-
+  CREATE INDEX "user_points(userid,feature)"   ON user_points(userid,feature);
+  CREATE INDEX "user_lines(userid,feature)"    ON user_lines(userid,feature);
+  CREATE INDEX "user_polygons(userid,feature)" ON user_lines(userid,feature);
 
 EOF

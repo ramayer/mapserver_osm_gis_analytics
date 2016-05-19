@@ -100,7 +100,7 @@ EOF
 
     psql <<EOF
       DELETE FROM additional_layers WHERE (layer,source) = ('starbucks','derived from OSM');
-      DELETE FROM additional_layers WHERE (layer,source) = ('areas around starbucks','derived from OSM');
+      DELETE FROM additional_layers WHERE (layer,source) = ('walking distance from starbucks','derived from OSM');
       INSERT INTO additional_layers (layer,source) values ('starbucks','derived from OSM');
       INSERT INTO additional_layers (layer,source) values ('walking distance from starbucks','derived from OSM');
 
