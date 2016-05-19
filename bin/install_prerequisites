@@ -8,7 +8,7 @@
 # sudo apt-add-repository -y ppa:ansible/ansible 
 
 
-[ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && visudo -cf /etc/sudoers.d/$USER )
+[ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && sudo visudo -cf /etc/sudoers.d/$USER )
 
 if ( grep -q ':gis:' ~/.pgpass ); then
     echo "Found 'gis' entries in .pgpass. Not modifying them" 
