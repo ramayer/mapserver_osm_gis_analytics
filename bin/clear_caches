@@ -1,1 +1,20 @@
-ansible-playbook  -i ~/.ansible/hosts ~/mapserver_osm_gis_analytics/ansible/playbooks/clear_caches.yaml
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+
+if [ -r "$HOME/.ansible/hosts" ] ; then
+   ansible_hosts_file=$HOME/.ansible/hosts
+else
+   echo "using default minimal ansible hosts file"
+   echo " if you're not installing locally,  consider a symbolic link to creating ~/.ansible/hosts"
+   echo " perhaps" 
+   echo "    mkdir -p ~/.ansible/hosts"
+   echo "    ln -s ~/mapserver_osm_gis_analytics/ansible/hosts.nonredundant ~/.ansible/hosts"
+   ansible_hosts_file=$HOME/mapserver_osm_gis_analytics/ansible/hosts.minimal
+fi
+
+cd $PROJECT_DIR/ansible/playbooks   # to find ansible.cfg
+
+ansible-playbook  -i $ansible_hosts_file ~/mapserver_osm_gis_analytics/ansible/playbooks/clear_caches.yaml
