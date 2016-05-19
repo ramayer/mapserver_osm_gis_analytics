@@ -13,7 +13,6 @@ psql << EOF
   CREATE TABLE additional_layers (
   	 id        	serial primary key,
 	 layer          varchar(40) UNIQUE,
-	 user_id   	int,
 	 attribution    text,
          source   	text
   );
