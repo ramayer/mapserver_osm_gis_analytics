@@ -3,6 +3,7 @@
 - name: install some packages needed by many servers
   apt: pkg={{ item }} state=latest
   with_items:
+    - apache2
     - munin
     - libcgi-fast-perl
     - libapache2-mod-fcgid
