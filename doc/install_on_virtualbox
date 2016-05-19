@@ -21,17 +21,9 @@
 
   git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
-  ~/mapserver_osm_gis_analytics/bin/install_prerequisites
-       [enter a password for the gis user]
+  ~/mapserver_osm_gis_analytics/bin/install_all
+       [enter a password for the gis user if prompted]
 
-  ~/mapserver_osm_gis_analytics/bin/install_using_ansible
-  ~/mapserver_osm_gis_analytics/bin/create_additional_layer_schema
-  ~/mapserver_osm_gis_analytics/bin/download_shapefiles
-  ~/mapserver_osm_gis_analytics/bin/install_fonts
-  ~/mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=tiny
-  ~/mapserver_osm_gis_analytics/bin/load_lpr_test_data
-  ~/mapserver_osm_gis_analytics/bin/deploy_using_ansible
-  ~/mapserver_osm_gis_analytics/bin/test_derived_layers
    
 # at this point, you should be able to go to 'http://[ip address]/' and see maps in a small neighborhood near downtown oakland.  
 
