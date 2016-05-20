@@ -14,19 +14,19 @@ mkdir -p ~/.azure/
 
 function show_usage {
     echo "usage:" >&2
-    echo "     $0 --environment=[singlevm,3tier,3tier-with-redundancy] --resource-group=<group> --azure-acct=<acct> --azure-region=<region> ">&2
+    echo "     $0 --environment=[singlevm,3-tier] --resource-group=<group> --azure-acct=<acct> --azure-region=<region> ">&2
     echo "note:" >&2
     echo "  --environment=singlevm" >&2
     echo "    A single virtual machine capable of loading about one matro-extract area from mapzen.com."
-    echo "  --environment=3tier" >2&
+    echo "  --environment=3-tier" >2&
     echo "    Launch a 3-tier (mapcache in web tier; mapserver in app tier; postgis in DB tier) "
     echo "    environment capabile of handling a reasonably busy full-planet environment, with"
     echo "    appropriate firewall rules"
-    echo "  --environment=3tier-with-redundancy" >2&
+    echo "  --environment=3-tier-with-redundancy" >2&
     echo "    [work-in-progress]"
     echo "examples:"  >&2
     echo "     $0 --environment=singlevm   --resource-group=maps-dev-1"
-    echo "     $0 --environment=3tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
+    echo "     $0 --environment=3-tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
     exit 2
 }
 
@@ -111,7 +111,7 @@ azure='/usr/bin/time azure'
 ######################################################################
 
 $azure config mode arm
-$azure account set $azure_acct
+$azure account set "$azure_acct"
 
 ######################################################################
 # Clear the old QA environment
@@ -145,7 +145,7 @@ $azure network nsg rule create --priority 999 --source-address-prefix '*'       
 $azure network nsg create $resourcegroup app-tier $azure_region
 $azure network nsg rule create --priority 200 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 22    $resourcegroup app-tier admin
 $azure network nsg rule create --priority 250 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 4949  $resourcegroup app-tier munin
-$azure network nsg rule create --priority 202 --source-address-prefix 10.1.1.0/24 --source-port-range '*' --destination-port-range 80    $resourcegroup app-tier mapserv
+$azure network nsg rule create --priority 203 --source-address-prefix 10.1.1.0/24 --source-port-range '*' --destination-port-range 10080 $resourcegroup app-tier mapserv
 $azure network nsg rule create --priority 300 --source-address-prefix 10.1.2.0/24 --source-port-range '*' --destination-port-range '*'   $resourcegroup app-tier app-tier
 $azure network nsg rule create --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*' --access deny $resourcegroup app-tier deny
 
@@ -159,6 +159,17 @@ $azure network nsg rule create --priority 999 --source-address-prefix '*'       
 
 $azure network nsg create $resourcegroup adm-tier $azure_region
 $azure network nsg rule create --priority 201 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 22    $resourcegroup adm-tier ssh
+
+fi
+
+if [ "$environment" = "singlevm" ]; then
+
+# similar to the 3-tiered web tier -- but also allow ssh
+$azure network nsg create $resourcegroup web-tier $azure_region
+$azure network nsg rule create --priority 201 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 80    $resourcegroup web-tier http
+$azure network nsg rule create --priority 202 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 443   $resourcegroup web-tier https
+$azure network nsg rule create --priority 401 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 22    $resourcegroup web-tier ssh
+$azure network nsg rule create --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*' --access deny $resourcegroup web-tier deny
 
 fi
 
@@ -195,19 +206,14 @@ $azure network vnet subnet create $resourcegroup "gis-vnet" "gis-db-subnet"  --a
 # Create public IP addresses
 ######################################################################
 
-if [ "$environment" = "3tier" ]; then
+if [ "$environment" = "3-tier" ]; then
 $azure network public-ip create $resourcegroup "adm-01" $azure_region
 $azure network public-ip create $resourcegroup "www-01" $azure_region
+$azure network public-ip create $resourcegroup "www-02" $azure_region
 fi
 
 if [ "$environment" = "singlevm" ]; then
 $azure network public-ip create $resourcegroup "www-01" $azure_region
-fi
-
-if [ "$environment" = "3tier-with-redundancy" ]; then
-$azure network public-ip create $resourcegroup "adm-01" $azure_region
-$azure network public-ip create $resourcegroup "www-01" $azure_region
-$azure network public-ip create $resourcegroup "www-02" $azure_region
 fi
 
 ######################################################################
@@ -218,24 +224,15 @@ if [ "$environment" = "singlevm" ]; then
 $azure network nic create $resourcegroup "gis-nic-www-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-01"
 fi
 
-if [ "$environment" = "3tier" ]; then
-$azure network nic create $resourcegroup "gis-nic-adm-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-adm-subnet" --public-ip-name "adm-01"
-$azure network nic create $resourcegroup "gis-nic-www-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-01"
-$azure network nic create $resourcegroup "gis-nic-app-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
-$azure network nic create $resourcegroup "gis-nic-db-01"  $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-db-subnet"
-fi
-
-if [ "$environment" = "3tier-with-redundancy" ]; then
+if [ "$environment" = "3-tier" ]; then
 $azure network nic create $resourcegroup "gis-nic-adm-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-adm-subnet" --public-ip-name "adm-01"
 $azure network nic create $resourcegroup "gis-nic-www-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-01"
 $azure network nic create $resourcegroup "gis-nic-www-02" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-02"
 $azure network nic create $resourcegroup "gis-nic-app-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
 $azure network nic create $resourcegroup "gis-nic-app-02" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+$azure network nic create $resourcegroup "gis-nic-app-03" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
 $azure network nic create $resourcegroup "gis-nic-db-01"  $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-db-subnet"
-$azure network nic create $resourcegroup "gis-nic-db-02"  $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-db-subnet"
 fi
-
-
 
 ######################################################################
 ## Create a Storage Account for this Resource Group
@@ -285,7 +282,7 @@ $azure vm create $resourcegroup "everything-01"    $azure_region "Linux"   -z $w
 fi
 
 
-if [ "$environment" = "3tier" ]; then
+if [ "$environment" = "3-tier" ]; then
 
 # Interesting to see if a DS13 ($580/month) with a RAID of 10 spinning disks (hard to look up cost),
 # is better or worse than a DS12 ($290/month) with SSDs (hard to look up cost),
@@ -304,18 +301,28 @@ if [ "$environment" = "3tier" ]; then
 #   DS1 only has a 7GB local SSD.
 #
 #   osm2pgsql flat_node node caches are 31GB -- making D1 a wiser choice for those machines.
+#
+#
+#  Note that sometimes a faster machine can be cheaper. 
+#    right now in westus, a D12_v2 is $0.371/hr, compared to D12_v2 at $0.39/hr
+#    right now in westus, a D1_v2 is $0.073/hr, compared to D1 at $0.077/hr
 
 
-adm_vm_size=Standard_D1
-web_vm_size=Standard_D1
+adm_vm_size=Standard_D1_v2
+web_vm_size=Standard_D1_v2
 app_vm_size=Standard_D1_v2
-db_vm_size=Standard_DS12
+db_vm_size=Standard_DS12_v2
 
 $azure vm create $resourcegroup "linux-admin-01" $azure_region "Linux"   -z $adm_vm_size -N gis-nic-adm-01 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key
 $azure vm create $resourcegroup "mapcache-01"    $azure_region "Linux"   -z $web_vm_size -N gis-nic-www-01 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key
+$azure vm create $resourcegroup "mapcache-02"    $azure_region "Linux"   -z $web_vm_size -N gis-nic-www-02 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key
 $azure vm create $resourcegroup "mapserv-01"     $azure_region "Linux"   -z $app_vm_size -N gis-nic-app-01 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key    
 $azure vm create $resourcegroup "mapserv-02"     $azure_region "Linux"   -z $app_vm_size -N gis-nic-app-02 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key    
+$azure vm create $resourcegroup "mapserv-03"     $azure_region "Linux"   -z $app_vm_size -N gis-nic-app-03 -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key    
 $azure vm create $resourcegroup "map-db-01"      $azure_region "Linux"   -z $db_vm_size  -N gis-nic-db-01  -u gisadmin --storage-account-name $storage_acct -Q $linuximg --ssh-publickey-file $azure_public_key
+
+## TODO - hire a DBA that can set up replication and failover for the database and load balance queries across them
+
 
 # Add disks for a large RAID array as configured by this script:
 # https://github.com/Azure/azure-quickstart-templates/blob/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
@@ -336,18 +343,25 @@ $azure vm create $resourcegroup "map-db-01"      $azure_region "Linux"   -z $db_
 #  git clone https://github.com/Azure/azure-quickstart-templates
 #  sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
 #  [ assume that created /datadisks/disk1 ]
+#  sudo service postgresql stop
 #  sudo mv /var/lib/postgresql /datadisks/disk1
-#  sudo ln -s /datadisks/disk1 /var/lib/postgresql
-
+#  sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
+#  sudo mkdir /datadisks/disk1/gisdata
+#  sudo ln -s /datadisks/disk1/gisdata /mnt/gisdata
+#  sudo chmod a+w /mnt/gisdata/.
 
 # Consider this instead 
 $azure vm disk attach-new -g $resourcegroup -o $premium_storage_acct "map-db-01" -z 500
 $azure vm disk attach-new -g $resourcegroup -o $premium_storage_acct "map-db-01" -z 500
 # or maybe even a RAID array of those.
 
-# Add disks for storing map tiles
+# Add spinning disks for storing map tiles
 $azure vm disk attach-new -g $resourcegroup "mapcache-01" -z 500 
 $azure vm disk attach-new -g $resourcegroup "mapcache-01" -z 500 
+
+$azure vm disk attach-new -g $resourcegroup "mapcache-02" -z 500 
+$azure vm disk attach-new -g $resourcegroup "mapcache-02" -z 500 
+
 
 # TODO: for the map tiles, figure out how to automate this part: 
 #
