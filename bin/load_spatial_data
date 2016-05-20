@@ -416,10 +416,6 @@ function load_osm_data {
 
  echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
 
-
- echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
-
-
  # Lol, seems someone from russia has been tagging benches made out of wooden logs.
  #    https://www.google.com/#q=%D0%B1%D1%80%D0%B5%D0%B2%D0%BD%D0%BE
  # I guess it's cool trivia, but looks distracting to see russian on maps in the US.
