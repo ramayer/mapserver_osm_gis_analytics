@@ -5,7 +5,10 @@
     - unzip
     - sysstat
     - jq
+    - libdbd-pg-perl
     - munin-node
+
+# libdbd-pg-perl required for munin-configure to configure its postgres plugins
 
 - name: add ansible user
   user: name=ansible
@@ -69,3 +72,6 @@
 - name: restart munin-node
   service: name=munin-node state=restarted
   when: muninconf.changed
+
+# consider 
+#     munin-node-configure --shell | bash
