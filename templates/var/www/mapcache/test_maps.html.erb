@@ -14,6 +14,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
+            font-family: "Roboto","Helvetica","Arial",sans-serif;
       }
 
       .ol-mouse-position {
@@ -162,108 +163,6 @@
 	});
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Atlas
-////////////////////////////////////////////////////////////////////////////////
-/*	
-var atlasManager = new ol.style.AtlasManager({
-    // we increase the initial size so that all symbols fit into
-    // a single atlas image
-    initialSize: 512
-});
-
-var symbolInfo = [{
-    opacity: 1.0,
-    scale: 1.0,
-    fillColor: 'rgba(255, 153, 0, 0.4)',
-    strokeColor: 'rgba(255, 204, 0, 0.2)'
-}, {
-    opacity: 0.75,
-    scale: 1.25,
-    fillColor: 'rgba(70, 80, 224, 0.4)',
-    strokeColor: 'rgba(12, 21, 138, 0.2)'
-}, {
-    opacity: 0.5,
-    scale: 1.5,
-    fillColor: 'rgba(66, 150, 79, 0.4)',
-    strokeColor: 'rgba(20, 99, 32, 0.2)'
-}, {
-    opacity: 1.0,
-    scale: 1.0,
-    fillColor: 'rgba(176, 61, 35, 0.4)',
-    strokeColor: 'rgba(145, 43, 20, 0.2)'
-}];
-
-var radiuses = [1, 2, 3, 4, 5, 6];
-var symbolCount = symbolInfo.length * radiuses.length * 2;
-var symbols = [];
-var i, j;
-for (i = 0; i < symbolInfo.length; ++i) {
-    var info = symbolInfo[i];
-    for (j = 0; j < radiuses.length; ++j) {
-	// circle symbol
-	symbols.push(new ol.style.Circle({
-	    opacity: info.opacity,
-	    scale: info.scale,
-	    radius: radiuses[j],
-	    fill: new ol.style.Fill({
-		color: info.fillColor
-	    }),
-	    stroke: new ol.style.Stroke({
-		color: info.strokeColor,
-		width: 1
-	    }),
-	    // by passing the atlas manager to the symbol,
-	    // the symbol will be added to an atlas
-	    atlasManager: atlasManager
-	}));
-
-	// star symbol
-	symbols.push(new ol.style.RegularShape({
-	    points: 8,
-	    opacity: info.opacity,
-	    scale: info.scale,
-	    radius: radiuses[j],
-	    radius2: radiuses[j] * 0.7,
-	    angle: 1.4,
-	    fill: new ol.style.Fill({
-		color: info.fillColor
-	    }),
-	    stroke: new ol.style.Stroke({
-		color: info.strokeColor,
-		width: 1
-	    }),
-	    atlasManager: atlasManager
-	}));
-    }
-}
-
-var featureCount = 100000;
-var features = new Array(featureCount);
-var feature, geometry;
-var e = 25000000;
-for (i = 0; i < featureCount; ++i) {
-    geometry = new ol.geom.Point(
-	[2 * e * Math.random() - e, 2 * e * Math.random() - e]);
-    feature = new ol.Feature(geometry);
-    feature.setStyle(
-	new ol.style.Style({
-	    image: symbols[i % symbolCount]
-	})
-    );
-    features[i] = feature;
-}
-
-
-var vectorSource = new ol.source.Vector({
-    features: features
-});
-var atlasvector = new ol.layer.Vector({
-    title: 'Atlas Vectors',
-    visible: false,
-    source: vectorSource
-});
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -289,7 +188,10 @@ d3.csv('lpr.csv', function(error, dataset) {
         onerow=d;
         var d3857 = ol.proj.transform([d.lon,d.lat], 'EPSG:4326', 'EPSG:3857');
         geometry = new ol.geom.Point(d3857);
-        feature = new ol.Feature(geometry);
+	feature = new ol.Feature({
+		geometry:geometry,
+                data:d
+        });
         i += 1;
         lpr_features.push(feature);
     });
@@ -299,56 +201,6 @@ d3.csv('lpr.csv', function(error, dataset) {
     // atlasvector.changed();
     heatmap.changed();
     map.render();
-});
-
-
-////////////////////////////////////////////////////////////////////////////////
-// KML
-////////////////////////////////////////////////////////////////////////////////
-
-
-	var styleCache = {};
-	var lightningStyleFunction = function(feature) {
-	// 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
-	// standards-violating <magnitude> tag in each Placemark.  We extract it from
-	  // the Placemark's name instead.
-	  var name = feature.get('name');
-	  var magnitude = parseFloat(name.substr(2));
-	  var size = parseInt(10 + 40 * (magnitude - 5), 10);
-	  var style = styleCache[size];
-	  if (!style) {
-	  var canvas =
-	  /** @type {HTMLCanvasElement} */ (document.createElement('canvas'));
-	  var vectorContext = ol.render.toContext(
-	  /** @type {CanvasRenderingContext2D} */ (canvas.getContext('2d')),
-	  {size: [size + 2, size + 2], pixelRatio: size / 10});
-	  vectorContext.setStyle(new ol.style.Style({
-	  fill: new ol.style.Fill({color: 'rgba(255, 153, 0, 0.4)'}),
-	  stroke: new ol.style.Stroke({color: 'rgba(255, 204, 0, 0.2)', width: 1})
-	  }));
-	  vectorContext.drawGeometry(new ol.geom.Polygon(
-	  [[[0, 0], [4, 2], [6, 0], [10, 5], [6, 3], [4, 5], [0, 0]]]));
-	  style = new ol.style.Style({
-	  image: new ol.style.Icon({
-	  img: canvas,
-	  imgSize: [canvas.width, canvas.height],
-	  rotation: 1.2
-	  })
-	  });
-	  styleCache[size] = style;
-	  }
-	  return style;
-	        };
-var kmlvectors = new ol.layer.Vector({
-  title: 'KML Vectors',
-  visible: false,
-  source: new ol.source.Vector({
-    url: './data/2012_Earthquakes_Mag5.kml',
-    format: new ol.format.KML({
-        extractStyles: false
-    })
-  }),
-  style: lightningStyleFunction
 });
 
 
@@ -616,7 +468,7 @@ var clusters = new ol.layer.Vector({
        ];
 
 
-       var external_overlays = [kmlvectors,heatmap,clusters,
+       var external_overlays = [heatmap,clusters,
 		       // Consider:
 		       // "tile_map_edge_buffer" "256"  
 		       // in the .map file instead of a gutter here.
@@ -784,17 +636,103 @@ var clusters = new ol.layer.Vector({
 	return false;
     };
 
-    var evtcrd;
-
-    map.on('singleclick', function(evt) {
+    function query_osm_data(evt) {
 	var coordinate = evt.coordinate;
-	evtcrd = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
-	var hdms = ol.coordinate.toStringHDMS(ol.proj.transform(
-	    coordinate, 'EPSG:3857', 'EPSG:4326'));
-	content.innerHTML = '<code>' + hdms + '</code>';
-        $.get('/map_data?q='+evtcrd[0]+','+evtcrd[1],function(data) { $("#popup-content").html(data)});
+	var crd4326 = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
+	var hdms = ol.coordinate.toStringXY(crd4326,4);
+
+
+	message = '<b>Data from Open Street Map at '+hdms+'</b><hr>';
+	content.innerHTML = message + "<br>...loading...</br>";
+        $.get('/map_data?q='+crd4326[0]+','+crd4326[1],function(data) { $("#popup-content").html(message + data)});
 	overlay.setPosition(coordinate);
+    }
+    // If someone clicked on an overlay, they want information on the overlay,
+    // so moving this to the selectInteraction instead.
+    // map.on('singleclick', query_osm_data);
+
+   // interesting select examples
+   // https://openlayersbook.github.io/ch08-interacting-with-your-map/example-02.html
+   var debug_select='';
+
+		       var selectEuropa = new ol.style.Style({
+		       stroke: new ol.style.Stroke({
+		       color: '#ff0000',
+		       width: 2
+		       })
+		       });
+		       
+
+   var selectInteraction = new ol.interaction.Select({
+       /*
+       layers: function (layer) {
+               debug_select=layer;
+	       return layer.get('id') == 'europa';
+       },
+       style: [selectEuropa]
+       */
+   });
+   map.getInteractions().extend([selectInteraction]);
+   selectInteraction.on('select', function(e) {
+      // document.getElementById('status').innerHTML = '&nbsp;
+      var selected_features = e.target.getFeatures().getArray();
+      if (selected_features.length == 1) {
+		   var selected_feature = selected_features[0];
+		   debug_select = selected_feature;
+		   overlay.setPosition(selected_feature.getGeometry().getCoordinates());
+		   var features = selected_feature.getProperties().features;
+		   if (features) { 
+		       var popup_text = "<b>"+features.length+" license plates seen in this cluster</b>";
+		       features.forEach(function(d) {
+		         data = d.getProperties().data;
+			 popup_text += "<br>"+data['red_VRM']+" at "+data['red_Timestamp'];;
+		       });
+		       $("#popup-content").html(popup_text)
+		   }
+      }
+      if (selected_features.length == 0) {
+      	 query_osm_data(e.mapBrowserEvent);
+      }
+   });
+   var selectedFeatures = selectInteraction.getFeatures();
+
+// http://openlayers.org/en/v3.2.0/examples/box-selection.js
+// a DragBox interaction used to select features by drawing boxes
+
+var dragBox = new ol.interaction.DragBox({
+    condition: ol.events.condition.platformModifierKeyOnly
+});
+
+map.addInteraction(dragBox);
+
+var infoBox = document.getElementById('popup-content');
+
+dragBox.on('boxend', function() {
+    // features that intersect the box are added to the collection of
+    // selected features, and their names are displayed in the "info"
+    // div
+    var info = [];
+    var extent = dragBox.getGeometry().getExtent();
+    vectorSource.forEachFeatureIntersectingExtent(extent, function(feature) {
+	selectedFeatures.push(feature);
+	info.push(feature.get('name'));
     });
+    if (info.length > 0) {
+	infoBox.innerHTML = info.join(', ');
+    }
+});
+
+// clear selection when drawing a new box and when clicking on the map
+dragBox.on('boxstart', function() {
+    selectedFeatures.clear();
+    infoBox.innerHTML = '&nbsp;';
+});
+map.on('click', function() {
+    selectedFeatures.clear();
+    infoBox.innerHTML = '&nbsp;';
+});
+
+
 
       </script>
 </body>
