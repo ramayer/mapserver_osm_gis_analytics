@@ -13,7 +13,7 @@
     { "desc":"LPR in School Zones"   , "name":"lpr_in_school_zones",   "template":"simple", "type":"overlay", "attribution":"<a href='https://data.oaklandnet.com/'>LPR data &copy; City of Oakland</a>"},
     { "desc":"Miami Dade Beats"      , "name":"mdc_mdpd_police_grids", "template":"simple", "type":"overlay"},
     { "desc":"Census ZCTA"           , "name":"census_zcta",           "template":"simple", "type":"overlay", "attribution":"<a href='https://www2.census.gov/geo/tiger/TIGER2010DP1/'>US Census Tiger Data</a>"},
-    { "desc":"SpotCrime"             , "name":"spotcrime",             "template":"simple", "type":"overlay", "attribution":"<a href='http://blog.spotcrime.com/2012/12/spotcrime-historical-crime-data-still.html'><img src='http://s3.amazonaws.com/m.spotcrime.com/mobile/media/v1/images/spotcrime-logo-spotty.png' style='height:25px, width:152px'></a>"},
-    { "desc":"Zillow Neighborhoods"  , "name":"zillow_neighborhoods",  "template":"simple", "type":"overlay", "attribution":"<a href='http://www.zillow.com/howto/api/neighborhood-boundaries.htm'><img src='http://www.zillowstatic.com/vstatic/9520695/static/logos/Zillow_Logo_HoodsProvided_RightAligned.gif'></a>"},
+    { "desc":"SpotCrime"             , "name":"spotcrime",             "template":"simple", "type":"overlay", "attribution":"<a href='http://blog.spotcrime.com/2012/12/spotcrime-historical-crime-data-still.html'><img src='https://s3.amazonaws.com/m.spotcrime.com/mobile/media/v1/images/spotcrime-logo-spotty.png' style='height:25px, width:152px'></a>"},
+    { "desc":"Zillow Neighborhoods"  , "name":"zillow_neighborhoods",  "template":"simple", "type":"overlay", "attribution":"<a href='https://www.zillow.com/howto/api/neighborhood-boundaries.htm'><img src='http://www.zillowstatic.com/vstatic/9520695/static/logos/Zillow_Logo_HoodsProvided_RightAligned.gif'></a>"},
     { "desc":"User Layers"           , "name":"user_layers",           "template":"simple", "type":"overlay"}
 ]
