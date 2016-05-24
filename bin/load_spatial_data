@@ -369,7 +369,7 @@ function load_osm_data {
   # explain analyze select "highway","nicename",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id ,highway,ref, name, CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END AS nicename, tunnel FROM planet_osm_line WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link') ORDER by z_order ) as highways where way && ST_GeomFromText('POLYGON((1486432.67054764 6574081.27320914,1486432.67054764 6673372.97295186,1585724.37029036 6673372.97295186,1585724.37029036 6574081.27320914,1486432.67054764 6574081.27320914))',900913);
   #
   # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql --proj 3857 put tertiary roads there.
-  echo 'create index "planet_osm_line__major_highways" on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');' | psql
+  echo "create index planet_osm_line__major_highways on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');" | psql
   echo 'create index "planet_osm_line__all_highways" on planet_osm_line using GIST(way) where highway is not null;' | psql
 
 
