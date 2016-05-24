@@ -7,11 +7,11 @@ overrides = {
   state:       {color:'#f0f0f0', outline:'#cccccc'},
   parking:     {color:'#d0d0d0', outline:'#666666'},   # should be noticably darker than 'building'
 
-  park:        {color:'#f0fecd'},
+  park:        {color:'#eaeebd'},
   grass:       {color:'#e5f2cc'},
-  forest:      {color:'#f8fff0', outline:"#b5c29c"},
-  sand:        {color:'#f8f8f0', outline:"#ccaa77"},
-  mud:         {color:'#f8f8f0', outline:"#ccbb77"},
+  forest:      {color:'#d5e2bc', outline:"#b5c29c"},
+  sand:        {color:'#fff2d0', outline:"#ccaa77"},
+  mud:         {color:'#ffeecc', outline:"#ccbb77"},
   military:    {color:'#f8f0f0', outline:"#444444"},
   tourism:     {color:'#fff0ff', outline:"#ccaaff"},
   school:      {color:'#fffff0'},

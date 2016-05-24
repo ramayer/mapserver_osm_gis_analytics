@@ -1,14 +1,10 @@
-# defaults are subtlecolor                                                                                                                                                      
 
-
-  def interpolate(color1,color2,fraction)
+def interpolate(color1,color2,fraction)
      rgb1          = color1.scan(/[0-9a-fA-F]{2}/).map{|x| x.to_i(16)}
      rgb2          = color2.scan(/[0-9a-fA-F]{2}/).map{|x| x.to_i(16)}
      rgb           = rgb1.zip(rgb2).map{|x,y| ((1-fraction)*x + fraction*y).round}
      "#%02x%02x%02x" % rgb.map{|x| x}
-  end
-
-
+end
 
 $map_colors = {
 

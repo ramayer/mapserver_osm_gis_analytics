@@ -415,7 +415,7 @@ var clusters = new ol.layer.Vector({
 		       urls: [
 		             'http://'+parallel_server_1+'/mapcache/tms/1.0.0/black_on_white@g2/{z}/{x}/{-y}.png',
 		             'http://'+parallel_server_2+'/mapcache/tms/1.0.0/white_on_black@g2/{z}/{x}/{-y}.png',
-		             'http://'+parallel_server_3+'/mapcache/tms/1.0.0/subtlecolor@g2/{z}/{x}/{-y}.png',
+		             'http://'+parallel_server_3+'/mapcache/tms/1.0.0/dark_roads@g2/{z}/{x}/{-y}.png',
   		             'http://'+parallel_server_4+'/mapcache/tms/1.0.0/white_roads@g2/{z}/{x}/{-y}.png'
 		            ]
 	       }),
@@ -445,7 +445,7 @@ var clusters = new ol.layer.Vector({
                         type: 'base',
                         source: new ol.source.TileWMS({
                             url: 'https://go.leapportal.us/tilecache/tilecache.cgi',
-                            params: {'LAYERS': 'subtlecolor2'} //,
+                            params: {'LAYERS': 'dark_roads2'} //,
                             // serverType: 'geoserver'
                         })
                     }),
@@ -458,7 +458,7 @@ var clusters = new ol.layer.Vector({
 				url: '/mapcache/',
 				params: {
 		                    'VERSION': '1.1.1',
-		                    'LAYERS': 'subtlecolor,opd_lpr,opd_beats'
+		                    'LAYERS': 'dark_roads,opd_lpr,opd_beats'
                                 }
 			})
 		    }),

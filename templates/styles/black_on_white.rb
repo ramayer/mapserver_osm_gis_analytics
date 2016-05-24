@@ -1,4 +1,4 @@
-# defaults are subtlecolor                                                                                                                                                      
+# defaults are dark_roads                                                                                                                                                      
 
 
   def interpolate(color1,color2,fraction)

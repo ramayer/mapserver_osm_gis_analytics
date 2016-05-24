@@ -1,4 +1,4 @@
-load File.join(File.dirname(__FILE__), 'subtlecolor.rb')
+load File.join(File.dirname(__FILE__), 'dark_roads.rb')
 
 
 # bing   is fill #e9e6df, road border #ded5c2

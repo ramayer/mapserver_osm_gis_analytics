@@ -89,7 +89,7 @@
 //                extent: projectionExtent,
 //                source: new ol.source.WMTS({
 //                        url: '/mapcache/wmts',
-//                        layer: 'subtlecolor',
+//                        layer: 'dark_roads',
 //                        matrixSet: 'g2',
 //                        format: 'image/png',
 //                        projection: projection,
@@ -108,7 +108,7 @@ var osm_layer = new ol.layer.Tile({
        // extent: projectionExtent,
        title: 'Open StreetMap Subtle Color',
        source: new ol.source.XYZ({
-               url: 'https://maps-qa.leapportal.us/mapcache/tms/1.0.0/subtlecolor@g2/{z}/{x}/{-y}.png',
+               url: 'https://maps-qa.leapportal.us/mapcache/tms/1.0.0/dark_roads@g2/{z}/{x}/{-y}.png',
 
        }),
 });

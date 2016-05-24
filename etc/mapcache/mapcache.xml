@@ -95,12 +95,12 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <source name="subtlecolor" type="wms">
+  <source name="dark_roads" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_subtlecolor.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_dark_roads.map</map>
       </params>
     </getmap>
     <http>
@@ -111,12 +111,12 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <source name="higher_contrast" type="wms">
+  <source name="subtle_color" type="wms">
     <getmap>
       <params>
         <FORMAT>image/png</FORMAT>
         <LAYERS>default</LAYERS>
-        <map>/home/ron/work/fli/maps_clean/map/qsgeo_higher_contrast.map</map>
+        <map>/home/ron/work/fli/maps_clean/map/qsgeo_subtle_color.map</map>
       </params>
     </getmap>
     <http>
@@ -193,8 +193,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <tileset name="subtlecolor">
-    <source>subtlecolor</source>
+  <tileset name="dark_roads">
+    <source>dark_roads</source>
     <cache>disk</cache>
     <grid>not_quite_google</grid>
     <grid>g</grid>
@@ -207,8 +207,8 @@ http://127.0.0.1/mapcache/wmts/1.0.0/wtf/default/g/1/1/1.png
 
   
 
-  <tileset name="higher_contrast">
-    <source>higher_contrast</source>
+  <tileset name="subtle_color">
+    <source>subtle_color</source>
     <cache>disk</cache>
     <grid>not_quite_google</grid>
     <grid>g</grid>

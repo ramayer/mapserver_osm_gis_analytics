@@ -31,7 +31,7 @@
 
 * Seed tiles:
    http://www.mapserver.org/mapcache/seed.html#mapcache-seed
-   sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t higher_contrast -g g2 -z 0,12
+   sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t subtle_color -g g2 -z 0,12
    But note that we need to increase swap space on the app server for this to not fail.
      # sudo mkdir /mnt/swap
      # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
@@ -45,7 +45,7 @@
 
  ... take those results, and run: 
 
- sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t subtlecolor -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66
+ sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t dark_roads -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66
 
  Or for all layers: 
   
@@ -80,7 +80,7 @@
 
 * On
   http://13.91.253.215/test_maps.html#map=12/-13576878.71/4532333.65/0
-  the secondary roads and grass looks better on subtlecolor
+  the secondary roads and grass looks better on dark_roads
 
 * airport runways are missing
 
