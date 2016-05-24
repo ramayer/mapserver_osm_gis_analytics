@@ -1,4 +1,5 @@
 <!doctype html>
+<%# coding: UTF-8 %>
 <html lang="en">
 <!--
 // TODO: http://cesiumjs.org/Cesium/Apps/Sandcastle/gallery/Geometry%20and%20Appearances.html
@@ -146,7 +147,9 @@
                visible: false,
 	       source: new ol.source.XYZ({
 		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
-	       }),
+                       attributions: [ol.source.OSM.ATTRIBUTION]
+
+	       })
 	    });
 	});
 //	local_base_layers[0].setVisible(true);
@@ -157,6 +160,7 @@
 	       title: item.desc,
                visible: false,
 	       source: new ol.source.XYZ({
+	               attributions: item.attribution,
 		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
 	       }),
 	    });
@@ -524,6 +528,11 @@ var clusters = new ol.layer.Vector({
             });
           });
 
+	var attribution = new ol.control.Attribution({
+	      collapsed: false
+	});
+		             
+
         var map = new ol.Map({
           layers: layers,
           target: 'map',
@@ -532,7 +541,8 @@ var clusters = new ol.layer.Vector({
 	    center: center,
             zoom: zoom,
             rotation: rotation
-          })
+          }),
+          controls: ol.control.defaults({attribution: false}).extend([attribution])
         });
 
 
