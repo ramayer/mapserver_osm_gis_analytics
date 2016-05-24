@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "note that this will only work from the map cache servers"
+
+# cache all major tile sets down to zoom level 12.
+
+sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t white_roads    -g g2 -z 0,12
+sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t dark_roads     -g g2 -z 0,12
+sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t subtle_color   -g g2 -z 0,12
+sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t black_on_white -g g2 -z 0,12
+sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t white_on_black -g g2 -z 0,12
+
+# cache one neighborhood more deeply.
+
+for i in `ls /var/cache/mapcache`; do echo $i; sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t $i -g g2 -z 0,18  -e -13620594.25,4527600.32,-13593742.87,4563243.66 ; done"
