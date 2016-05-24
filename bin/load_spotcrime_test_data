@@ -40,5 +40,6 @@ alter table spotcrime add column geom geometry(Point,3857);
 update spotcrime set geom = transform_ignoring_errors(ST_SetSRID(ST_Point(lon,lat),4326),3857);
 
 create index spotcrime_geom on spotcrime using gist(geom);
+alter table spotcrime add column id serial;
 
 EOF
