@@ -1,7 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 
-echo "NOTE - this requires a copy of the data SpotCrime released:"
+echo "NOTE - this requires a copy of the data SpotCrime released in 2010:"
 echo "See http://blog.spotcrime.com/2012/12/spotcrime-historical-crime-data-still.html for instructions to get the data"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
 
 #ignore
 #   gis=#  \copy spotcrime from '2008-3.csv'  csv header;
@@ -13,11 +16,9 @@ echo "See http://blog.spotcrime.com/2012/12/spotcrime-historical-crime-data-stil
 #   ERROR:  extra data after last expected column
 #   CONTEXT:  COPY spotcrime, line 341757: "2010-05-17,Theft,"8XX 78TH PLACE, DESMONIES",41.57915100000000,-93.81489200000000,http://spotcrime.c..."
 
+psql <<EOF
 
-create table spotcrime(dat date,cat text,addr text, lat float, lon float, url text, title text);
-with y as (select * from generate_series(2007,2010) as y), m as (select * from generate_series(1,12) as m)  select E'\\copy spotcrime from \''||y||'-'||m||E'.csv\'  csv header;' from y,m;
-
-
+CREATE TABLE spotcrime(dat date,cat text,addr text, lat float, lon float, url text, title text);
 CREATE OR REPLACE FUNCTION transform_ignoring_errors(geom1 geometry, srid int)
           RETURNS geometry AS
       $$
@@ -30,7 +31,14 @@ CREATE OR REPLACE FUNCTION transform_ignoring_errors(geom1 geometry, srid int)
       $$
       LANGUAGE plpgsql;
 
+
+
+
+with y as (select * from generate_series(2007,2010) as y), m as (select * from generate_series(1,12) as m)  select E'\\copy spotcrime from \''||y||'-'||m||E'.csv\'  csv header;' from y,m;
+
 alter table spotcrime add column geom geometry(Point,3857);
 update spotcrime set geom = transform_ignoring_errors(ST_SetSRID(ST_Point(lon,lat),4326),3857);
 
 create index spotcrime_geom on spotcrime using gist(geom);
+
+EOF
