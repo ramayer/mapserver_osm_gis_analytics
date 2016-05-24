@@ -682,7 +682,8 @@ var clusters = new ol.layer.Vector({
 		   overlay.setPosition(selected_feature.getGeometry().getCoordinates());
 		   var features = selected_feature.getProperties().features;
 		   if (features) { 
-		       var popup_text = "<b>"+features.length+" license plates seen in this cluster</b>";
+		       var s = (features.length == 1) ? "" : "s";
+		       var popup_text = "<b>"+features.length+" license plate"+s+" seen in this cluster</b>";
 		       features.forEach(function(d) {
 		         data = d.getProperties().data;
 			 popup_text += "<br>"+data['red_VRM']+" at "+data['red_Timestamp'];;
