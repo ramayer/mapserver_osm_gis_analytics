@@ -381,18 +381,18 @@ $azure vm disk attach-new -g $resourcegroup "mapcache-02" -z 500
 #
 #  git clone https://github.com/Azure/azure-quickstart-templates
 #  sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
-#  [ assume that created /datadisks/disk1 ]
-#
-#  sudo mkdir -p /datadisks/disk1/cache
-#  sudo chown www-data /datadisks/disk1/cache
-#  sudo ln -s /datadisks/disk1/cache /var/tmp/cache
+#  [ assume that created /datadisks/disk1 on /dev/md0]
 #
 # but then we need to re-format it with more inodes like:
-#   sudo mkfs.ext4 -i 4096 /dev/sdc1 
-#   sudo mount /dev/sdc1 /datadisks/disk1
-#   sudo mkdir -p /datadisks/disk1/cache
-#   sudo chown www-data /datadisks/disk1/cache
-#   sudo ln -s /datadisks/disk1/cache /var/tmp/cache
+#
+#   sudo umount /datadisks/disk1
+#   sudo dd if=/dev/zero of=/dev/md0 bs=1000 count=10
+#   sudo mkfs.ext4 -i 4096 /dev/md0
+#   sudo mount /dev/md0 /datadisks/disk1
+#   sudo mkdir -p /datadisks/disk1/cache/mapcache
+#   sudo chown www-data /datadisks/disk1/cache/mapcache
+#   sudo rm -rf /var/cache/mapcache
+#   sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache
 
 fi
 
