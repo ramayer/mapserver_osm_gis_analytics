@@ -25,10 +25,10 @@ class GisConvenienceFunctions
     sql = %Q{
       select * from (
         SELECT name,highway,waterway,route,
-               ST_Distance(r.way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
+               ST_Distance(r.way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
                FROM planet_osm_line r
-               WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{@one_quarter_mile})
-               ORDER BY way<->ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913) limit 100
+               WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{@one_quarter_mile})
+               ORDER BY way<->ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857) limit 100
        ) as a
       where
          (name is not null) and
@@ -73,11 +73,11 @@ class GisConvenienceFunctions
                "tunnel", "water", "waterway", "wetland", "width", "wood", "z_order", "way_area",
                "tags", "way",
                hstore_to_json(tags) as json_tags,
-               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
-               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
           FROM planet_osm_polygon geom
-         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance})
-           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance}),way)
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
            AND name IS NOT NULL
            AND name != 'United States of America'
       ORDER BY dist,way_area
@@ -93,11 +93,11 @@ class GisConvenienceFunctions
     sql = %Q{
         SELECT *,
                hstore_to_json(tags) as json_tags,
-               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
-               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
           FROM planet_osm_point geom
-         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance})
-           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance}),way)
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
            AND name IS NOT NULL
       ORDER BY dist
          LIMIT 100
@@ -112,11 +112,11 @@ class GisConvenienceFunctions
     sql = %Q{
         SELECT *,
                hstore_to_json(tags) as json_tags,
-               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),way) as intersects,
-               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),900913)) as dist
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
           FROM planet_osm_line geom
-         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance})
-           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),900913),#{interesting_distance}),way)
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
            AND name IS NOT NULL
       ORDER BY dist
          LIMIT 100
