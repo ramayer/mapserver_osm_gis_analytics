@@ -1,5 +1,3 @@
-# defaults are subtlecolor                                                                                                                                                      
-
 load File.join(File.dirname(__FILE__), 'white_roads.rb')
 
 overrides = {
@@ -9,14 +7,14 @@ overrides = {
   state:       {color:'#f0f0f0', outline:'#cccccc'},
   parking:     {color:'#d0d0d0', outline:'#666666'},   # should be noticably darker than 'building'
 
-  park:        {color:'#f0f0f0'},
-  grass:       {color:'#f0f0f0'},
-  forest:      {color:'#f0f0f0', outline:"#b5c29c"},
-  sand:        {color:'#f0f0f0', outline:"#ccaa77"},
-  mud:         {color:'#f0f0f0', outline:"#ccbb77"},
-  military:    {color:'#f0f0f0', outline:"#444444"},
-  tourism:     {color:'#f0f0f0', outline:"#ccaaff"},
-  school:      {color:'#fff0f0'},
+  park:        {color:'#f0fecd'},
+  grass:       {color:'#e5f2cc'},
+  forest:      {color:'#f8fff0', outline:"#b5c29c"},
+  sand:        {color:'#f8f8f0', outline:"#ccaa77"},
+  mud:         {color:'#f8f8f0', outline:"#ccbb77"},
+  military:    {color:'#f8f0f0', outline:"#444444"},
+  tourism:     {color:'#fff0ff', outline:"#ccaaff"},
+  school:      {color:'#fffff0'},
   water:       {color:'#99b3cc'},
 
   building:    {color:'#d1d0cd', offset:'#8e8d8c'},
@@ -37,7 +35,6 @@ overrides = {
   water_label:     {color:'#444488',outline:'#ffffff'},
   
 }
-
 
 $map_colors = $map_colors.merge(overrides)
 

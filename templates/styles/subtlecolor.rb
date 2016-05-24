@@ -19,8 +19,8 @@ $map_colors = {
   parking:     {color:'#f0e8e0', outline:'#666666'},   # should be noticably different from 'building'
 
   tree:        {color:'#143306'},
-  park:        {color:'#d5e2bc'},
-  grass:       {color:'#dadead'},
+  park:        {color:'#dadead'},
+  grass:       {color:'#d5e2bc'},
   forest:      {color:'#c5d2ac', outline:"#b5c29c"},
   sand:        {color:'#f5e9c6', outline:"#ccaa77"},
   mud:         {color:'#eeddbb', outline:"#ccbb77"},
@@ -44,15 +44,15 @@ $map_colors = {
   # The old pallete was based on beige's  like #ddccaa
   # motorway:     {color:'#aa9977', outline:'#ded5c2'},
   # more: http://wiki.openstreetmap.org/wiki/Key:highway
-  motorway:     {color: interpolate('#f6dca4','#ffffff',0.0), outline:'#888888'},
-  trunk:        {color: interpolate('#f6dca4','#ffffff',0.1), outline:'#888888'},
-  primary:      {color: interpolate('#f6dca4','#ffffff',0.2), outline:'#888888'},
-  secondary:    {color: interpolate('#f6dca4','#ffffff',0.3), outline:'#888888'},
-  tertiary:     {color: interpolate('#f6dca4','#ffffff',0.4), outline:'#888888'},
-  unclassified: {color: interpolate('#f6dca4','#ffffff',0.5), outline:'#888888'},
-  residential:  {color: interpolate('#f6dca4','#ffffff',0.6), outline:'#888888'},
-  service:      {color: interpolate('#f6dca4','#ffffff',0.7), outline:'#888888'},
-  road:         {color: interpolate('#f6dca4','#ffffff',1.0), outline:'#888888'},
+  motorway:     {color: interpolate('#f6dca4','#ffffff',0.0), outline:'#aaaaaa'},
+  trunk:        {color: interpolate('#f6dca4','#ffffff',0.1), outline:'#aaaaaa'},
+  primary:      {color: interpolate('#f6dca4','#ffffff',0.2), outline:'#aaaaaa'},
+  secondary:    {color: interpolate('#f6dca4','#ffffff',0.3), outline:'#aaaaaa'},
+  tertiary:     {color: interpolate('#f6dca4','#ffffff',0.4), outline:'#aaaaaa'},
+  unclassified: {color: interpolate('#f6dca4','#ffffff',0.5), outline:'#aaaaaa'},
+  residential:  {color: interpolate('#f6dca4','#ffffff',0.6), outline:'#aaaaaa'},
+  service:      {color: interpolate('#f6dca4','#ffffff',0.7), outline:'#aaaaaa'},
+  road:         {color: interpolate('#f6dca4','#ffffff',1.0), outline:'#aaaaaa'},
   road_line:    {color:'#aaaaaa'},
   road_label:      {color:'#000000',outline:'#ffe5ad'}, 
 
