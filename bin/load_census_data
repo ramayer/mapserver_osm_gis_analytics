@@ -8,8 +8,8 @@ mkdir -p $GIS_DATA_DIR/census
 cd $GIS_DATA_DIR/census
 
 
-wget -e robots=off -x --mirror -p https://www2.census.gov/geo/tiger/TIGER2010DP1/
-wget -x --mirror -p ftp://ftp2.census.gov/geo/tiger/TIGER2010BLKPOPHU/
+wget -e robots=off -x --mirror -p --no-parent https://www2.census.gov/geo/tiger/TIGER2010DP1/
+wget -x --mirror -p --no-parent ftp://ftp2.census.gov/geo/tiger/TIGER2010BLKPOPHU/
 
 mkdir tmp
 unzip -d tmp ./www2.census.gov/geo/tiger/TIGER2010DP1/ZCTA_2010Census_DP1.zip 
