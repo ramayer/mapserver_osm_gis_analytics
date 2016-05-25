@@ -90,36 +90,44 @@ MAP
         NAME "spotcrime"
         <%= default_connection() %>
         DATA "geom from (select * from spotcrime) as a using unique id using srid=3857"
-        <%
-            color='#ff0000'
-        %>
+        MAXSCALEDENOM 50010
         CLASS
-            MAXSCALEDENOM 50010
             TEXT "[title]"
             STYLE
                 SIZE   5
                 SYMBOL 'circle'
-                COLOR '#ff0000'
+                COLOR '#ff000080'
             END
 	    LABEL
 	        MAXSCALEDENOM 2010
 		FONT arial
 		TYPE TRUETYPE
-		SIZE 8
-                COLOR '#ff0000'
-		OUTLINECOLOR "#ffffff"
+		SIZE 7
+                COLOR '#ffffff'
+		OUTLINECOLOR "#000000"
 		OUTLINEWIDTH 1
 		POSITION auto
 		BUFFER 1
 		PARTIALS FALSE
 	    END
         END
+    END
+
+    LAYER
+        TYPE POINT
+        PROJECTION "init=epsg:3857" END
+        STATUS ON 
+        GROUP "default"
+        NAME "spotcrime"
+        <%= default_connection() %>
+        DATA "geom from (select * from spotcrime) as a using unique id using srid=3857"
+        MINSCALEDENOM 50010
         CLASS
             MINSCALEDENOM 50010
             STYLE
                 SIZE   3
                 SYMBOL 'circle'
-                COLOR '#ff0000'
+                COLOR '#ff000020'
             END
         END
     END
