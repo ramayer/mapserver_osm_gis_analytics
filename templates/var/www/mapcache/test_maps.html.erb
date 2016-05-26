@@ -145,8 +145,12 @@
 	       type: 'base',
 	       title: item.desc,
                visible: false,
+               // Note - without "maxZoom", this fails on Chrome on Windows 10.
+               // but works with Firefox everywhere, IE everywhere,
+	       // Chrome on Windows 7 and Chromium on Linux.  Strange.
 	       source: new ol.source.XYZ({
 		       url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
+		       maxZoom: 21,
                        attributions: [ol.source.OSM.ATTRIBUTION]
 
 	       })
