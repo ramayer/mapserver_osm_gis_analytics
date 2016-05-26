@@ -79,7 +79,7 @@ LAYER
     PROJECTION "init=epsg:4326" END
     STATUS ON 
     GROUP "default"
-    NAME "Beats"
+    NAME "census zcta"
     <%= default_connection() %>
     DATA "geom from (select  * from zcta_2010census_dp1 join palette on (palette.idx = (dp0080003 * 255 / dp0080001) and palette.name='green_to_red') where dp0080001 > 0) as a using unique gid using srid=4269"
     CLASS
