@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# The TileCache can create hundreds of millions of files (map tiles)
+# over a single weekend.
+#
+# The default disk created by the azure-quickstart-templates
+# script is far more limited.
+#
+# This script re-formats the drive and moves the mapcache directory
+# to the new drive configured to hold more files.
+
+git clone https://github.com/Azure/azure-quickstart-templates
+sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+
+# Assume that created /datadisks/disk1 on /dev/md0 . 
+# But then we need to re-format it with more inodes like:
+
+sudo umount /datadisks/disk1
+sudo dd if=/dev/zero of=/dev/md0 bs=1000 count=10
+sudo mkfs.ext4 -i 4096 /dev/md0
+sudo mount /dev/md0 /datadisks/disk1
+sudo mkdir -p /datadisks/disk1/cache/mapcache
+sudo chown www-data /datadisks/disk1/cache/mapcache
+sudo rm -rf /var/cache/mapcache
+sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache

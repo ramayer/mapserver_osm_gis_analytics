@@ -394,6 +394,23 @@ $azure vm disk attach-new -g $resourcegroup "mapcache-02" -z 500
 #   sudo rm -rf /var/cache/mapcache
 #   sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache
 
+# TODO
+#   To generate the nationwide-spotcrime-dot-map, the mapserver VMs need 
+#   much more than the 3.4 GB RAM that the cheap Azure VMs have.
+#
+#   Each spotcrime tile at zoom level 3 takeas about 1.5 GB of RAM;
+#   and the app servers are configured to generate a few tiles in parallel.
+#
+#   Workaround that by adding 10GB of swap to those too.
+#
+#     sudo mkdir /mnt/swap
+#     sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+#     sudo chown root:root /mnt/swap/10GB 
+#     sudo chmod 0600 /mnt/swap/10GB
+#     sudo mkswap  /mnt/swap/10GB
+#     sudo swapon /mnt/swap/10GB
+
+
 fi
 
 

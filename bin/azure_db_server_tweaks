@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Move /var/lib/postgresql to a large raid array.
+#
+# For planet-latest.osm.pbf, reasonable options are:
+#   * A 10-disk RAID-0 of 100GB spinning disks.
+#   * A  2-disk RAID-0 of 500GB SSD disks.
+# 
+#
+git clone https://github.com/Azure/azure-quickstart-templates
+sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+#  [ assume that created /datadisks/disk1 ]
+sudo service postgresql stop
+sudo mv /var/lib/postgresql /datadisks/disk1
+sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
+sudo mkdir /datadisks/disk1/gisdata
+sudo ln -s /datadisks/disk1/gisdata /mnt/gisdata
+sudo chmod a+w /mnt/gisdata/.
+
+# And on a DS12 server, the following is also needed so osm2pgsql doesn't fail,
+# because it will try to use over 40GB of RAM just before creating indexes.
+# Possibly much more depending on parameters passed to osm2pgsql.
+# 
+# see https://github.com/forensiclogic/mapserver_osm_gis_analytics/blob/master/doc/loading_osm_data__memory_usage.png
+
+sudo mkdir /mnt/swap
+sudo dd if=/dev/zero of=/mnt/swap/20GB bs=1M count=20480
+sudo chown root:root /mnt/swap/20GB
+sudo chmod 0600 /mnt/swap/20GB
+sudo mkswap /mnt/swap/20GB
+sudo swapon /mnt/swap/20GB
