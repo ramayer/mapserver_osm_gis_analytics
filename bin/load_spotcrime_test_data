@@ -42,4 +42,41 @@ update spotcrime set geom = transform_ignoring_errors(ST_SetSRID(ST_Point(lon,la
 create index spotcrime_geom on spotcrime using gist(geom);
 alter table spotcrime add column id serial;
 
+
+INSERT INTO additional_layers (layer,source) values ('spotcrime_states','derived from OSM and SpotCrime');
+INSERT INTO additional_layers (layer,source) values ('spotcrime_zips','derived from OSM and SpotCrime');
+
+
+
+EOF
+
+cat <<EOF
+
+      the following would probably be cool, but takes forever
+
+
+      INSERT INTO additional_polygons (layer,label,color,geom)
+          select 'spotcrime_zips',
+                 count(*)::text || ' in ' || zcta5ce10,
+                 null,
+                 zcta_2010census_dp1.geom
+          FROM spotcrime
+          JOIN zcta_2010census_dp1 ON ( ST_Intersects(spotcrime.geom,ST_transform(zcta_2010census_dp1.geom,3857)))
+          group by zcta5ce10,zcta_2010census_dp1.geom
+           ;
+
+
+
+      INSERT INTO additional_polygons (layer,label,color,geom)
+          select 'spotcrime_states',
+                 count(*)::text || ' ' || planet_osm_polygon.name, 
+                 null,
+                 planet_osm_polygon.way
+          FROM planet_osm_polygon
+          JOIN spotcrime ON ( ST_Intersects(geom,way))
+          AND  planet_osm_polygon.admin_level='4'
+          group by way,name
+           ;
+         
+
 EOF
