@@ -92,21 +92,6 @@ CONFIG "PROJ_LIB" "/usr/share/proj"
 CONFIG "MS_ERRORFILE" "stderr"
 PROJECTION  "init=epsg:3857"  END
 
-LAYER
-    TYPE LINE
-    PROJECTION "init=epsg:4326" END
-    STATUS ON 
-    GROUP "default"
-    NAME "user lines"
-    <%= default_connection() %>
-    DATA "geom from (select * from user_lines) as a using unique id using srid=4326"
-    CLASS
-        STYLE
-            COLOR '#ff0000'
-        END
-    END
-END
-
 SYMBOL
     NAME "circle"
     TYPE ELLIPSE
@@ -322,6 +307,63 @@ LAYER
         END
     END
 END
+
+
+SYMBOL
+  NAME "alternative_arrow"
+  TYPE TRUETYPE
+  FONT arial
+  FILLED true
+  ANTIALIAS true
+  CHARACTER '&#8594;'
+  ANCHORPOINT 1 0.5
+END
+
+LAYER
+    TYPE LINE
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user lines"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,]+$'
+    END
+    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+
+    STYLE
+      GEOMTRANSFORM "end"
+      COLOR [innercolor]
+      OUTLINECOLOR [outercolor]
+      OUTLINEWIDTH 5
+      SYMBOL "alternative_arrow"
+      SIZE 30
+      ANGLE AUTO
+    END # STYLE
+
+  END # CLASS
+
+
+
+
+
+END
+
+
+
 
 
 
