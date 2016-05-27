@@ -121,7 +121,6 @@ LAYER
     GROUP "default"
     NAME "user points"
     <%= default_connection() %>
-
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
@@ -242,10 +241,24 @@ LAYER
     GROUP "default"
     NAME "user polygons"
     <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,]+$'
+    END
     DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
     CLASS
         STYLE
-            COLOR '#0000ff11'
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINECOLOR [outlinecolor]
+	    OUTLINEWIDTH [outlinewidth]
+        END
+        STYLE
+            SYMBOL [symbol]
+	    SIZE [size]
         END
         TEXT '[label]'
         LABEL
@@ -261,6 +274,55 @@ LAYER
         END
     END
 END
+
+
+LAYER
+    TYPE POLYGON
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user polygons"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'highlights'    '^[0-9,]+$'
+    END
+    DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%highlights%)'
+    CLASS
+        STYLE
+            COLOR [color]
+	    OPACITY [opacity]
+        END
+        STYLE
+	    OUTLINECOLOR '#0000ff'
+	    WIDTH 5
+        END
+        STYLE
+	    OUTLINECOLOR '#ffff00'
+	    WIDTH 1
+        END
+        STYLE
+            SYMBOL [symbol]
+	    SIZE [size]
+        END
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 12
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#0000ff'
+            OUTLINECOLOR '#ffffff'
+	    MINFEATURESIZE AUTO
+        END
+    END
+END
+
 
 
 END
