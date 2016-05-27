@@ -1,3 +1,47 @@
+*  Track down why Azure's limiting us to a tiny number of Dv2 cores.
+
+
+    $ azure vm list-usage westus
+    info:    Executing command vm list-usage
+    data:    Name                         Unit   CurrentValue  Limit
+    data:    ---------------------------  -----  ------------  -----
+    data:    Availability Sets            Count  0             2000 
+    data:    Total Regional Cores         Count  45            200  
+    data:    Virtual Machines             Count  30            10000
+    data:    Virtual Machine Scale Sets   Count  0             50   
+    data:    Standard D Family Cores      Count  8             200  
+    data:    Standard A0-A7 Family Cores  Count  4             200  
+    data:    Standard DS Family Cores     Count  5             200  
+    data:    Standard Dv2 Family Cores    Count  20            20   
+    data:    Standard DSv2 Family Cores   Count  8             20   
+    info:    vm list-usage command OK
+    $ 
+
+
+
+* Automate the RAID DISK and Swap Space configuration defined at the bottom of
+  mapserver_osm_gis_analytics/bin/add_web_server_to_azure_environment
+
+
+#   sudo umount /datadisks/disk1
+#   sudo dd if=/dev/zero of=/dev/md0 bs=1000 count=10
+#   sudo mkfs.ext4 -i 4096 /dev/md0
+#   sudo mount /dev/md0 /datadisks/disk1
+#   sudo mkdir -p /datadisks/disk1/cache/mapcache
+#   sudo chown www-data /datadisks/disk1/cache/mapcache
+#   sudo rm -rf /var/cache/mapcache
+#   sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache
+
+
+#     sudo mkdir /mnt/swap
+#     sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+#     sudo chown root:root /mnt/swap/10GB 
+#     sudo chmod 0600 /mnt/swap/10GB
+#     sudo mkswap  /mnt/swap/10GB
+#     sudo swapon /mnt/swap/10GB
+
+
+
 * Automate:
   shp2pgsql -I -s 3857 '/etc/mapserver/shapefiles/land_polygons.shp' > /tmp/land_polygons.sql
   psql -q -h localhost gis gis < /tmp/land_polygons.sql 

@@ -153,16 +153,17 @@ function load_osm_data {
   echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_polygons;" | psql
   echo "DROP MATERIALIZED VIEW IF EXISTS planet_admin_boundaries;" | psql
   echo "DROP TABLE IF EXISTS planet_osm_roads CASCADE;" | psql
+  echo "DROP TABLE IF EXISTS planet_osm_polygon CASCADE;" | psql
 
   if [ "$map_data" == "planet" ]; then 
      wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
      # Warning - you need a huge machine to build the whole planet.
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
   fi
 
   if [ "$map_data" == "california" ]; then 
      wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
   fi
 
   if [ "$map_data" == "states" ]; then 
@@ -174,7 +175,7 @@ function load_osm_data {
      wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
      wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
      # note that you can not use the "--slim" mode with states that touch each other.
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
   fi
 
   if [ "$map_data" == "small" ]; then 
@@ -282,16 +283,16 @@ function load_osm_data {
      # sudo swapon /mnt/swap/10GB
      osmconvert  tmp/*.o5m -o=./new.o5m
 
-     # Even though osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this
-     #    osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
+     # Even though osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this
+     #    osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
      # because some of these extracts have redundant data, and with the option it gives the following error
      #
-     # osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
+     # osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
      # 
      # However we can also not use it without the option due to this issue:
-     #    https://github.com/openstreetmap/osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST/issues/151
+     #    https://github.com/openstreetmap/osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST/issues/151
      # that requires that nodes (apparently even across files) need to be ordered
-     osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs ./new.o5m
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs ./new.o5m
 
 
     # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
@@ -304,7 +305,7 @@ function load_osm_data {
       # This one seems to have pretty old data
       # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
       wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/san-francisco-bay_california.osm.pbf
-      osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs san-francisco-bay_california.osm.pbf
+      osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs san-francisco-bay_california.osm.pbf
   fi
 
   if [ "$map_data" == "tiny" ]; then 
@@ -316,7 +317,7 @@ function load_osm_data {
      #    32.85531 -97.25333 -97.24225 32.84897
      echo GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox"
      GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox" > lake_merrit.osm
-     osm2pgsql -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
+     osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
   fi
 
   echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
@@ -367,8 +368,8 @@ function load_osm_data {
   #
   # explain analyze select "highway","nicename",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id ,highway,ref, name, CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END AS nicename, tunnel FROM planet_osm_line WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link') ORDER by z_order ) as highways where way && ST_GeomFromText('POLYGON((1486432.67054764 6574081.27320914,1486432.67054764 6673372.97295186,1585724.37029036 6673372.97295186,1585724.37029036 6574081.27320914,1486432.67054764 6574081.27320914))',900913);
   #
-  # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql put tertiary roads there.
-  echo 'create index "planet_osm_line__major_highways" on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');' | psql
+  # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql --proj 3857 put tertiary roads there.
+  echo "create index planet_osm_line__major_highways on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');" | psql
   echo 'create index "planet_osm_line__all_highways" on planet_osm_line using GIST(way) where highway is not null;' | psql
 
 
@@ -525,8 +526,8 @@ if [ "$create_db" == "true" ]; then
     # echo 'create extension plpgsql' | psql $dbname fli   # already installed in template
     # echo 'create extension intagg' | psql $dbname fli
     # echo 'create extension intarray' | psql $dbname fli
-    #    While required for earlier versions of osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST, intarray 
-    #    is now unnecessary and will interfere with osm2pgsql --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST's array
+    #    While required for earlier versions of osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST, intarray 
+    #    is now unnecessary and will interfere with osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST's array
     #    handling. Please use a database without intarray.
     # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/postgis.sql
     # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/spatial_ref_sys.sql

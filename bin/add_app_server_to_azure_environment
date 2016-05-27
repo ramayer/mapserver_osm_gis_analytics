@@ -14,7 +14,7 @@ mkdir -p ~/.azure/
 
 function show_usage {
     echo "usage:" >&2
-    echo "     $0 --resource-group=<group> --azure-acct=<acct>" --azure-region=<region> >&2
+    echo "     $0 --resource-group=<group> --azure-region=<region>" >&2
     echo "note:" >&2
     echo "  This script assumes a resource group configured in a way that matches"
     echo "  that from the create_azure_environment script"
@@ -22,7 +22,6 @@ function show_usage {
     echo "     $0 --resource-group=map-test"
     exit 2
 }
-
 
 while getopts "$optspec" optchar; do
     case "${optchar}" in
@@ -32,20 +31,10 @@ while getopts "$optspec" optchar; do
                     val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
                     echo "Parsing option: '--${OPTARG}', value: '${val}'" >&2;
                     ;;
-                environment=*)
-                    val=${OPTARG#*=}
-                    opt=${OPTARG%=$val}
-                    environment=$val
-                    ;;
                 resource-group=*)
                     val=${OPTARG#*=}
                     opt=${OPTARG%=$val}
                     resourcegroup=$val
-                    ;;
-                azure-acct=*)
-                    val=${OPTARG#*=}
-                    opt=${OPTARG%=$val}
-                    azure_acct=$val
                     ;;
                 azure-region=*)
                     val=${OPTARG#*=}
@@ -85,25 +74,16 @@ azure='/usr/bin/time azure'
 
 now=`date +'%Y%m%d%T' | perl -pe 's/://g'` 
 
-nic_name=$now
-
-$azure network nic create $resourcegroup $nic_name" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+nic_name="app-"$now
+vm_name=mapserv-$now
 
 adm_vm_size=Standard_D1
 web_vm_size=Standard_D1
 app_vm_size=Standard_D1_v2
 db_vm_size=Standard_DS12
 
-$azure vm create $resourcegroup "mapserv-"$now   $azure_region "Linux"   -z $app_vm_size -N $nic_name -u gisadmin -Q $linuximg --ssh-publickey-file $azure_public_key    
+$azure network nic create $resourcegroup $nic_name $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+$azure vm create $resourcegroup $vm_name   $azure_region "Linux"   -z $app_vm_size -N $nic_name -u gisadmin -Q $linuximg --ssh-publickey-file $azure_public_key    
 
 
-# TODO --- test this script.
-#       The following worked on our old environment.   Hopefully this script duplicates that behavior.
-#
-# 2014  now=`date +'%Y%m%d%T' | perl -pe 's/://g'`
-# 2015  azure network nic create maps-prod-4 $now westus --subnet-vnet-name "fli-vnet" --subnet-name "fli-app-subnet"
-# 2016  azure vm create maps-prod-4 "mapserv-"$now   westus Linux -z $app_vm_size -N $now -u fliadmin -Q $linuximg  --ssh-publickey-file $azure_public_key
-#
-# 2017  now=`date +'%Y%m%d%T' | perl -pe 's/://g'`
-# 2018  azure network nic create maps-prod-4 $now westus --subnet-vnet-name "fli-vnet" --subnet-name "fli-app-subnet"
-3 2019  azure vm create maps-prod-4 "mapserv-"$now   westus Linux -z $app_vm_size -N $now -u fliadmin -Q $linuximg  --ssh-publickey-file $azure_public_key
+
