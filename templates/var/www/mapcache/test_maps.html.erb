@@ -74,8 +74,8 @@
 
     </style>
     <script src="https://code.jquery.com/jquery-2.2.3.min.js"></script>
-    <link rel="stylesheet" href="./v3.15.1-dist/ol.css" type="text/css">
-    <script src="./v3.15.1-dist/ol.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="./v3.16.0-dist/ol.css" type="text/css">
+    <script src="./v3.16.0-dist/ol.js" type="text/javascript"></script>
     <link rel="stylesheet" href="ol3-layerswitcher/src/ol3-layerswitcher.css" />
     <script src="ol3-layerswitcher/src/ol3-layerswitcher.js"></script>
 
@@ -135,7 +135,10 @@
         }
       }
 
-       var layer_json = <%= File.read("#{ENV['PROJECT_DIR']}/templates/layers.json") %>
+       var layer_json = [];
+       jQuery.ajax({ url: "./layers.json", success: function(body) { layer_json = body; }, async:false });
+
+
        var base_layers = layer_json.filter( function(value) { return value.type=='base' });
        var overlay_layers = layer_json.filter( function(value) { return value.type!='base' });
 
@@ -179,11 +182,11 @@
 /// http://zeroviscosity.com/d3-js-step-by-step/step-4-loading-external-data
 
 // TODO - try atlas vectors to save RAM on webgl browsers
-// # http://openlayers.org/en/v3.15.1/examples/symbol-atlas-webgl.html?q=vector
+// # http://openlayers.org/en/v3.16.0/examples/symbol-atlas-webgl.html?q=vector
 // OR: https://github.com/openlayers/ol3/issues/5054
 //     http://openlayers.org/en/v3.14.2/examples/image-vector-layer.html
 //
-// TODO - try if even more can load with something like this: http://openlayers.org/en/v3.15.1/examples/dynamic-data.html?q=clear+layer
+// TODO - try if even more can load with something like this: http://openlayers.org/en/v3.16.0/examples/dynamic-data.html?q=clear+layer
 var onerow = ''
 var i = 0;
 var lpr_features = [];

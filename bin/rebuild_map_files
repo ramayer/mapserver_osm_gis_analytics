@@ -54,3 +54,4 @@ mkdir -p $INSTALL_DIR/usr/lib/cgi-bin
 erb $PROJECT_DIR/templates/usr/lib/cgi-bin/map_data.cgi.erb > $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi
 chmod a+x $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi
 
+cp $PROJECT_DIR/templates/layers.json $INSTALL_DIR/var/www/mapcache/layers.json
