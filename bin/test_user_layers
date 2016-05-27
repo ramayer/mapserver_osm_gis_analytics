@@ -47,7 +47,7 @@ psql <<EOF
                  select 1,1,8,name,'#ff00ff',2,'#000000',4,1,null,st_transform(way,4326)               
                  from planet_osm_line where way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913) and name is null;
 
-
+update user_lines set label='My Label', labelcolor='#ff0000',labeloutlinecolor='#ffffff',labelsize=8;
 
 
 

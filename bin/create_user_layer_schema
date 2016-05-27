@@ -45,6 +45,11 @@ psql << EOF
          feature        int,
 
          label          text,
+         labelsize      double precision,
+         labelcolor     text,
+         labeloutlinecolor text,
+         labeloutlinewidth  double precision,
+
          angle          double precision,
          innercolor     text,
          innerwidth     double precision,
