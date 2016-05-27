@@ -171,6 +171,71 @@ LAYER
 END
 
 LAYER
+    TYPE POINT
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user points"
+    <%= default_connection() %>
+
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,]+$'
+        'highlights'  '^[0-9,]+$'
+    END
+    DATA "geom from (select * from user_points) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%highlights%)'
+    LABELITEM "label"
+    CLASS
+        STYLE
+	    SIZE 30
+	    SYMBOL 'circle'
+            COLOR '#ffff00'
+	    OUTLINEWIDTH 55
+	    OUTLINECOLOR '#ff0000'
+        END
+        STYLE
+	    SIZE [size]
+	    SYMBOL [symbol]
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINEWIDTH [outlinewidth]
+	    OUTLINECOLOR [outlinecolor]
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE [labelsize]
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+	    SHADOWSIZE [labelshadowx] [labelshadowy]
+	    POSITION AUTO
+        END
+
+        LABEL
+	    TEXT "[centeredlabel]"
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 8
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#000000'
+            OUTLINECOLOR '#ffffff'
+	    SHADOWSIZE 3 3
+	    FORCE true
+        END
+
+    END
+END
+
+
+LAYER
     TYPE POLYGON
     PROJECTION "init=epsg:4326" END
     STATUS ON 
