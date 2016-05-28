@@ -45,11 +45,17 @@ psql << EOF
          feature        int,
 
          label          text,
+         labelsize      double precision,
+         labelcolor     text,
+         labeloutlinecolor text,
+         labeloutlinewidth  double precision,
+
          angle          double precision,
-         color          text,
+         innercolor     text,
+         innerwidth     double precision,
+         outercolor     text,
+         outerwidth     double precision,
          opacity        int,
-         outlinecolor   text,
-         outlinewidth   text,
          size           double precision,
          symbol         text,
  
@@ -93,4 +99,6 @@ psql << EOF
   CREATE INDEX "user_lines(userid,feature)"    ON user_lines(userid,feature);
   CREATE INDEX "user_polygons(userid,feature)" ON user_lines(userid,feature);
 
+
 EOF
+

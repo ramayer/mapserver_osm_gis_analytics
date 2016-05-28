@@ -31,5 +31,25 @@ psql <<EOF
                   select '1',1,'1','circle'					                ,15 + 3 * (osm_id % 10), name, '#ff0000', 3,'#ffff00',osm_id%10,st_transform(way,4326)
                   from planet_osm_point where amenity = 'drinking_water' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
 
+         insert into user_polygons (userid,feature,session,color,opacity,outlinecolor,outlinewidth,geom,symbol,size) 
+                  select 1,5,1,'#ff0000','50','#00ff00',5,st_multi(st_transform(way,4326)),null      ,8
+                  from planet_osm_polygon where way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913) and name<>'Lake Merritt';
+
+         insert into user_polygons (userid,feature,session,color,opacity,outlinecolor,outlinewidth,geom,symbol,size)
+                 select 1,6,1,'#ff0000','00','#00ff00',5,st_multi(st_transform(way,4326)),'https://maps.google.com/mapfiles/ms/micons/blue.png'        ,8
+                 from planet_osm_polygon where way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913) and name='Lake Merritt';
+
+         insert into user_polygons (userid,feature,session,color,opacity,outlinecolor,outlinewidth,geom,symbol,size)
+                 select 1,7,1,'#000000','50','#ff0000',05,st_multi(st_transform(way,4326)),null      ,8
+                 from planet_osm_polygon where way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913) and name is null;
+
+          insert into user_lines (userid,session,feature,label,innercolor,innerwidth,outercolor,outerwidth,size,symbol,geom)
+                 select 1,1,8,name,'#ff00ff',2,'#000000',4,1,null,st_transform(way,4326)               
+                 from planet_osm_line where way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913) and name is null;
+
+update user_lines set label='My Label', labelcolor='#ff0000',labeloutlinecolor='#ffffff',labelsize=8;
+
+
+
 EOF
 
