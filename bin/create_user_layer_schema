@@ -14,7 +14,7 @@ psql << EOF
 
          userid         text,
          session        text,      
-         feature        int,
+         feature        numeric,
 
          symbol             text,
          size               double precision,
@@ -42,7 +42,7 @@ psql << EOF
 
          userid         text,
          session        text,      
-         feature        int,
+         feature        numeric,
 
          label          text,
          labelsize      double precision,
@@ -69,7 +69,7 @@ psql << EOF
 
          userid         text,
          session        text,      
-         feature        int,
+         feature        numeric,
 
          symbol             text,
          size               double precision,
