@@ -47,9 +47,22 @@ else
     (cd $INSTALL_DIR/var/www/mapcache ; git clone https://github.com/walkermatt/ol3-layerswitcher)
 fi
 
+if [ -d $INSTALL_DIR/var/www/mapcache/leaflet ];
+then
+    echo "already had leaflet"
+else
+    echo "need leaflet"
+    mkdir -p $INSTALL_DIR/var/www/mapcache/leaflet
+    (cd $INSTALL_DIR/var/www/mapcache/leaflet ; wget http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.zip)
+    (cd $INSTALL_DIR/var/www/mapcache/leaflet ; unzip leaflet.zip)
+fi
+
+
+
 erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
 install $PROJECT_DIR/templates/var/www/mapcache/index.html $INSTALL_DIR/var/www/mapcache/index.html
 cp $PROJECT_DIR/templates/var/www/mapcache/openlayers_helpers.js $INSTALL_DIR/var/www/mapcache/openlayers_helpers.js
+cp $PROJECT_DIR/templates/var/www/mapcache/test_leaflet.html $INSTALL_DIR/var/www/mapcache/test_leaflet.html
 
 mkdir -p $INSTALL_DIR/usr/lib/cgi-bin
 erb $PROJECT_DIR/templates/usr/lib/cgi-bin/map_data.cgi.erb > $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi

@@ -165,3 +165,17 @@
   env GIS_PORT=5432 GIS_HOST='postgis-01' GIS_PASSWORD='changeme' rake test
   gem build gis_convenience_functions.gemspec 
   sudo gem install gis_convenience_functions
+
+
+* Another interesting data set 
+
+  http://www.dc.state.fl.us/pub/obis_request.html
+
+* Another: 
+
+  http://data.denvergov.org/
+
+ And another:
+
+   https://fusiontables.googleusercontent.com/fusiontables/embedviz?viz=GVIZ&t=TABLE&q=select+col0,+col1,+col2,+col3,+col4,+col5,+col6,+col7,+col8,+col9,+col10,+col11,+col12,+col13,+col14,+col15,+col16,+col17,+col18+from+1YK-hPbypQWCg2Uj35SRgNgwQ5yLyYnOANjY-wYkh&containerId=googft-gviz-canvas
+https://www.reddit.com/r/datasets/comments/4gqq5z/request_human_trafficking_or_missing/
