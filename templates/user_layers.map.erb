@@ -109,7 +109,7 @@ LAYER
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,]+$'
+        'features'    '^[0-9,\-]+$'
     END
     DATA "geom from (select * from user_points) as a using unique id using srid=4326"
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
@@ -165,8 +165,8 @@ LAYER
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,]+$'
-        'highlights'  '^[0-9,]+$'
+        'features'    '^[0-9,\-]+$'
+        'highlights'  '^[0-9,\-]+$'
     END
     DATA "geom from (select * from user_points) as a using unique id using srid=4326"
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
@@ -229,7 +229,7 @@ LAYER
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,]+$'
+        'features'    '^[0-9,-\]+$'
     END
     DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
@@ -271,7 +271,7 @@ LAYER
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
-        'highlights'    '^[0-9,]+$'
+        'highlights'    '^[0-9,\-]+$'
     END
     DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
@@ -329,7 +329,7 @@ LAYER
     VALIDATION
         'userid'      '^[0-9a-zA-Z\-]+$'
         'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,]+$'
+        'features'    '^[0-9,\-]+$'
     END
     DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
