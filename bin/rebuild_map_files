@@ -49,6 +49,7 @@ fi
 
 erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
 install $PROJECT_DIR/templates/var/www/mapcache/index.html $INSTALL_DIR/var/www/mapcache/index.html
+cp $PROJECT_DIR/templates/var/www/mapcache/openlayers_helpers.js $INSTALL_DIR/var/www/mapcache/openlayers_helpers.js
 
 mkdir -p $INSTALL_DIR/usr/lib/cgi-bin
 erb $PROJECT_DIR/templates/usr/lib/cgi-bin/map_data.cgi.erb > $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi
