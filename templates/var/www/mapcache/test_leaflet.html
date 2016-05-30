@@ -15,12 +15,55 @@
 
  <script type="text/javascript">
 
-       var mymap = L.map('mapid').setView([51.505, -0.09], 13);
+       var map = L.map('mapid').setView([37.505, -121.09], 7);
+
+/*
        L.tileLayer('/mapcache/tms/1.0.0/white_roads@g2/{z}/{x}/{y}.png', {
            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
            maxZoom: 18,
            tms: true
-     }).addTo(mymap);
+     }).addTo(map);
+*/
+
+
+       var layer1 = L.tileLayer('/mapcache/tms/1.0.0/subtle_color@g2/{z}/{x}/{y}.png', {
+           attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+           maxZoom: 18,
+           tms: true
+       });
+       var layer2 = L.tileLayer('/mapcache/tms/1.0.0/white_roads@g2/{z}/{x}/{y}.png', {
+           attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+           maxZoom: 18,
+           tms: true
+       });
+
+
+var littleton = L.marker([39.61, -105.02]).bindPopup('This is Littleton, CO.'),
+    denver    = L.marker([39.74, -104.99]).bindPopup('This is Denver, CO.'),
+    aurora    = L.marker([39.73, -104.8]).bindPopup('This is Aurora, CO.'),
+    golden    = L.marker([39.77, -105.23]).bindPopup('This is Golden, CO.');
+
+var cities = L.layerGroup([littleton, denver, aurora, golden]);
+
+var baseMaps = {
+    "a": layer1,
+    "b": layer2
+};
+var overlayMaps = {
+    "Cities": cities
+};
+
+L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+var popup = L.popup();
+function onMapClick(e) {
+    popup
+        .setLatLng(e.latlng)
+        .setContent("You clicked the map at " + e.latlng.toString())
+        .openOn(map);
+}
+map.on('click', onMapClick);
+
 
 
  </script>

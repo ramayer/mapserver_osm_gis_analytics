@@ -77,6 +77,10 @@ var local_overlay_layers = overlay_layers.map( function(item,index){
 
 
 
+var debug_data = "";
+
+
+
 
 // Assumes data has fields called 'lat' and 'lon'
 function create_layers_from_data(layername,data) {
@@ -106,7 +110,7 @@ function create_layers_from_data(layername,data) {
     });
 
     var cluster_source = new ol.source.Cluster({
-            distance: 18,
+            distance: 20,
             source: source
     });
     cluster_source.setProperties({size_cache:{}});
@@ -128,20 +132,31 @@ function create_layers_from_data(layername,data) {
         var num_of_clusters = cluster_source.getFeatures().length; 
         if (!size_cache[resolution]) {
             console.log("need to set size_cache for "+resolution);
-            size_cache[resolution]=1;
+            var features = cluster_source.getFeatures();
+            maxFeatureCount = 0;
+            features.forEach(function(f) {
+              var origFeatures = f.get('features');
+              maxFeatureCount = Math.max(maxFeatureCount, origFeatures.length);
+            });
+            size_cache[resolution]={
+                maxFeatureCount: maxFeatureCount
+            };
         }
 
         var size = feature.get('features').length;
+        var color = nicecolor(size,size_cache[resolution].maxFeatureCount);
+        var radius = niceradius(size);
+
         var style = [new ol.style.Style({
 	    image: new ol.style.Circle({
-		radius: 10,
+		radius: radius,
 		fill: new ol.style.Fill({
-		    color: 'rgba(255, 255, 0, 0.5)',
+		    color: color
 		}),
 		stroke: new ol.style.Stroke({    color: 'rgba(255, 0, 0, 1)',    width: 2 })
 	    }),
 	    text: new ol.style.Text({
-		text: size.toString() + " of " + num_of_clusters,
+		text: size.toString(),
 		fill: textFill,
 		textAlign: 'center', 
 		textBaseline: 'middle',
@@ -195,6 +210,12 @@ d3.csv('lpr.csv', function(error, dataset) {
         i += 1;
         lpr_features.push(feature);
     });
+
+
+    var more_layers = create_layers_from_data('lpr2',dataset);
+    overlay_layer_group.getLayers().push(more_layers[1]);
+    overlay_layer_group.getLayers().push(more_layers[0]);
+
     lpr_source = new ol.source.Vector({features: lpr_features});
     heatmap.setSource(lpr_source);
     clusters.setSource(new ol.source.Cluster({ distance: 16, source:lpr_source}));
@@ -266,8 +287,8 @@ function nicecolor(num,maxFeatureCount) {
     else                 {return [255,255,255,opacity];} // "#880000"
 }
 
-function clustersize(num) {
-    if (num < 2) {return 2;}
+function niceradius(num) {
+    if (num < 2) {return 5;}
     return Math.log(num)/Math.log(2) + 5;
 }
 
@@ -289,16 +310,14 @@ function calculateClusterInfo(resolution) {
 	for (var j = 0, jj = originalFeatures.length; j < jj; ++j) {
 	    ol.extent.extend(extent, originalFeatures[j].getGeometry().getExtent());
 	}
-	radius = clustersize(originalFeatures.length);
+	radius = niceradius(originalFeatures.length);
 	feature.set('radius', radius);
 	color = nicecolor(originalFeatures.length,maxFeatureCount);
 	feature.set('color', color);
     }
 }
-var debugfeature = '';
 var currentResolution;
 function styleFunction(feature, resolution) {
-    debugfeature = feature;
     if (resolution != currentResolution) {
 	calculateClusterInfo(resolution);
 	currentResolution = resolution;
@@ -487,16 +506,17 @@ var external_overlays = [heatmap,clusters,
 var all_base_layers = local_base_layers.concat(external_base_layers);
 var all_overlay_layers = local_overlay_layers.concat(external_overlays);
 
-var layers = [
-    new ol.layer.Group({
+
+var base_layer_group = new ol.layer.Group({
         'title': 'Base maps',
         layers: all_base_layers
-    }),
-    new ol.layer.Group({
+});
+var overlay_layer_group = new ol.layer.Group({
         title: 'Overlays',
         layers: all_overlay_layers
-    })
-];
+})
+var layers = [base_layer_group, overlay_layer_group];
+
 
 var attribution = new ol.control.Attribution({
     collapsed: false
@@ -625,7 +645,6 @@ function query_osm_data(evt) {
     var crd4326 = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
     var hdms = ol.coordinate.toStringXY(crd4326,4);
 
-
     message = '<b>Data from Open Street Map at '+hdms+'</b><hr>';
     content.innerHTML = message + "<br>...loading...</br>";
     $.get('/map_data?q='+crd4326[0]+','+crd4326[1],function(data) { $("#popup-content").html(message + data)});
@@ -716,7 +735,4 @@ map.on('click', function() {
     infoBox.innerHTML = '&nbsp;';
 });
 
-
-var more_layers = create_layers_from_data('dynamically_added',[{lat:37,lon:-123},{lat:38,lon:-120}]);
-map.addLayer(more_layers[0]);
 
