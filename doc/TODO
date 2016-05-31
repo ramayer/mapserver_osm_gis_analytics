@@ -1,3 +1,10 @@
+http://stackoverflow.com/questions/22206570/how-do-bounds-work-in-openlayers-3
+  
+map.getView().fit(vectorSources.getExtent(), map.getSize());
+
+
+
+
 *  Track down why Azure's limiting us to a tiny number of Dv2 cores.
 
 
@@ -54,7 +61,7 @@
 
   create index water on planet_osm_polygon("natural") where "natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank';
 
-* Find out why the great lakes disappeared.
+ * Find out why the great lakes disappeared.
   Water polygons from
   http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
 
