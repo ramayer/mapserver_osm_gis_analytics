@@ -51,3 +51,13 @@ EOF
 mkdir -p $INSTALL_DIR/var/www/mapcache
 
 egrep '(red_Timestamp|04/01/2014)'  /tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv | perl -pe 's/[\"\(\)]//g; s/Location 1/lat,lon/'   > $INSTALL_DIR/var/www/mapcache/lpr.csv
+
+cat $INSTALL_DIR/var/www/mapcache/lpr.csv | 
+  jq --slurp --raw-input --raw-output \
+    'split("\n") | .[1:] | map(split(",")) |
+        map({"red_VRM": .[0],
+             "red_Timestamp": .[1],
+             "lat": .[2],
+             "lon": .[3]})' \
+     > $INSTALL_DIR/var/www/mapcache/lpr.json
+

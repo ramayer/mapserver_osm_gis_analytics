@@ -77,19 +77,97 @@ var local_overlay_layers = overlay_layers.map( function(item,index){
 
 
 
+////////////////////////////////////////////////////////////////////////////////
+// Useful sytles, colors, strokes, and fills
+////////////////////////////////////////////////////////////////////////////////
+var redStroke = new ol.style.Stroke({color: 'rgba(255, 0, 0, 0.9)',width: 1});
+var textFill = new ol.style.Fill({color: '#000'});
+var textStroke = new ol.style.Stroke({ color: 'rgba(255, 255, 255, 0.6)',  width: 2 });
+var invisibleFill = new ol.style.Fill({ color: 'rgba(255, 0, 0, 1.00)'});
+
+function nicecolor(num,maxFeatureCount) {
+    var opacity = 0.8;
+    if (num >= maxFeatureCount / 2) {
+	var brightness = 1 - (2.0 * num / maxFeatureCount - 1.0);
+	return [127 + 127 * brightness, 0,  0,opacity];
+    } else {
+	var brightness = 1 - (num / maxFeatureCount * 2);
+	return [255, 255*brightness,  0,opacity];
+    }
+    // an interesting alternative is: 
+    // [255, 153, 0, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
+    if      (num < 3.3)  {return [255,255,  0,opacity];}   // "#ffff00"
+    else if (num < 10)   {return [255,191,  0,opacity];}   // "#ffcc00"
+    else if (num < 33)   {return [255,127,  0,opacity];}   // "#ff8800"
+    else if (num < 100)  {return [255, 63,  0,opacity];}   // "#ff4400"
+    else if (num < 333)  {return [255,  0,  0,opacity];}   // "#ff0000"
+    else if (num < 1000) {return [191,  0,  0,opacity];}   // "#cc0000"
+    else if (num < 3333) {return [ 63,  0,  0,opacity];}   // "#880000"
+    else                 {return [255,255,255,opacity];}   // "#880000"
+}
+
+function niceradius(num) {
+    if (num < 2) {return 5;}
+    if (num > 1000) {return Math.log(1000)/Math.log(2) + 5;}
+    return Math.log(num)/Math.log(2) + 5;
+}
+
+function interestingClusterStyle(numFeatures,maxFeatureCount) {
+        var color = nicecolor(numFeatures,maxFeatureCount);
+        var radius = niceradius(numFeatures);
+        var style = [new ol.style.Style({
+	    image: new ol.style.Circle({
+		radius: radius,
+		fill: new ol.style.Fill({
+		    color: color
+		}),
+		stroke: new ol.style.Stroke({ color: 'rgba(255, 0, 0, 1)', width: 1 })
+	    }),
+	    text: new ol.style.Text({
+		text: numFeatures.toString(),
+		fill: textFill,
+		textAlign: 'center', 
+		textBaseline: 'middle',
+		offsetY: 1,
+		font: 'bold 11px Arial'
+		// ,
+		//stroke: textStroke
+	    })
+	})];
+	return style;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+var vectorSource; // for drag box example below
+
 var debug_data = "";
-
-
+/*
+	  OL: 3.16.0
+	  Note that the following fails to find the features in the extent:
+	      extent = map.getView().calculateExtent(map.getSize());
+	      clusters.getSource().getFeaturesInExtent(extent);
+	  Manually getting the clusters and comparing
+	      clusters.getSource().getFeatures()[0].getGeometry().getExtent();
+	  with the extent returns more clusters.
+*/
 
 
 // Assumes data has fields called 'lat' and 'lon'
+//       300,000 1.5G after restart; 1.746 after zoomed in.
+
+
 function create_layers_from_data(layername,data) {
     var features=[];
     var i = 0;
+
     data.forEach(function(d) {
         d.lat = +d.lat;
         d.lon = +d.lon;
-        if (i > 100000) return;
+        if (i > 10000) return; // avoid killing browsers - this can make firefox bloat to 2.5 GB.
         onerow=d;
         var d3857 = ol.proj.transform([d.lon,d.lat], 'EPSG:4326', 'EPSG:3857');
         geometry = new ol.geom.Point(d3857);
@@ -100,7 +178,10 @@ function create_layers_from_data(layername,data) {
         features.push(feature);
         i += 1;
     });
+
+    console.log("trying "+features.length+" features");
     var source = new ol.source.Vector({features: features});
+    vectorSource = source;
     var heatmap = new ol.layer.Heatmap({
         title: 'Heat Map of '+layername,
         visible: false,
@@ -108,63 +189,37 @@ function create_layers_from_data(layername,data) {
         blur: 10,
         radius: 2
     });
-
+    // heatmap.changed();  // TODO - look up why the example needed this 
     var cluster_source = new ol.source.Cluster({
-            distance: 20,
+            distance: 24,
             source: source
     });
-    cluster_source.setProperties({size_cache:{}});
-
-      /*
-	  OL: 3.16.0
-	  Note that the following fails to find the features in the extent:
-	      extent = map.getView().calculateExtent(map.getSize());
-	      clusters.getSource().getFeaturesInExtent(extent);
-	  Manually getting the clusters and comparing
-	      clusters.getSource().getFeatures()[0].getGeometry().getExtent();
-	  with the extent returns more clusters.
-      */    
+    cluster_source.setProperties({style_caches:{}});
 
     var cool_style_function = function(feature,resolution){
-
         var cluster_props   = cluster_source.getProperties();
-        var size_cache      = cluster_props.size_cache;
-        var num_of_clusters = cluster_source.getFeatures().length; 
-        if (!size_cache[resolution]) {
-            console.log("need to set size_cache for "+resolution);
+        var style_caches    = cluster_props.style_caches;
+        var style_cache     = style_caches[resolution];
+
+        if (!style_cache) {
+            console.log("need to set style_cache for "+resolution);
             var features = cluster_source.getFeatures();
-            maxFeatureCount = 0;
+            var maxFeatureCount = 0;
             features.forEach(function(f) {
               var origFeatures = f.get('features');
               maxFeatureCount = Math.max(maxFeatureCount, origFeatures.length);
             });
-            size_cache[resolution]={
-                maxFeatureCount: maxFeatureCount
+            style_cache = {
+                maxFeatureCount: maxFeatureCount,
+                styles: {}
             };
+            style_caches[resolution] = style_cache;
         }
 
-        var size = feature.get('features').length;
-        var color = nicecolor(size,size_cache[resolution].maxFeatureCount);
-        var radius = niceradius(size);
+        var maxFeatureCount = style_cache.maxFeatureCount;
+        var numFeatures = feature.get('features').length;
+        var style = interestingClusterStyle(numFeatures,maxFeatureCount);
 
-        var style = [new ol.style.Style({
-	    image: new ol.style.Circle({
-		radius: radius,
-		fill: new ol.style.Fill({
-		    color: color
-		}),
-		stroke: new ol.style.Stroke({    color: 'rgba(255, 0, 0, 1)',    width: 2 })
-	    }),
-	    text: new ol.style.Text({
-		text: size.toString(),
-		fill: textFill,
-		textAlign: 'center', 
-		textBaseline: 'middle',
-		offsetY: 1,
-		font: 'bold 12px Arial',
-		//stroke: textStroke
-	    })
-	})];
 	return style;
     }
 
@@ -196,185 +251,16 @@ var i = 0;
 var lpr_features = [];
 var lpr_source = new ol.source.Vector({features: lpr_features});
 d3.csv('lpr.csv', function(error, dataset) {
-    dataset.forEach(function(d) {
-        d.lat = +d.lat;
-        d.lon = +d.lon;
-        if (i > 100000) return;
-        onerow=d;
-        var d3857 = ol.proj.transform([d.lon,d.lat], 'EPSG:4326', 'EPSG:3857');
-        geometry = new ol.geom.Point(d3857);
-	feature = new ol.Feature({
-	    geometry:geometry,
-            data:d
-        });
-        i += 1;
-        lpr_features.push(feature);
-    });
-
 
     var more_layers = create_layers_from_data('lpr2',dataset);
     overlay_layer_group.getLayers().push(more_layers[1]);
     overlay_layer_group.getLayers().push(more_layers[0]);
-
-    lpr_source = new ol.source.Vector({features: lpr_features});
-    heatmap.setSource(lpr_source);
-    clusters.setSource(new ol.source.Cluster({ distance: 16, source:lpr_source}));
-    // atlasvector.changed();
-    heatmap.changed();
     map.render();
 });
 
-////////////////////////////////////////////////////////////////////////////////
-// Heatmap
-////////////////////////////////////////////////////////////////////////////////
-var heatmap = new ol.layer.Heatmap({
-    title: 'Heat Map',
-    visible: false,
-    source: new ol.source.Vector({features: lpr_features}),
-    blur: 10,
-    radius: 2
-});
-
-////////////////////////////////////////////////////////////////////////////////
-// Clusters
-////////////////////////////////////////////////////////////////////////////////
-
-var earthquakeStroke = new ol.style.Stroke({color: 'rgba(255, 0, 0, 0.9)',width: 1});
-var textFill = new ol.style.Fill({
-    color: '#000'
-});
-var textStroke = new ol.style.Stroke({
-    color: 'rgba(255, 255, 255, 0.6)',
-    width: 2
-});
-var invisibleFill = new ol.style.Fill({
-    color: 'rgba(255, 0, 0, 1.00)'
-});
-
-function createEarthquakeStyle(feature) {
-    var name = feature.get('name');
-    return new ol.style.Style({
-	geometry: feature.getGeometry(),
-	image: new ol.style.RegularShape({
-	    radius1: 7,
-	    radius2: 3,
-	    points: 5,
-	    angle: Math.PI,
-	    fill: new ol.style.Fill({ color: 'rgba(255, 255, 0, 0.8)'}),
-	    stroke: earthquakeStroke
-	})
-    });
-}
-
-function nicecolor(num,maxFeatureCount) {
-    var opacity = 0.8;
-    if (num >= maxFeatureCount / 2) {
-	var brightness = 1 - (2.0 * num / maxFeatureCount - 1.0);
-	return [127 + 127 * brightness, 0,  0,opacity];
-    } else {
-	var brightness = 1 - (num / maxFeatureCount * 2);
-	return [255, 255*brightness,  0,opacity];
-    }
-    // their demo had:
-    // [255, 153, 0, Math.min(0.8, 0.4 + (size / maxFeatureCount))]
-    if      (num < 3.3)  {return [255,255,  0,opacity];}   // "#ffff00"
-    else if (num < 10)   {return [255,191,  0,opacity];}   // "#ffcc00"
-    else if (num < 33)   {return [255,127,  0,opacity];}   // "#ff8800"
-    else if (num < 100)  {return [255, 63,  0,opacity];}   // "#ff4400"
-    else if (num < 333)  {return [255,  0,  0,opacity];}   // "#ff0000"
-    else if (num < 1000) {return [191,  0,  0,opacity];}   // "#cc0000"
-    else if (num < 3333) {return [ 63,  0,  0,opacity];}   // "#880000"
-    else                 {return [255,255,255,opacity];} // "#880000"
-}
-
-function niceradius(num) {
-    if (num < 2) {return 5;}
-    return Math.log(num)/Math.log(2) + 5;
-}
 
 
-var maxFeatureCount;
-function calculateClusterInfo(resolution) {
-    maxFeatureCount = 0;
-    var features = clusters.getSource().getFeatures();
-    var feature, radius, color;
-    for (var i = features.length - 1; i >= 0; --i) {
-	var feature = features[i];
-	var origFeatures = feature.get('features');
-	maxFeatureCount = Math.max(maxFeatureCount, origFeatures.length)
-    }
-    for (var i = features.length - 1; i >= 0; --i) {
-	feature = features[i];
-	var originalFeatures = feature.get('features');
-	var extent = ol.extent.createEmpty();
-	for (var j = 0, jj = originalFeatures.length; j < jj; ++j) {
-	    ol.extent.extend(extent, originalFeatures[j].getGeometry().getExtent());
-	}
-	radius = niceradius(originalFeatures.length);
-	feature.set('radius', radius);
-	color = nicecolor(originalFeatures.length,maxFeatureCount);
-	feature.set('color', color);
-    }
-}
-var currentResolution;
-function styleFunction(feature, resolution) {
-    if (resolution != currentResolution) {
-	calculateClusterInfo(resolution);
-	currentResolution = resolution;
-    }
-    var style;
-    var size = feature.get('features').length;
-    if (size > 1) {
-	style = [new ol.style.Style({
-	    image: new ol.style.Circle({
-		radius: feature.get('radius'),
-		fill: new ol.style.Fill({
-		    color: feature.get('color')
-		}),
-		stroke: earthquakeStroke
-	    }),
-	    text: new ol.style.Text({
-		text: size.toString(),
-		fill: textFill,
-		textAlign: 'center', 
-		textBaseline: 'middle',
-		offsetY: 1,
-		font: 'bold 12px Arial',
-		//stroke: textStroke
-	    })
-	})];
-    } else {
-	var originalFeature = feature.get('features')[0];
-	style = [createEarthquakeStyle(originalFeature)];
-    }
-    return style;
-}
 
-function selectStyleFunction(feature, resolution) {
-    var styles = [new ol.style.Style({
-	image: new ol.style.Circle({
-	    radius: feature.get('radius'),
-	    fill: invisibleFill
-	})
-    })];
-    var originalFeatures = feature.get('features');
-    var originalFeature;
-    for (var i = originalFeatures.length - 1; i >= 0; --i) {
-	originalFeature = originalFeatures[i];
-	styles.push(createEarthquakeStyle(originalFeature));
-    }
-    return styles;
-}
-
-var clusters = new ol.layer.Vector({
-    title: 'Clusters',
-    visible: false,
-    source: new ol.source.Cluster({
-	distance: 18,
-	source: new ol.source.Vector({features: lpr_features}),
-    }),
-    style: styleFunction
-});
 ////////////////////////////////////////////////////////////////////////////////
 
 // The parallel tile loading test assumes your servers are named something like 'map1.example.com'
@@ -470,7 +356,7 @@ var external_base_layers = [
 ];
 
 
-var external_overlays = [heatmap,clusters,
+var external_overlays = [
 			 // Consider:
 			 // "tile_map_edge_buffer" "256"  
 			 // in the .map file instead of a gutter here.
@@ -658,23 +544,10 @@ function query_osm_data(evt) {
 // https://openlayersbook.github.io/ch08-interacting-with-your-map/example-02.html
 var debug_select='';
 
-var selectEuropa = new ol.style.Style({
-    stroke: new ol.style.Stroke({
-	color: '#ff0000',
-	width: 2
-    })
-});
 
+var selectInteraction = new ol.interaction.Select({});
+map.addInteraction(selectInteraction);  // map.getInteractions().extend([selectInteraction]);
 
-var selectInteraction = new ol.interaction.Select({
-    /*
-      layers: function (layer) {
-      debug_select=layer;
-      return layer.get('id') == 'europa';
-      },
-    */
-});
-map.getInteractions().extend([selectInteraction]);
 selectInteraction.on('select', function(e) {
     // document.getElementById('status').innerHTML = '&nbsp;
     var selected_features = e.target.getFeatures().getArray();
@@ -716,6 +589,7 @@ dragBox.on('boxend', function() {
     // div
     var info = [];
     var extent = dragBox.getGeometry().getExtent();
+    // TODO --- identify which sources are selectable.
     vectorSource.forEachFeatureIntersectingExtent(extent, function(feature) {
 	selectedFeatures.push(feature);
 	info.push(feature.get('name'));
