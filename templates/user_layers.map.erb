@@ -106,7 +106,8 @@ SYMBOL
   FONT arial
   FILLED true
   ANTIALIAS true
-  CHARACTER '&#8594;'
+  # CHARACTER '&#8594;'
+  CHARACTER '>'
   ANCHORPOINT 1 0.5
 END
 
@@ -149,83 +150,6 @@ LAYER
 	    MINFEATURESIZE AUTO
         END
     END
-END
-
-LAYER
-    TYPE LINE
-    PROJECTION "init=epsg:4326" END
-    STATUS ON 
-    GROUP "default"
-    NAME "user lines"
-    <%= default_connection() %>
-    VALIDATION
-        'userid'      '^[0-9a-zA-Z\-]+$'
-        'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,\-]+$'
-    END
-    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
-    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
-    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
-    CLASS
-        EXPRESSION ('[arrowhead]'='t' or '[arrowhead]'='true')
-        STYLE
-          COLOR [outercolor]
-          WIDTH [outerwidth]
-        END # STYLE
-        STYLE
-          COLOR [innercolor]
-          WIDTH [innerwidth]
-        END # STYLE
-        STYLE
-          GEOMTRANSFORM "end"
-          COLOR [innercolor]
-          OUTLINECOLOR [outercolor]
-          OUTLINEWIDTH 5
-          SYMBOL "alternative_arrow"
-          SIZE 30
-          ANGLE AUTO
-        END # STYLE
-        TEXT '[label]'
-        LABEL
-            TYPE TRUETYPE
-            FONT arial
-            PARTIALS FALSE
-            OUTLINEWIDTH 1
-            PRIORITY 5
-            SIZE [labelsize]
-            MINDISTANCE 100
-            ANGLE FOLLOW
-            COLOR [labelcolor]
-            OUTLINECOLOR [labeloutlinecolor]
-   	    OUTLINEWIDTH 3
-        END
-    END # CLASS
-
-    CLASS
-        STYLE
-          COLOR [outercolor]
-          WIDTH [outerwidth]
-        END # STYLE
-        STYLE
-          COLOR [innercolor]
-          WIDTH [innerwidth]
-        END # STYLE
-        TEXT '[label]'
-        LABEL
-            TYPE TRUETYPE
-            FONT arial
-            PARTIALS FALSE
-            OUTLINEWIDTH 1
-            PRIORITY 5
-            SIZE [labelsize]
-            MINDISTANCE 100
-            ANGLE FOLLOW
-            COLOR [labelcolor]
-            OUTLINECOLOR [labeloutlinecolor]
-   	    OUTLINEWIDTH 3
-        END
-    END # CLASS
-
 END
 
 LAYER
@@ -279,8 +203,82 @@ LAYER
 	    SHADOWSIZE 3 3
 	    FORCE true
         END
-
     END
+END
+
+LAYER
+    TYPE LINE
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user lines"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,\-]+$'
+    END
+    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        EXPRESSION ('[arrowhead]'='t' or '[arrowhead]'='true')
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        STYLE
+          GEOMTRANSFORM "end"
+          COLOR [innercolor]
+          OUTLINECOLOR [outercolor]
+          OUTLINEWIDTH 5
+          SYMBOL "alternative_arrow"
+          SIZE 15
+          ANGLE AUTO
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
+    CLASS
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
 END
 
 LAYER
