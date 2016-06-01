@@ -167,6 +167,41 @@ LAYER
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
     PROCESSING 'NATIVE_FILTER=feature in (%features%)'
     CLASS
+        EXPRESSION ('[arrowhead]'='t' or '[arrowhead]'='true')
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        STYLE
+          GEOMTRANSFORM "end"
+          COLOR [innercolor]
+          OUTLINECOLOR [outercolor]
+          OUTLINEWIDTH 5
+          SYMBOL "alternative_arrow"
+          SIZE 30
+          ANGLE AUTO
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
+
+    CLASS
         STYLE
           COLOR [outercolor]
           WIDTH [outerwidth]
