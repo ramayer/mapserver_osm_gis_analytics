@@ -58,6 +58,7 @@ psql << EOF
          opacity        int,
          size           double precision,
          symbol         text,
+         arrowhead      boolean,
  
          dttm           timestamp default now(),
          geom           geometry(LineString,4326)
