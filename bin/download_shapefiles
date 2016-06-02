@@ -75,12 +75,12 @@ EOF
       
 }
 
-load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip  land_polygons.shp land_polygons 3857 poly
-load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip simplified_land_polygons.shp simplified_land_polygons  3857 poly
-load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip cb_2014_us_state_20m.shp cb_2014_us_state_20m 4269 poly
-load_shapefile http://data.openoakland.org/sites/default/files/Oak_CommunityPoliceBeats_0.zip Oak_PoliceBeats.shp oak_policebeats 4326 poly 
-load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/689f41305d8b46d3b708113ce1444734_5.zip' Police_Grid.shp mdc_mdpd_police_grid 4326 poly
-load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/ca807c842bca47cdac87fc880442150c_1.zip' Police_Station.shp mdc_police_stations 4326 point
+load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip	                    land_polygons.shp	         land_polygons	           3857 poly
+load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip         simplified_land_polygons.shp simplified_land_polygons  3857 poly
+load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip		    cb_2014_us_state_20m.shp	 cb_2014_us_state_20m	   4269 poly
+load_shapefile http://data.openoakland.org/sites/default/files/Oak_CommunityPoliceBeats_0.zip	    Oak_PoliceBeats.shp		 oak_policebeats	   4326 poly 
+load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/689f41305d8b46d3b708113ce1444734_5.zip' Police_Grid.shp		 mdc_mdpd_police_grid	   4326 poly
+load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/ca807c842bca47cdac87fc880442150c_1.zip' Police_Station.shp		 mdc_police_stations	   4326 point
 
 
 #################################################################################

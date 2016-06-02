@@ -52,24 +52,30 @@ var local_base_layers = base_layers.map( function(item,index){
 	type: 'base',
 	title: item.desc,
         visible: layer_should_be_visible(item.desc),
-        // Note - without "maxZoom", this fails on Chrome on Windows 10.
-        // but works with Firefox everywhere, IE everywhere,
+        // Note - without "maxZoom" or "opaque",
+        // this fails on Chrome on Windows 10.
+        // But works with Firefox everywhere, IE everywhere,
 	// Chrome on Windows 7 and Chromium on Linux.  Strange.
 	source: new ol.source.XYZ({
-	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
 	    maxZoom: 21,
+	    crossOrigin: 'anonymous',
+	    opaque: true,
+	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
             attributions: [ol.source.OSM.ATTRIBUTION]
-
 	})
     });
 });
 
+
+// 'opaque' is a lie; but Chrome on Windows 10 will draw the layers incorrectly
+// if 'opaque' is not specified.
 var local_overlay_layers = overlay_layers.map( function(item,index){
     return new ol.layer.Tile({
 	title: item.desc,
         visible: false,
 	source: new ol.source.XYZ({
 	    attributions: item.attribution,
+	    opaque: true,
 	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
 	}),
     });
