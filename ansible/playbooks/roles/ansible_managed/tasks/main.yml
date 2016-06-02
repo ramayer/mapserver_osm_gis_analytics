@@ -6,6 +6,7 @@
     - sysstat
     - jq
     - libdbd-pg-perl
+    - ruby-pg
     - munin-node
 
 # libdbd-pg-perl required for munin-configure to configure its postgres plugins
