@@ -190,7 +190,7 @@ function create_layers_from_data(layername,data) {
     vectorSource = source;
     var heatmap = new ol.layer.Heatmap({
         title: 'Heat Map of '+layername,
-        visible: false,
+        visible: layer_should_be_visible('Heat Map of '+layername),
         source: source,
         blur: 10,
         radius: 2
@@ -230,8 +230,8 @@ function create_layers_from_data(layername,data) {
     }
 
     var clusters = new ol.layer.Vector({
-        title: 'Clusters',
-        visible: true,
+        title: 'Cluster of '+layername,
+        visible: layer_should_be_visible('Clusters of '+layername),
         source: cluster_source,
         style: cool_style_function
     });
