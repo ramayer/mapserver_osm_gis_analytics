@@ -230,11 +230,15 @@ function create_layers_from_data(layername,data) {
     }
 
     var clusters = new ol.layer.Vector({
-        title: 'Cluster of '+layername,
+        title: 'Clusters of '+layername,
         visible: layer_should_be_visible('Clusters of '+layername),
         source: cluster_source,
         style: cool_style_function
     });
+
+    clusters.on('change:visible',updatePermalink);
+    heatmap.on('change:visible',updatePermalink);
+
     return [clusters,heatmap];
 }
 
@@ -383,15 +387,6 @@ var external_overlays = [
 		                     'LAYERS': 'default'
                                  }
 			     })
-			 }),
-			 new ol.layer.Tile({
-                             title: 'State Overlay',
-                             visible: false,
-                             source: new ol.source.TileWMS({
-				 url: 'http://demo.opengeo.org/geoserver/wms',
-				 params: {'LAYERS': 'ne:ne_10m_admin_1_states_provinces_lines_shp'},
-				 serverType: 'geoserver'
-                             })
 			 })
 			];
 
