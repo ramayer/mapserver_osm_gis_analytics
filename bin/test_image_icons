@@ -1,0 +1,17 @@
+#!/bin/bash
+
+
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+cd $PROJECT_DIR
+
+
+mkdir -p $INSTALL_DIR/var/www/mapcache/i
+
+if [ -f $INSTALL_DIR/var/www/mapcache/i/.git ]; then
+    echo "already had images"
+else
+    cd $INSTALL_DIR/var/www/mapcache/i
+    git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
+fi
