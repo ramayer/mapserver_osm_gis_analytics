@@ -99,6 +99,59 @@ SYMBOL
     FILLED TRUE
 END
 
+
+SYMBOL
+  NAME "alternative_arrow"
+  TYPE TRUETYPE
+  FONT arial
+  FILLED true
+  ANTIALIAS true
+  # CHARACTER '&#8594;'
+  CHARACTER '>'
+  ANCHORPOINT 1 0.5
+END
+
+LAYER
+    TYPE POLYGON
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user polygons"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,-\]+$'
+    END
+    DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        STYLE
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINECOLOR [outlinecolor]
+	    OUTLINEWIDTH [outlinewidth]
+        END
+        STYLE
+            SYMBOL [symbol]
+	    SIZE [size]
+        END
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 12
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#0000ff'
+            OUTLINECOLOR '#ffffff'
+	    MINFEATURESIZE AUTO
+        END
+    END
+END
+
 LAYER
     TYPE POINT
     PROJECTION "init=epsg:4326" END
@@ -150,8 +203,82 @@ LAYER
 	    SHADOWSIZE 3 3
 	    FORCE true
         END
-
     END
+END
+
+LAYER
+    TYPE LINE
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user lines"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,\-]+$'
+    END
+    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        EXPRESSION ('[arrowhead]'='t' or '[arrowhead]'='true')
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        STYLE
+          GEOMTRANSFORM "end"
+          COLOR [innercolor]
+          OUTLINECOLOR [outercolor]
+          OUTLINEWIDTH 5
+          SYMBOL "alternative_arrow"
+          SIZE 15
+          ANGLE AUTO
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
+    CLASS
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
 END
 
 LAYER
@@ -219,47 +346,6 @@ LAYER
 END
 
 
-LAYER
-    TYPE POLYGON
-    PROJECTION "init=epsg:4326" END
-    STATUS ON 
-    GROUP "default"
-    NAME "user polygons"
-    <%= default_connection() %>
-    VALIDATION
-        'userid'      '^[0-9a-zA-Z\-]+$'
-        'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,-\]+$'
-    END
-    DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
-    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
-    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
-    CLASS
-        STYLE
-            COLOR [color]
-	    OPACITY [opacity]
-	    OUTLINECOLOR [outlinecolor]
-	    OUTLINEWIDTH [outlinewidth]
-        END
-        STYLE
-            SYMBOL [symbol]
-	    SIZE [size]
-        END
-        TEXT '[label]'
-        LABEL
-            TYPE TRUETYPE
-            FONT arial
-            PARTIALS FALSE
-            SIZE 12
-            OUTLINEWIDTH 2
-            PRIORITY 5
-            COLOR '#0000ff'
-            OUTLINECOLOR '#ffffff'
-	    MINFEATURESIZE AUTO
-        END
-    END
-END
-
 
 LAYER
     TYPE POLYGON
@@ -277,12 +363,12 @@ LAYER
     FILTER ( [userid] = '%userid%' and [session] = '%session%' )
     PROCESSING 'NATIVE_FILTER=feature in (%highlights%)'
     CLASS
+        # STYLE
+        #     COLOR [color]
+	#     OPACITY [opacity]
+        # END
         STYLE
-            COLOR [color]
-	    OPACITY [opacity]
-        END
-        STYLE
-	    OUTLINECOLOR '#0000ff'
+	    OUTLINECOLOR '#ff0000'
 	    WIDTH 5
         END
         STYLE
@@ -307,79 +393,6 @@ LAYER
         END
     END
 END
-
-
-SYMBOL
-  NAME "alternative_arrow"
-  TYPE TRUETYPE
-  FONT arial
-  FILLED true
-  ANTIALIAS true
-  CHARACTER '&#8594;'
-  ANCHORPOINT 1 0.5
-END
-
-LAYER
-    TYPE LINE
-    PROJECTION "init=epsg:4326" END
-    STATUS ON 
-    GROUP "default"
-    NAME "user lines"
-    <%= default_connection() %>
-    VALIDATION
-        'userid'      '^[0-9a-zA-Z\-]+$'
-        'session'     '^[0-9a-zA-Z\-]+$'
-        'features'    '^[0-9,\-]+$'
-    END
-    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
-    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
-    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
-    CLASS
-        STYLE
-          COLOR [outercolor]
-          WIDTH [outerwidth]
-        END # STYLE
-        STYLE
-          COLOR [innercolor]
-          WIDTH [innerwidth]
-        END # STYLE
-
-    STYLE
-      GEOMTRANSFORM "end"
-      COLOR [innercolor]
-      OUTLINECOLOR [outercolor]
-      OUTLINEWIDTH 5
-      SYMBOL "alternative_arrow"
-      SIZE 30
-      ANGLE AUTO
-    END # STYLE
-    TEXT '[label]'
-
-    LABEL
-            TYPE TRUETYPE
-            FONT arial
-            PARTIALS FALSE
-            OUTLINEWIDTH 1
-            PRIORITY 5
-            SIZE [labelsize]
-            MINDISTANCE 100
-            ANGLE FOLLOW
-            COLOR [labelcolor]
-            OUTLINECOLOR [labeloutlinecolor]
-   	    OUTLINEWIDTH 3
-     END
-
-
-  END # CLASS
-
-
-
-
-
-END
-
-
-
 
 
 
