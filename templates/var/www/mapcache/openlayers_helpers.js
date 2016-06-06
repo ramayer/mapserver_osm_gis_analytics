@@ -375,13 +375,14 @@ var external_overlays = [
 			 new ol.layer.Tile({
 			     preload: Infinity,
 			     title: 'Uncached user-generated layers',
-			     visible: false,
+			     visible: layer_should_be_visible('Uncached user-generated layers'),
  		             source: new ol.source.TileWMS({
 		                 gutter: 200,
 				 url: '/mapserv/user_layers',
 				 params: {
 		                     'VERSION': '1.1.1',
 		                     'features': '1,2,3',
+		                     'highlights': '-1',
 		                     'userid': '1',
 		                     'session': '1',
 		                     'LAYERS': 'default'
