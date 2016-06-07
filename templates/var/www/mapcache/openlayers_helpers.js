@@ -61,7 +61,7 @@ var local_base_layers = base_layers.map( function(item,index){
 	    crossOrigin: 'anonymous',
 	    opaque: true,
 	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
-            attributions: [ol.source.OSM.ATTRIBUTION]
+            attributions: item.attribution
 	})
     });
 });
@@ -72,7 +72,7 @@ var local_base_layers = base_layers.map( function(item,index){
 var local_overlay_layers = overlay_layers.map( function(item,index){
     return new ol.layer.Tile({
 	title: item.desc,
-        visible: false,
+        visible: layer_should_be_visible(item.desc),
 	source: new ol.source.XYZ({
 	    attributions: item.attribution,
 	    opaque: true,
