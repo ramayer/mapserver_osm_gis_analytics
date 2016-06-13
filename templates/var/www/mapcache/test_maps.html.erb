@@ -74,6 +74,7 @@
     <script src="ol3-layerswitcher/src/ol3-layerswitcher.js"></script>
 
     <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
   </head>
 
   <!--
@@ -87,7 +88,76 @@
   </div>
 </div>
 
-  <script type="text/javascript"  src="openlayers_helpers.js" charset="utf-8"></script>
+<script type="text/javascript" charset="utf-8" src="openlayers_helpers.js"></script>
+<script type="text/javascript" charset="utf-8">
+
+jQuery.ajax({ url: "./layers.json", success: function(body) {
+    var layer_json = body;
+    var base_layers    = layer_json.filter( function(value) { return value.type=='base' });
+    var overlay_layers = layer_json.filter( function(value) { return value.type=='overlay' });
+    base_layers.map( function(item,index) {
+	var l = make_simple_tile_layer(item);
+	var lgname = (item.type == 'base') ? 'Base Maps' : 'Overlays';
+	var lg = get_layer_group_by_title(map,lgname);
+	lg.getLayers().push(l);
+    });
+    overlay_layers.map(function(item,index) {
+	var l = make_simple_tile_layer(item);
+	var lgname = (item.type == 'base') ? 'Base Maps' : 'Overlays';
+	var lg = get_layer_group_by_title(map,lgname);
+	lg.getLayers().push(l);
+    });
+}, async:true });
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+/// get more features from csv
+/// http://zeroviscosity.com/d3-js-step-by-step/step-4-loading-external-data
+//
+// TODO - try atlas vectors to save RAM on webgl browsers
+// # http://openlayers.org/en/v3.16.0/examples/symbol-atlas-webgl.html?q=vector
+// OR: https://github.com/openlayers/ol3/issues/5054
+//     http://openlayers.org/en/v3.14.2/examples/image-vector-layer.html
+//
+// TODO - try if even more can load with something like this: http://openlayers.org/en/v3.16.0/examples/dynamic-data.html?q=clear+layer
+var i = 0;
+d3.csv('lpr.csv', function(error, dataset) {
+    var more_layers = create_layers_from_data('lpr2',dataset);
+    var overlay_layer_group = get_layer_group_by_title(map,'Overlays');
+    overlay_layer_group.getLayers().push(more_layers[1]);
+    overlay_layer_group.getLayers().push(more_layers[0]);
+    map.render();
+});
+
+
+
+var user_defined_layers = new ol.layer.Tile({
+			     preload: Infinity,
+			     title: 'Uncached user-generated layers',
+			     visible: layer_should_be_visible('Uncached user-generated layers'),
+ 		             source: new ol.source.TileWMS({
+		                 gutter: 200,
+				 url: '/mapserv/user_layers',
+				 params: {
+		                     'VERSION': '1.1.1',
+		                     'features': '1,2,3',
+		                     'highlights': '-1',
+		                     'userid': '1',
+		                     'session': '1',
+		                     'LAYERS': 'default'
+                                 }
+			     })
+			 });
+
+var overlay_layer_group = get_layer_group_by_title(map,'Overlays');
+ overlay_layer_group.getLayers().push(user_defined_layers);
+
+
+
+
+</script>
 
 </body>
 </html>

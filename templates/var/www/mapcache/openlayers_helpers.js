@@ -1,8 +1,36 @@
-var html5_position;
+var geolocation_position; // a convenient global variable.
 
-var default_view = { zoom:12, center:[-13606244, 4548015], rotation:0, active_layers:['White Roads'] };
+/*
+** A convenience function to walk through each layer on the map
+** recursively, descending through LayerGroups.
+*/
+function forEachLayerRecursively(layergroup,f) {
+    layergroup.forEach(function(lg){
+        if (lg.getLayers) {
+            forEachLayerRecursively(lg.getLayers(),f);
+        } else {
+            f(lg);
+        }
+    })
+}
 
-function get_default_map_view_from_url() {
+function set_map_view_using_geolocation() {
+    function showPosition(position) {
+	var position_in_3857 = ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857');
+	geolocation_position = position;
+	shouldUpdate         = false;
+	map.getView().setCenter(position_in_3857);
+    }
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition);
+    }
+}
+
+function get_layer_group_by_title(map,title) {
+   return map.getLayers().getArray().find(function(l) {return l.get('title') == title});
+}
+
+function get_default_map_view() {
     var hash = window.location.hash.replace('#map=', '');
     var parts = hash.split('/');
     var zoom, center, rotation;
@@ -15,71 +43,122 @@ function get_default_map_view_from_url() {
         return view;
     }
     default_view = { zoom:12, center:[-13606244, 4548015], rotation:0, active_layers:['white_roads'] };
+    set_map_view_using_geolocation();
     return default_view;
 }
 
-function set_map_view_using_geolocation() {
-    function showPosition(position) {
-	var position_in_3857 = ol.proj.transform([position.coords.longitude, position.coords.latitude], 'EPSG:4326', 'EPSG:3857');
-	html5_position = position;
-	map.getView().setCenter(position_in_3857);
-	shouldUpdate = false;
-    }
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(showPosition);
-    }
-}
+var default_view = get_default_map_view();
 
-if (window.location.hash !== '') {
-    default_view = get_default_map_view_from_url();
-} else {
-    set_map_view_using_geolocation();
-}
 
+/*
+** Make map layers visible if the layer's name is in a list of names specified by
+** the URL parameters.
+*/
 function layer_should_be_visible(name) {
     return (default_view.active_layers.indexOf(name) >= 0);
 }
 
 
-var layer_json = [];
-jQuery.ajax({ url: "./layers.json", success: function(body) { layer_json = body; }, async:false });
-var base_layers    = layer_json.filter( function(value) { return value.type=='base' });
-var overlay_layers = layer_json.filter( function(value) { return value.type!='base' });
-var local_base_layers = base_layers.map( function(item,index){
-    console.log("for "+item.desc+" "+ (default_view.active_layers.indexOf(item.desc) >= 0));
-    return new ol.layer.Tile({
+/*
+** Updates the URL so it can act as a permalink, and so the back
+** button can restore the view state when navigating through the
+** history.    Similar to the openlayers3 permalink example, and
+** https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onpopstate
+*/
+var debugevt = ''
+var shouldUpdate = true;
+var updatePermalink = function(evt) {
+
+    debugevt = evt;
+    // console.log("updatePermalink: "+JSON.stringify(evt));
+    console.log("updatePermalink: "+evt.type);
+
+
+    var view = map.getView();
+    if (!shouldUpdate) {
+        // do not update the URL when the view was changed in the 'popstate' handler
+        shouldUpdate = true;
+        return;
+    }
+    var center = view.getCenter();
+    var active_layer_names=[];
+    forEachLayerRecursively(map.getLayers(),function(lg){
+        var props = lg.getProperties();
+        if (props.visible) {
+            active_layer_names.push(props.title);
+        }
+    });
+    var active_layer_string = JSON.stringify(active_layer_names);
+    var hash = '#map=' +
+        view.getZoom() + '/' +
+        Math.round(center[0] * 100) / 100 + '/' +
+        Math.round(center[1] * 100) / 100 + '/' +
+        view.getRotation()+'/'+
+        encodeURI(active_layer_string);
+
+    var state = {
+        zoom: view.getZoom(),
+        center: view.getCenter(),
+        rotation: view.getRotation(),
+        active_layers: active_layer_names
+    };
+
+   // Seems more people expect the back button to not go through
+   // map interactions.   Perhaps it should happen conditionally
+   // with just certain interactions?
+
+    // window.history.pushState(state, 'map', hash);
+    window.history.replaceState(state, 'map', hash);
+
+};
+
+
+/***********************************************************************
+** OpenLayers is rather verbose when it comes to adding layers, 
+** having to define both a Tile Source and a Tile Layer separetly.
+**
+** This gets extra burdensome when you want to add callbacks
+** to each layer, for example, to update the browser's history
+** when layers are eanbled and disabled.
+**
+** This wrapper makes it more convenient to create a tile source and
+** tile layer with some convenient callbacks.
+**
+** Note - without "maxZoom" or "opaque", this fails on Chrome on
+** Windows 10.  But works with Firefox everywhere and IE everywhere,
+** and works on Chrome on Windows 7 and Chromium on Linux.  Strange.
+** For overlay layers, 'opaque' is a lie; but Chrome on Windows 10
+** will draw the layers incorrectly if 'opaque' is not specified.
+***********************************************************************/
+
+function debugevent(e){
+ console.log(e);
+}
+
+
+function make_simple_tile_layer(properties) {
+    var url = properties.url || ('/mapcache/tms/1.0.0/' + properties.name + '@g2/{z}/{x}/{-y}.png');
+    var source = new ol.source.XYZ({
+	maxZoom: 21,
+	crossOrigin: 'anonymous',
+	opaque: true,
+	url: url,
+        attributions: properties.attribution
+    });
+    var layer = new ol.layer.Tile({
+	title: properties.desc,
+	type: properties.type,
+        visible: layer_should_be_visible(properties.desc),
 	preload: Infinity,
-	type: 'base',
-	title: item.desc,
-        visible: layer_should_be_visible(item.desc),
-        // Note - without "maxZoom" or "opaque",
-        // this fails on Chrome on Windows 10.
-        // But works with Firefox everywhere, IE everywhere,
-	// Chrome on Windows 7 and Chromium on Linux.  Strange.
-	source: new ol.source.XYZ({
-	    maxZoom: 21,
-	    crossOrigin: 'anonymous',
-	    opaque: true,
-	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
-            attributions: item.attribution
-	})
+	source: source
     });
-});
+    // layer.on('change:visible',updatePermalink);
+    return layer;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 
-// 'opaque' is a lie; but Chrome on Windows 10 will draw the layers incorrectly
-// if 'opaque' is not specified.
-var local_overlay_layers = overlay_layers.map( function(item,index){
-    return new ol.layer.Tile({
-	title: item.desc,
-        visible: layer_should_be_visible(item.desc),
-	source: new ol.source.XYZ({
-	    attributions: item.attribution,
-	    opaque: true,
-	    url: '/mapcache/tms/1.0.0/' + item.name + '@g2/{z}/{x}/{-y}.png',
-	}),
-    });
-});
 
 
 
@@ -143,24 +222,12 @@ function interestingClusterStyle(numFeatures,maxFeatureCount) {
 	return style;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 
 var vectorSource; // for drag box example below
 
 var debug_data = "";
-/*
-	  OL: 3.16.0
-	  Note that the following fails to find the features in the extent:
-	      extent = map.getView().calculateExtent(map.getSize());
-	      clusters.getSource().getFeaturesInExtent(extent);
-	  Manually getting the clusters and comparing
-	      clusters.getSource().getFeatures()[0].getGeometry().getExtent();
-	  with the extent returns more clusters.
-*/
-
 
 // Assumes data has fields called 'lat' and 'lon'
 //       300,000 1.5G after restart; 1.746 after zoomed in.
@@ -174,13 +241,13 @@ function create_layers_from_data(layername,data) {
         d.lat = +d.lat;
         d.lon = +d.lon;
         if (i > 10000) return; // avoid killing browsers - this can make firefox bloat to 2.5 GB.
-        onerow=d;
         var d3857 = ol.proj.transform([d.lon,d.lat], 'EPSG:4326', 'EPSG:3857');
         geometry = new ol.geom.Point(d3857);
 	feature = new ol.Feature({
 	    geometry:geometry,
             data:d
         });
+        feature.set('name',d['red_VRM']);
         features.push(feature);
         i += 1;
     });
@@ -206,7 +273,6 @@ function create_layers_from_data(layername,data) {
         var cluster_props   = cluster_source.getProperties();
         var style_caches    = cluster_props.style_caches;
         var style_cache     = style_caches[resolution];
-
         if (!style_cache) {
             console.log("need to set style_cache for "+resolution);
             var features = cluster_source.getFeatures();
@@ -221,11 +287,9 @@ function create_layers_from_data(layername,data) {
             };
             style_caches[resolution] = style_cache;
         }
-
         var maxFeatureCount = style_cache.maxFeatureCount;
         var numFeatures = feature.get('features').length;
         var style = interestingClusterStyle(numFeatures,maxFeatureCount);
-
 	return style;
     }
 
@@ -236,191 +300,39 @@ function create_layers_from_data(layername,data) {
         style: cool_style_function
     });
 
-    clusters.on('change:visible',updatePermalink);
-    heatmap.on('change:visible',updatePermalink);
+    // clusters.on('change:visible',updatePermalink);
+    // heatmap.on('change:visible',updatePermalink);
 
     return [clusters,heatmap];
 }
 
 
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-/// get more features from csv
-/// http://zeroviscosity.com/d3-js-step-by-step/step-4-loading-external-data
-//
-// TODO - try atlas vectors to save RAM on webgl browsers
-// # http://openlayers.org/en/v3.16.0/examples/symbol-atlas-webgl.html?q=vector
-// OR: https://github.com/openlayers/ol3/issues/5054
-//     http://openlayers.org/en/v3.14.2/examples/image-vector-layer.html
-//
-// TODO - try if even more can load with something like this: http://openlayers.org/en/v3.16.0/examples/dynamic-data.html?q=clear+layer
-var onerow = ''
-var i = 0;
-var lpr_features = [];
-var lpr_source = new ol.source.Vector({features: lpr_features});
-d3.csv('lpr.csv', function(error, dataset) {
-
-    var more_layers = create_layers_from_data('lpr2',dataset);
-    overlay_layer_group.getLayers().push(more_layers[1]);
-    overlay_layer_group.getLayers().push(more_layers[0]);
-    map.render();
-});
-
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// The parallel tile loading test assumes your servers are named something like 'map1.example.com'
-var parallel_server_1 = location.hostname.replace('1','1');
-var parallel_server_2 = location.hostname.replace('1','2');
-var parallel_server_3 = location.hostname.replace('1','3');
-var parallel_server_4 = location.hostname.replace('1','4');
-
-var external_base_layers = [
-
-    // http://www.acuriousanimal.com/thebookofopenlayers3/chapter02_04_image_layer.html
-    new ol.layer.Image({
-	opacity: 0.75,
-  	type: 'base',
-	title: 'test image layer',
-        visible: false,
-	source: new ol.source.ImageStatic({
-	    attributions: [
-		new ol.Attribution({
-		    html: '&copy; <a href="https://www.lib.utexas.edu/maps/historical/">University of Texas Libraries</a>'
-		})
-	    ],
-	    url: 'https://www.lib.utexas.edu/maps/historical/newark_nj_1922.jpg',
-	    imageSize: [691, 541],
-	    projection: ol.proj.get('EPSG:3857'), // map.getView().getProjection(),
-	    imageExtent: ol.extent.applyTransform([-74.22655, 40.71222, -74.12544, 40.77394], ol.proj.getTransform("EPSG:4326", "EPSG:3857"))
-	})
-    }),
-
-    new ol.layer.Tile({
-	preload: Infinity,
-	type: 'base',
-	title: "test parallel loading",
-        visible: false,
-	source: new ol.source.XYZ({
-	    urls: [
-		'http://'+parallel_server_1+'/mapcache/tms/1.0.0/black_on_white@g2/{z}/{x}/{-y}.png',
-		'http://'+parallel_server_2+'/mapcache/tms/1.0.0/white_on_black@g2/{z}/{x}/{-y}.png',
-		'http://'+parallel_server_3+'/mapcache/tms/1.0.0/dark_roads@g2/{z}/{x}/{-y}.png',
-  		'http://'+parallel_server_4+'/mapcache/tms/1.0.0/white_roads@g2/{z}/{x}/{-y}.png'
-	    ]
-	}),
-    }),
 
 
-
-
-    new ol.layer.Tile({
-        title: 'Stamen Watercolor',
-        type: 'base',
-        visible: false,
-        source: new ol.source.Stamen({
-            layer: 'watercolor'
-        })
-    }),
-    new ol.layer.Tile({
-        title: 'OSM',
-        type: 'base',
-        visible: false,
-        source: new ol.source.OSM()
-    }),
-    
-    new ol.layer.Tile({
-        title: 'Old OSM Data',
-        visible: false,
-        type: 'base',
-        source: new ol.source.TileWMS({
-            url: 'https://go.leapportal.us/tilecache/tilecache.cgi',
-            params: {'LAYERS': 'subtlecolor'} //,
-            // serverType: 'geoserver'
-        })
-    }),
-    new ol.layer.Tile({
-	preload: Infinity,
-	type: 'base',
-	title: 'composited wms layer',
-	visible: false,
-	source: new ol.source.TileWMS({
-	    url: '/mapcache/',
-	    params: {
-		'VERSION': '1.1.1',
-		'LAYERS': 'dark_roads,opd_lpr,opd_beats'
-            }
-	})
-    }),
-
-    new ol.layer.Tile({
-        title: 'Satellite',
-        type: 'base',
-        visible: false,
-        source: new ol.source.MapQuest({layer: 'sat'})
-    })
+var layers = [
+    new ol.layer.Group({'title': 'Base Maps'}),
+    new ol.layer.Group({title: 'Overlays'})
 ];
 
-
-var external_overlays = [
-			 // Consider:
-			 // "tile_map_edge_buffer" "256"  
-			 // in the .map file instead of a gutter here.
-			 // If we do that, we need to use mode=tile, and send
-			 // tile requests instead.
-			 new ol.layer.Tile({
-			     preload: Infinity,
-			     title: 'Uncached user-generated layers',
-			     visible: layer_should_be_visible('Uncached user-generated layers'),
- 		             source: new ol.source.TileWMS({
-		                 gutter: 200,
-				 url: '/mapserv/user_layers',
-				 params: {
-		                     'VERSION': '1.1.1',
-		                     'features': '1,2,3',
-		                     'highlights': '-1',
-		                     'userid': '1',
-		                     'session': '1',
-		                     'LAYERS': 'default'
-                                 }
-			     })
-			 })
-			];
-
-var all_base_layers = local_base_layers.concat(external_base_layers);
-var all_overlay_layers = local_overlay_layers.concat(external_overlays);
+layers.forEach(function(lg){ lg.on('change', updatePermalink); })
 
 
-var base_layer_group = new ol.layer.Group({
-        'title': 'Base maps',
-        layers: all_base_layers
-});
-var overlay_layer_group = new ol.layer.Group({
-        title: 'Overlays',
-        layers: all_overlay_layers
-})
-var layers = [base_layer_group, overlay_layer_group];
 
-
-var attribution = new ol.control.Attribution({
-    collapsed: false
-});
-
-
+// Consider: 
+//     renderer: 'webgl'  //  faster, but the heatmap fails
 var map = new ol.Map({
     layers: layers,
     target: 'map',
-    //  renderer: 'webgl',  faster, but heatmap fails
     view: new ol.View({
 	center: default_view.center,
         zoom: default_view.zoom,
         rotation: default_view.rotation
     }),
-    controls: ol.control.defaults({attribution: false}).extend([attribution])
+    controls: ol.control.defaults({attributionOptions: {collapsed:false}})
 });
 
 
@@ -432,73 +344,23 @@ var mousePositionControl = new ol.control.MousePosition({
 map.addControl(mousePositionControl);
 
 
-
-var layerSwitcher = new ol.control.LayerSwitcher({
-    tipLabel: 'Légende' // Optional label for button
-});
+var layerSwitcher = new ol.control.LayerSwitcher({});
 map.addControl(layerSwitcher);
-
 
 var scaleline = new ol.control.ScaleLine();
 map.addControl(scaleline);
-
-
-function forEachLayerRecursively(layergroup,f) {
-    layergroup.forEach(function(lg){
-        if (lg.getLayers) {
-            forEachLayerRecursively(lg.getLayers(),f);
-        } else {
-            f(lg);
-        }
-    })
-}
-
-
-
-var shouldUpdate = true;
-var view = map.getView();
-var updatePermalink = function() {
-    if (!shouldUpdate) {
-        // do not update the URL when the view was changed in the 'popstate' handler
-        shouldUpdate = true;
-        return;
-    }
-    var center = view.getCenter();
-    // save visible layers
-    var active_layer_names=[];
-    forEachLayerRecursively(map.getLayers(),function(lg){
-        var props = lg.getProperties();
-        if (props.visible) {
-            active_layer_names.push(props.title);
-        }
-    });
-    var active_layer_string = JSON.stringify(active_layer_names);
-    var hash = '#map=' +
-        view.getZoom() + '/' +
-        Math.round(center[0] * 100) / 100 + '/' +
-        Math.round(center[1] * 100) / 100 + '/' +
-        view.getRotation()+'/'+
-        encodeURI(active_layer_string);
-
-    var state = {
-        zoom: view.getZoom(),
-        center: view.getCenter(),
-        rotation: view.getRotation(),
-        active_layers: active_layer_names
-    };
-    window.history.pushState(state, 'map', hash);
-};
-
 map.on('moveend', updatePermalink);
+
+
+
+/*
 all_base_layers.forEach(function(l) {
     l.on('change:visible',updatePermalink);
 });
 all_overlay_layers.forEach(function(l) {
     l.on('change:visible',updatePermalink);
 });
-
-// restore the view state when navigating through the history, see
-// https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onpopstate
+*/
 window.addEventListener('popstate', function(event) {
     if (event.state === null) {
         return;
@@ -506,11 +368,18 @@ window.addEventListener('popstate', function(event) {
     map.getView().setCenter(event.state.center);
     map.getView().setZoom(event.state.zoom);
     map.getView().setRotation(event.state.rotation);
+
     // TODO - restore active layers
+
     shouldUpdate = false;
 });
 
-// http://openlayers.org/en/latest/examples/popup.html?q=popup		       
+
+////////////////////////////////////////////////////////////////////////////////
+// Map Overlay.
+// based on http://openlayers.org/en/latest/examples/popup.html?q=popup		       
+////////////////////////////////////////////////////////////////////////////////
+
 var container = document.getElementById('popup');
 var content = document.getElementById('popup-content');
 var closer = document.getElementById('popup-closer');
@@ -528,6 +397,9 @@ closer.onclick = function() {
     return false;
 };
 
+////////////////////////////////////////////////////////////////////////////////
+
+
 function query_osm_data(evt) {
     var coordinate = evt.coordinate;
     var crd4326 = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
@@ -538,10 +410,10 @@ function query_osm_data(evt) {
     $.get('/map_data?q='+crd4326[0]+','+crd4326[1],function(data) { $("#popup-content").html(message + data)});
     overlay.setPosition(coordinate);
 }
-// If someone clicked on an overlay, they want information on the overlay,
-// so moving this to the selectInteraction instead.
+// If someone clicked on an overlay or something else selectable,
+// they probably want information on the thing that was selected.
+// So moving this to the selectInteraction instead.
 // map.on('singleclick', query_osm_data);
-
 // interesting select examples
 // https://openlayersbook.github.io/ch08-interacting-with-your-map/example-02.html
 var debug_select='';
@@ -580,15 +452,11 @@ var selectedFeatures = selectInteraction.getFeatures();
 var dragBox = new ol.interaction.DragBox({
     condition: ol.events.condition.platformModifierKeyOnly
 });
-
 map.addInteraction(dragBox);
-
-var infoBox = document.getElementById('popup-content');
-
 dragBox.on('boxend', function() {
+    var infoBox = document.getElementById('popup-content');
     // features that intersect the box are added to the collection of
-    // selected features, and their names are displayed in the "info"
-    // div
+    // selected features
     var info = [];
     var extent = dragBox.getGeometry().getExtent();
     // TODO --- identify which sources are selectable.
@@ -603,12 +471,90 @@ dragBox.on('boxend', function() {
 
 // clear selection when drawing a new box and when clicking on the map
 dragBox.on('boxstart', function() {
+    var infoBox = document.getElementById('popup-content');
     selectedFeatures.clear();
     infoBox.innerHTML = '&nbsp;';
 });
 map.on('click', function() {
+    var infoBox = document.getElementById('popup-content');
     selectedFeatures.clear();
     infoBox.innerHTML = '&nbsp;';
 });
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+var more_base_layers = [
+    new ol.layer.Tile({
+        title: 'OSM',
+        type: 'base',
+        visible: false,
+        source: new ol.source.OSM()
+    }),
+    new ol.layer.Tile({
+        title: 'Old OSM Data',
+        visible: false,
+        type: 'base',
+        source: new ol.source.TileWMS({
+            url: 'https://go.leapportal.us/tilecache/tilecache.cgi',
+            params: {'LAYERS': 'subtlecolor'} //,
+            // serverType: 'geoserver'
+        })
+    }),
+    new ol.layer.Tile({
+	preload: Infinity,
+	type: 'base',
+	title: 'composited wms layer',
+	visible: false,
+	source: new ol.source.TileWMS({
+	    url: '/mapcache/',
+	    params: {
+		'VERSION': '1.1.1',
+		'LAYERS': 'dark_roads,opd_lpr,opd_beats'
+            }
+	})
+    }),
+    new ol.layer.Tile({
+        title: 'Satellite',
+        type: 'base',
+        visible: false,
+        source: new ol.source.MapQuest({layer: 'sat'})
+    })
+];
+
+function add_layer_to_layergroup_by_type(map,lgname,layer) {
+    var layertype = layer.getProperties().type;
+    var lgname = (layertype == 'base') ? 'Base Maps' :
+                 (layertype == 'overlay') ? 'Overlays' :
+                 'Other';
+    var lg = get_layer_group_by_title(map,lgname);
+    lg.getLayers().push(l);
+}
+
+var external_overlays = [
+			 // Consider:
+			 // "tile_map_edge_buffer" "256"  
+			 // in the .map file instead of a gutter here.
+			 // If we do that, we need to use mode=tile, and send
+			 // tile requests instead.
+			 new ol.layer.Tile({
+			     preload: Infinity,
+			     title: 'Uncached user-generated layers',
+			     visible: layer_should_be_visible('Uncached user-generated layers'),
+ 		             source: new ol.source.TileWMS({
+		                 gutter: 200,
+				 url: '/mapserv/user_layers',
+				 params: {
+		                     'VERSION': '1.1.1',
+		                     'features': '1,2,3',
+		                     'highlights': '-1',
+		                     'userid': '1',
+		                     'session': '1',
+		                     'LAYERS': 'default'
+                                 }
+			     })
+			 })
+			];
 
