@@ -1,0 +1,54 @@
+#!/bin/bash
+
+git clone https://github.com/Azure/azure-quickstart-templates
+sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+# assume that created /datadisks/disk1 
+# TODO --- check if it didn't and report a meaningful error
+
+target_disk=/mnt
+
+[ -d /datadisks/disk1 ] && target_disk=/datadisks/disk1
+
+sudo service postgresql stop
+sudo mv /var/lib/postgresql $target_disk
+sudo ln -s $target_disk/postgresql /var/lib/postgresql
+sudo service postgresql start
+
+
+# where the load_spatial_data script expects it
+if [ -d /datadisks/disk1 ]; then
+  sudo mkdir -p /datadisks/disk1/gis_data
+  sudo ln -s /datadisks/disk1/gis_data /mnt/gisdata
+  sudo chown $USER /datadisks/disk1/gis_data /mnt/gisdata
+else
+  sudo mkdir -p /mnt/gisdata
+  sudo chown $USER /mnt/gisdata
+fi
+
+# assume the server has a ssd mounted on /mnt
+#
+# Need more swap space if we want to run osm2pgsql or osmconvert
+# directly on the database server
+#
+#
+# Curious!!! on Some Azure VMs /mnt is NTFS.
+# On those, the command fallocate fails, as follows:
+#
+# https://github.com/kamaln7/ansible-swapfile/issues/3
+#    
+# fallocate: fallocate failed: Operation not supported
+# /dev/sdb1 on /mnt type fuseblk (rw,relatime,user_id=0,group_id=0,allow_other,blksize=4096)
+#
+# Also, on the ntfs /mnt the chmod statement fails.
+#
+# consider
+#     sudo umount /dev/sdb1
+#     sudo mkfs.ext4 /dev/sdb1
+#     sudo mount /dev/sdb1 /mnt
+
+sudo fallocate -l 10G /mnt/10G.swap
+sudo chmod 0600 /mnt/10G.swap
+sudo mkswap /mnt/10G.swap
+sudo swapon /mnt/10G.swap
+
+

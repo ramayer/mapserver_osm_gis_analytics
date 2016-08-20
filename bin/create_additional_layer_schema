@@ -1,0 +1,63 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+psql << EOF
+
+  DROP TABLE IF EXISTS additional_layers   CASCADE;
+  DROP TABLE IF EXISTS additional_lines    CASCADE;
+  DROP TABLE IF EXISTS additional_polygons CASCADE;
+  DROP TABLE IF EXISTS additional_points   CASCADE;
+
+  CREATE TABLE additional_layers (
+  	 id        	serial primary key,
+	 layer          varchar(40) UNIQUE,
+	 attribution    text,
+         source   	text
+  );
+
+  CREATE TABLE additional_polygons (
+  	 id            bigserial,
+	 layer         varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 label         text,
+	 color         text,
+	 outlinecolor  text,
+	 opacity       text,
+	 tags	       hstore,
+	 geom	       geometry(MultiPolygon,3857)
+  );
+
+  CREATE TABLE additional_lines (
+  	 id           bigserial,
+	 layer        varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 label        text,
+	 color        text,
+	 outlinecolor text,
+	 outlinewidth text,
+	 opacity      text,
+	 tags	      hstore,
+	 geom	      geometry(LineString,3857)
+  );
+
+  CREATE TABLE additional_points (
+  	 id          bigserial,
+	 layer       varchar(40) REFERENCES additional_layers(layer) ON DELETE CASCADE,
+	 label       text,
+	 color       text,
+	 opacity     text,
+	 size        float,
+	 symbol      text,
+	 tags	     hstore,
+	 geom	     geometry(Point,3857)
+  );
+
+  CREATE INDEX "additional_points(geom)"   ON additional_points using GIST (geom);
+  CREATE INDEX "additional_lines(geom)"    ON additional_lines using GIST (geom);
+  CREATE INDEX "additional_polygons(geom)" ON additional_polygons using GIST (geom);
+
+  CREATE INDEX "additional_points(layer)"   ON additional_points(layer);
+  CREATE INDEX "additional_lines(layer)"    ON additional_lines(layer);
+  CREATE INDEX "additional_polygons(layer)" ON additional_polygons(layer);
+
+EOF

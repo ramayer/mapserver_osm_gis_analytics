@@ -1,0 +1,20 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+$PROJECT_DIR/bin/install_prerequisites
+$PROJECT_DIR/bin/install_using_ansible
+$PROJECT_DIR/bin/create_additional_layer_schema
+$PROJECT_DIR/bin/install_fonts
+$PROJECT_DIR/bin/download_shapefiles
+$PROJECT_DIR/bin/load_spatial_data --load-osm-data=tiny
+$PROJECT_DIR/bin/deploy_using_ansible
+$PROJECT_DIR/bin/create_user_layer_schema
+$PROJECT_DIR/bin/test_user_layers
+
+
+$PROJECT_DIR/bin/load_lpr_test_data
+$PROJECT_DIR/bin/test_derived_layers
+ruby $PROJECT_DIR/bin/make_heatmap_palette | psql
+$PROJECT_DIR/bin/load_census_data

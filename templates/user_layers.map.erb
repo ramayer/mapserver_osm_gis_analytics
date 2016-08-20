@@ -1,0 +1,399 @@
+<%
+
+%Q{
+     Test with:
+          delete from user_points;
+     	  insert into user_points (symbol,size,label,geom) select 'https://maps.google.com/mapfiles/ms/micons/blue.png'		     ,30, name, st_transform(way,4326) from planet_osm_point where amenity='restaurant' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,geom) select 'https://maps.google.com/mapfiles/ms/micons/coffeehouse.png'       ,30, name, st_transform(way,4326) from planet_osm_point where amenity='cafe' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,color,opacity,geom) select 'circle'					     ,15, name, '#ff0000',50, st_transform(way,4326) from planet_osm_point where amenity is null and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+
+     	  insert into user_points (symbol,size,label,geom) select 'http://localhost/images/mugshot1.png'		             ,50, name, st_transform(way,4326) from planet_osm_point where amenity='car_sharing' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+     	  insert into user_points (symbol,size,label,geom) select 'http://localhost/images/mugshot2.png'		             ,50, name, st_transform(way,4326) from planet_osm_point where amenity='place_of_worship' and way && ST_SetSRID(ST_MakeBox2D(ST_Point(-13611214.76, 4550501.72),ST_Point(-13608209.11,4553442.03)),900913);
+
+
+
+}
+
+
+   $scales = [
+       {minscaledenom:0        , maxscaledenom:5010     ,   zoom:17},
+       {minscaledenom:5010     , maxscaledenom:10010    ,   zoom:16},
+       {minscaledenom:10010    , maxscaledenom:25010    ,   zoom:15},
+       {minscaledenom:25010    , maxscaledenom:50010    ,   zoom:14},
+       {minscaledenom:50010    , maxscaledenom:100010   ,   zoom:13},
+       {minscaledenom:100010   , maxscaledenom:175010   ,   zoom:12},
+       {minscaledenom:175010   , maxscaledenom:250010   ,   zoom:11},
+       {minscaledenom:250010   , maxscaledenom:500010   ,   zoom:10},
+       {minscaledenom:500010   , maxscaledenom:1000010  ,   zoom:9},
+       {minscaledenom:1000010  , maxscaledenom:2500010  ,   zoom:8},
+       {minscaledenom:2500010  , maxscaledenom:5000010  ,   zoom:7},
+       {minscaledenom:5000010  , maxscaledenom:10000010 ,   zoom:6},
+       {minscaledenom:10000010 , maxscaledenom:20000010 ,   zoom:5},
+    ]
+
+   def database_username()
+       ENV["PGUSER"] || 'gis'
+   end
+
+   def database_host()
+       ENV["PGHOST"] || 'postgis-01'
+   end
+
+   def database_password()
+       ENV["PGPASSWORD"] || 'changeme'
+   end
+
+   def default_connection
+       %Q{
+         CONNECTIONTYPE postgis
+         CONNECTION "host=#{ database_host() } dbname=gis user=#{ database_username() } password=#{ database_password() } port=5432"
+         PROCESSING "CLOSE_CONNECTION=DEFER"
+       }
+   end
+
+   def get_color(f,c='color')
+       return '#ff0000'
+   end
+
+%>
+MAP
+
+OUTPUTFORMAT
+    NAME agg
+    DRIVER AGG/PNG
+    IMAGEMODE RGBA
+    FORMATOPTION "INTERLACE=false"
+    MIMETYPE "image/png"
+END
+
+FONTSET "./fonts.lst"
+IMAGETYPE agg
+MAXSIZE 10000
+SIZE 800 800
+EXTENT 16805492 -4049385 16857351 -3975830
+UNITS meters
+
+
+WEB
+    LOG '/tmp/mapserver.log'
+    METADATA
+        wms_srs "epsg:3857 epsg:900913 epsg:4326"
+        labelcache_map_edge_buffer "-10"
+	# Consider this: 
+	# 	"tile_map_edge_buffer" "50"
+	# instead of needing to declare a gutter in openlayers.
+        wms_title "osm france"
+        "ows_enable_request" "*"
+    END
+END
+
+DEBUG 10
+CONFIG "PROJ_LIB" "/usr/share/proj"
+CONFIG "MS_ERRORFILE" "stderr"
+PROJECTION  "init=epsg:3857"  END
+
+SYMBOL
+    NAME "circle"
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+END
+
+
+SYMBOL
+  NAME "alternative_arrow"
+  TYPE TRUETYPE
+  FONT arial
+  FILLED true
+  ANTIALIAS true
+  # CHARACTER '&#8594;'
+  CHARACTER '>'
+  ANCHORPOINT 1 0.5
+END
+
+LAYER
+    TYPE POLYGON
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user polygons"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,-\]+$'
+    END
+    DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        STYLE
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINECOLOR [outlinecolor]
+	    OUTLINEWIDTH [outlinewidth]
+        END
+        STYLE
+            SYMBOL [symbol]
+	    SIZE [size]
+        END
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 12
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#0000ff'
+            OUTLINECOLOR '#ffffff'
+	    MINFEATURESIZE AUTO
+        END
+    END
+END
+
+LAYER
+    TYPE POINT
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user points"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,\-]+$'
+    END
+    DATA "geom from (select * from user_points) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    LABELITEM "label"
+    CLASS
+        STYLE
+	    SIZE [size]
+	    SYMBOL [symbol]
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINEWIDTH [outlinewidth]
+	    OUTLINECOLOR [outlinecolor]
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE [labelsize]
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+	    SHADOWSIZE [labelshadowx] [labelshadowy]
+	    POSITION AUTO
+        END
+
+        LABEL
+	    TEXT "[centeredlabel]"
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 8
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#000000'
+            OUTLINECOLOR '#ffffff'
+	    SHADOWSIZE 3 3
+	    FORCE true
+        END
+    END
+END
+
+LAYER
+    TYPE LINE
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user lines"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,\-]+$'
+    END
+    DATA "geom from (select *,(outerwidth + 10) as arrowwidth from user_lines) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%features%)'
+    CLASS
+        EXPRESSION ('[arrowhead]'='t' or '[arrowhead]'='true')
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        STYLE
+          GEOMTRANSFORM "end"
+          COLOR [innercolor]
+          OUTLINECOLOR [outercolor]
+          OUTLINEWIDTH 5
+          SYMBOL "alternative_arrow"
+          SIZE 15
+          ANGLE AUTO
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
+    CLASS
+        STYLE
+          COLOR [outercolor]
+          WIDTH [outerwidth]
+        END # STYLE
+        STYLE
+          COLOR [innercolor]
+          WIDTH [innerwidth]
+        END # STYLE
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE [labelsize]
+            MINDISTANCE 100
+            ANGLE FOLLOW
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+   	    OUTLINEWIDTH 3
+        END
+    END # CLASS
+END
+
+LAYER
+    TYPE POINT
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user points"
+    <%= default_connection() %>
+
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'features'    '^[0-9,\-]+$'
+        'highlights'  '^[0-9,\-]+$'
+    END
+    DATA "geom from (select * from user_points) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%highlights%)'
+    LABELITEM "label"
+    CLASS
+        STYLE
+	    SIZE 30
+	    SYMBOL 'circle'
+            COLOR '#ffff00'
+	    OUTLINEWIDTH 55
+	    OUTLINECOLOR '#ff0000'
+        END
+        STYLE
+	    SIZE [size]
+	    SYMBOL [symbol]
+            COLOR [color]
+	    OPACITY [opacity]
+	    OUTLINEWIDTH [outlinewidth]
+	    OUTLINECOLOR [outlinecolor]
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE [labelsize]
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR [labelcolor]
+            OUTLINECOLOR [labeloutlinecolor]
+	    SHADOWSIZE [labelshadowx] [labelshadowy]
+	    POSITION AUTO
+        END
+
+        LABEL
+	    TEXT "[centeredlabel]"
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 8
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#000000'
+            OUTLINECOLOR '#ffffff'
+	    SHADOWSIZE 3 3
+	    FORCE true
+        END
+
+    END
+END
+
+
+
+LAYER
+    TYPE POLYGON
+    PROJECTION "init=epsg:4326" END
+    STATUS ON 
+    GROUP "default"
+    NAME "user polygons"
+    <%= default_connection() %>
+    VALIDATION
+        'userid'      '^[0-9a-zA-Z\-]+$'
+        'session'     '^[0-9a-zA-Z\-]+$'
+        'highlights'    '^[0-9,\-]+$'
+    END
+    DATA "geom from (select * from user_polygons) as a using unique id using srid=4326"
+    FILTER ( [userid] = '%userid%' and [session] = '%session%' )
+    PROCESSING 'NATIVE_FILTER=feature in (%highlights%)'
+    CLASS
+        # STYLE
+        #     COLOR [color]
+	#     OPACITY [opacity]
+        # END
+        STYLE
+	    OUTLINECOLOR '#ff0000'
+	    WIDTH 5
+        END
+        STYLE
+	    OUTLINECOLOR '#ffff00'
+	    WIDTH 1
+        END
+        STYLE
+            SYMBOL [symbol]
+	    SIZE [size]
+        END
+        TEXT '[label]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 12
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#0000ff'
+            OUTLINECOLOR '#ffffff'
+	    MINFEATURESIZE AUTO
+        END
+    END
+END
+
+
+
+END

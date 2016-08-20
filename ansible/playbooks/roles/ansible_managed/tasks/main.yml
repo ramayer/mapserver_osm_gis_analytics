@@ -4,6 +4,12 @@
   with_items:
     - unzip
     - sysstat
+    - jq
+    - libdbd-pg-perl
+    - ruby-pg
+    - munin-node
+
+# libdbd-pg-perl required for munin-configure to configure its postgres plugins
 
 - name: add ansible user
   user: name=ansible
@@ -46,3 +52,27 @@
      create: yes
      regexp: '^ansible'
      validate: 'visudo -cf %s'
+
+- name: "Build hosts file"
+  lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item]['ansible_ssh_host'] }} {{item}}" state=present
+  when: hostvars[item]['ansible_ssh_host'] is defined
+  with_items: groups['all']
+
+
+
+- name: Set up munin
+  apt: pkg={{ item }} state=latest install_recommends=yes
+  with_items:
+    - munin-node
+    - sysstat
+
+- name: configure munin node
+  lineinfile: dest="/etc/munin/munin-node.conf" line="allow ^.*$" backup=yes
+  register: muninconf
+
+- name: restart munin-node
+  service: name=munin-node state=restarted
+  when: muninconf.changed
+
+# consider 
+#     munin-node-configure --shell | bash

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+cd $PROJECT_DIR
+
+
+if [ -d $INSTALL_DIR/var/www/mapcache/i ]; then
+    echo "already had images on mapcache's /var/www"
+else
+    mkdir -p $INSTALL_DIR/var/www/mapcache
+    cd $INSTALL_DIR/var/www/mapcache
+    git clone https://github.com/forensiclogic/images.git i
+fi
+
+if  [ -d $INSTALL_DIR/etc/mapserver/i ]; then 
+    echo "already had images in mapserver config dir"
+else
+    mkdir -p  $INSTALL_DIR/etc/mapserver
+    cd $INSTALL_DIR/etc/mapserver
+    git clone https://github.com/forensiclogic/images.git i
+fi    

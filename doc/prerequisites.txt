@@ -1,0 +1,1 @@
+sudo apt-get install cgi-mapserver libproj-dev libproj0 proj-bin

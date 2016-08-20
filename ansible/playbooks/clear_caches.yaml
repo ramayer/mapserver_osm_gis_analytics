@@ -1,0 +1,19 @@
+---
+
+- name: Clear caches
+  become: yes
+  hosts: mapcache
+  tasks:
+    - name: Check old map cache tiles
+      shell: ls -1 /var/cache/mapcache/ | grep -v old_tiles
+      register: cache_contents
+    - name: Show what it'll delete
+      debug: msg="will remove /var/cache/mapcache/{{ item }} at {{ansible_date_time.iso8601}}"
+      with_items: '{{cache_contents.stdout_lines}}'
+    - name: make a temporary directory to move the files to for deleting
+      file: dest=/var/cache/mapcache/old_tiles/{{ansible_date_time.iso8601}} mode=755 state=directory owner={{ lookup("env","USER") }}
+    - name: Move the tiles to the temporary directory.
+      command: mv /var/cache/mapcache/{{item}} /var/cache/mapcache/old_tiles/{{ansible_date_time.iso8601}}
+      with_items: '{{cache_contents.stdout_lines}}'
+    - name: Slowly delete
+      shell: daemon -o /var/log/mapcache-delete.log.{{ansible_date_time.iso8601}} -- ionice -c 3 find /var/cache/mapcache/old_tiles/ -delete

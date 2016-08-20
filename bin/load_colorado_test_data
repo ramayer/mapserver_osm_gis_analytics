@@ -1,0 +1,20 @@
+#!/bin/bash
+
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+mkdir -p $GIS_DATA_DIR/colorado
+cd $GIS_DATA_DIR/colorado
+
+
+wget -x --mirror -p  'https://data.colorado.gov/api/geospatial/us3j-cyz6?method=export&format=Original'
+mkdir tmp
+unzip -d tmp './data.colorado.gov/api/geospatial/us3j-cyz6?method=export&format=Original'
+shp2pgsql -I -s 4326 tmp/BlockGroup2000SF3.shp colorado_demographics | psql -q
+
+
+
+
+# TODO - consider Chicago too:
+#  http://robparal.blogspot.com/2014/01/chicago-tract-shapefile-with-acs-data.html

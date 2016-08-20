@@ -114,15 +114,29 @@
   notify:
     - restart postgres
 
+- name: set postgres to listen on all IP addresses
+  become: yes
+  become_user: postgres
+  command: psql -U postgres postgres -c "ALTER SYSTEM SET listen_addresses = '*';"
+  notify:
+    - restart postgres
+
+- name: set postgres to log slow queries
+  become: yes
+  become_user: postgres
+  command: psql -U postgres postgres -c "ALTER SYSTEM SET log_min_duration_statement=1000;"
+  notify: 
+    - restart postgres
+
 - name: create privileged gis user 
   become: yes
   become_user: postgres
-  postgresql_user: name=gis role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password | default(changeme) }} 
+  postgresql_user: name=gis role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password }} 
 
 - name: create unprivileged mapserver user
   become: yes
   become_user: postgres
-  postgresql_user: name=mapserver role_attr_flags=NOSUPERUSER  password={{ database_password | default(mapserver) }} 
+  postgresql_user: name=mapserver role_attr_flags=NOSUPERUSER  password={{ database_password }} 
 
 - name: create gis database
   become: yes

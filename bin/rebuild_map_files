@@ -1,0 +1,71 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+cd $PROJECT_DIR
+
+mapdir=$INSTALL_DIR/etc/mapserver
+mapcachedir=$INSTALL_DIR/etc/mapcache
+
+mkdir -p $mapdir/map
+mkdir -p $mapcachedir
+
+layers=$PROJECT_DIR/templates/layers.json
+
+for style in $(jq -r '.[] | select( .template == "qsgeo" ) | .name' $layers)
+do
+ echo trying qsgeo based style: $style
+ erb -r $PROJECT_DIR/templates/styles/$style.rb     templates/qsgeo.map.erb > $mapdir/$style.map
+done
+
+for style in $(jq -r '.[] | select( .template == "simple" ) | .name' $layers)
+do
+ echo trying simple style: $style
+ erb  $PROJECT_DIR/templates/$style.map.erb > $mapdir/$style.map
+done
+
+erb $PROJECT_DIR/templates/mapcache.xml.erb > $mapcachedir/mapcache.xml
+
+
+mkdir -p $INSTALL_DIR/var/www/mapcache
+
+if [ -f $INSTALL_DIR/var/www/mapcache/v3.16.0-dist/ol.js ];
+then
+    echo "already had openlayers"
+else
+    echo "need openlayers"
+    (cd $INSTALL_DIR/var/www/mapcache ; wget https://github.com/openlayers/ol3/releases/download/v3.16.0/v3.16.0-dist.zip)
+    (cd $INSTALL_DIR/var/www/mapcache ; unzip v3.16.0-dist.zip)
+fi
+
+
+if [ -d $INSTALL_DIR/var/www/mapcache/ol3-layerswitcher ];
+then
+    echo "already had openlayers layerswitcher"
+else
+    echo "need openlayers layerswitcher"
+    (cd $INSTALL_DIR/var/www/mapcache ; git clone https://github.com/walkermatt/ol3-layerswitcher)
+fi
+
+if [ -d $INSTALL_DIR/var/www/mapcache/leaflet ];
+then
+    echo "already had leaflet"
+else
+    echo "need leaflet"
+    mkdir -p $INSTALL_DIR/var/www/mapcache/leaflet
+    (cd $INSTALL_DIR/var/www/mapcache/leaflet ; wget http://cdn.leafletjs.com/leaflet/v1.0.0-rc.1/leaflet.zip)
+    (cd $INSTALL_DIR/var/www/mapcache/leaflet ; unzip leaflet.zip)
+fi
+
+
+
+erb $PROJECT_DIR/templates/var/www/mapcache/test_maps.html.erb > $INSTALL_DIR/var/www/mapcache/test_maps.html
+install $PROJECT_DIR/templates/var/www/mapcache/index.html $INSTALL_DIR/var/www/mapcache/index.html
+cp $PROJECT_DIR/templates/var/www/mapcache/openlayers_helpers.js $INSTALL_DIR/var/www/mapcache/openlayers_helpers.js
+cp $PROJECT_DIR/templates/var/www/mapcache/test_leaflet.html $INSTALL_DIR/var/www/mapcache/test_leaflet.html
+
+mkdir -p $INSTALL_DIR/usr/lib/cgi-bin
+erb $PROJECT_DIR/templates/usr/lib/cgi-bin/map_data.cgi.erb > $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi
+chmod a+x $INSTALL_DIR/usr/lib/cgi-bin/map_data.cgi
+
+cp $PROJECT_DIR/templates/layers.json $INSTALL_DIR/var/www/mapcache/layers.json

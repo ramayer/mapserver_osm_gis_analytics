@@ -1,0 +1,105 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+psql << EOF
+
+  DROP TABLE IF EXISTS user_lines    CASCADE;
+  DROP TABLE IF EXISTS user_polygons CASCADE;
+  DROP TABLE IF EXISTS user_points   CASCADE;
+
+  CREATE TABLE user_points (
+         id             bigserial,
+
+         userid         text,
+         session        text,      
+         feature        numeric,
+
+         symbol             text,
+         size               double precision,
+         angle              double precision,
+         color              text,
+         opacity            int,
+         outlinecolor       text,
+         outlinewidth       text,
+         label              text,
+         labelsize          double precision,
+         labelcolor         text,
+         labeloutlinecolor  text,
+         labelpriority      int,
+         labelshadowx       double precision,
+         labelshadowy       double precision,
+
+         centeredlabel      text,
+ 
+         dttm           timestamp default now(),
+         geom           geometry(Point,4326)
+  );
+
+  CREATE TABLE user_lines (
+         id             bigserial,
+
+         userid         text,
+         session        text,      
+         feature        numeric,
+
+         label          text,
+         labelsize      double precision,
+         labelcolor     text,
+         labeloutlinecolor text,
+         labeloutlinewidth  double precision,
+
+         angle          double precision,
+         innercolor     text,
+         innerwidth     double precision,
+         outercolor     text,
+         outerwidth     double precision,
+         opacity        int,
+         size           double precision,
+         symbol         text,
+         arrowhead      boolean,
+ 
+         dttm           timestamp default now(),
+         geom           geometry(LineString,4326)
+  );
+
+
+  CREATE TABLE user_polygons (
+         id            bigserial,
+
+         userid         text,
+         session        text,      
+         feature        numeric,
+
+         symbol             text,
+         size               double precision,
+         angle              double precision,
+         color              text,
+         opacity            int,
+         outlinecolor       text,
+         outlinewidth       text,
+         label              text,
+         labelsize          double precision,
+         labelcolor         text,
+         labeloutlinecolor  text,
+         labelpriority      int,
+         labelshadowx       double precision,
+         labelshadowy       double precision,
+ 
+         dttm           timestamp default now(),
+         geom           geometry(MultiPolygon,4326)
+  );
+
+
+  CREATE INDEX "user_points(geom)"   ON user_points using GIST (geom);
+  CREATE INDEX "user_lines(geom)"    ON user_lines using GIST (geom);
+  CREATE INDEX "user_polygons(geom)" ON user_polygons using GIST (geom);
+
+  CREATE INDEX "user_points(userid,feature)"   ON user_points(userid,feature);
+  CREATE INDEX "user_lines(userid,feature)"    ON user_lines(userid,feature);
+  CREATE INDEX "user_polygons(userid,feature)" ON user_lines(userid,feature);
+
+
+EOF
+

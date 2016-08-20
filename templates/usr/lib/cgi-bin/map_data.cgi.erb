@@ -1,0 +1,227 @@
+#!/usr/bin/ruby
+# coding: utf-8
+
+require 'cgi'
+require 'json'
+require 'pg'
+
+# TODO --- use the gem.   
+
+class GisConvenienceFunctions
+
+  def initialize(dbname,user,host,port,password)
+    @@feet_per_meter = 3.28084
+    @@miles_per_meter = 0.000621371
+    @five_hundred_feet    = 152.4   # 500 / @@feet_per_meter # 402.336 # 1/4 mile in meters
+    @one_quarter_mile     = 402.336 # 1/4 mile in meters
+    @geo_pg ||= PGconn.open(:dbname => dbname,
+                            :user=> user,
+                            :host=> host,
+                            :port=> port,
+                            :password=>password)
+  end
+
+  def get_likely_cross_streets(lat,lon)
+    sql = %Q{
+      select * from (
+        SELECT name,highway,waterway,route,
+               ST_Distance(r.way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
+               FROM planet_osm_line r
+               WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{@one_quarter_mile})
+               ORDER BY way<->ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857) limit 100
+       ) as a
+      where
+         (name is not null) and
+         (highway is not null OR
+          route is not null  OR 
+          waterway is not null
+         )
+      order by dist limit 5;
+    }
+    result = @geo_pg.exec(sql,[lat,lon])
+    result.to_a.map{|row| [row['name'],row['dist']]}
+  end
+
+  def cheap_reverse_geocode(lat,lon)
+    likely_cross_streets = get_likely_cross_streets(lat,lon)
+    cheap_geocode = likely_cross_streets.map{|nam,dist| nam}.uniq[0..1].join(" and ")
+  end
+
+  def zillow_neighborhood(lat,lon)
+    sql = %Q{
+        SELECT state,county,city,name,regionid
+          FROM zillow_neighborhoods
+         WHERE geom && ST_SetSRID(ST_MakePoint($2,$1),4326)
+           AND ST_Intersects(geom,ST_SetSRID(ST_MakePoint($2,$1),4326))
+    }
+    result = @geo_pg.exec(sql,[lat,lon])
+    result.to_a.map{|row| row.each_pair{|x,y| row.delete(x) unless y}; row.delete('way'); row}.first
+  end
+
+  def nearby_polygons(lat,lon,interesting_distance = nil)
+    interesting_distance ||= @five_hundred_feet
+    #  Consider "name IS NOT NULL or leisure='pitch' or sport='basketball'"
+    sql = %Q{
+        SELECT "osm_id", "access", "addr:housename", "addr:housenumber", "addr:interpolation", "admin_level",
+               "aerialway", "aeroway", "amenity", "area", "barrier", "bicycle", "brand", "bridge", "boundary",
+               "building", "construction", "covered", "culvert", "cutting", "denomination", "disused",
+               "embankment", "foot", "generator:source", "harbour", "highway", "historic", "horse",
+               "intermittent", "junction", "landuse", "layer", "leisure", "lock", "man_made", "military",
+               "motorcar", "name", "natural", "office", "oneway", "operator", "place", "population",
+               "power", "power_source", "public_transport", "railway", "ref", "religion", "route",
+               "service", "shop", "sport", "surface", "toll", "tourism", "tower:type", "tracktype",
+               "tunnel", "water", "waterway", "wetland", "width", "wood", "z_order", "way_area",
+               "tags", "way",
+               hstore_to_json(tags) as json_tags,
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
+          FROM planet_osm_polygon geom
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
+           AND name IS NOT NULL
+           AND name != 'United States of America'
+      ORDER BY dist,way_area
+         LIMIT 100;
+    }
+    result = @geo_pg.exec(sql,[lat,lon])
+    result.to_a.map{|row| row.each_pair{|x,y| row.delete(x) unless y}; row.delete('way'); row}
+  end
+
+  def nearby_osm_points(lat,lon,interesting_distance=nil)
+    #  Consider "name IS NOT NULL or leisure='pitch' or sport='basketball'"
+    interesting_distance ||= @five_hundred_feet
+    sql = %Q{
+        SELECT *,
+               hstore_to_json(tags) as json_tags,
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
+          FROM planet_osm_point geom
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
+           AND name IS NOT NULL
+      ORDER BY dist
+         LIMIT 100
+       ;
+    }
+    result = @geo_pg.exec(sql,[lat,lon])
+    result.to_a.map{|row| row.each_pair{|x,y| row.delete(x) unless y}; row.delete('way'); row}
+  end
+
+  def nearby_osm_lines(lat,lon,interesting_distance=nil)
+    interesting_distance ||= @five_hundred_feet
+    sql = %Q{
+        SELECT *,
+               hstore_to_json(tags) as json_tags,
+               ST_Intersects(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),way) as intersects,
+               ST_Distance(way,ST_Transform(ST_SetSRID(ST_MakePoint($2, $1),4326),3857)) as dist
+          FROM planet_osm_line geom
+         WHERE way && ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance})
+           AND ST_Intersects(ST_Buffer(ST_Transform(ST_SetSRID(ST_MakePoint($2,$1),4326),3857),#{interesting_distance}),way)
+           AND name IS NOT NULL
+      ORDER BY dist
+         LIMIT 100
+       ;
+    }
+    result = @geo_pg.exec(sql,[lat,lon])
+    result.to_a.map{|row| row.each_pair{|x,y| row.delete(x) unless y}; row.delete('way'); row}
+  end
+
+  def nearby_landmarks(lat,lon)
+    inside = []
+    near   = []
+    city = county = state = zip = nil
+
+    np = nearby_polygons(lat,lon)
+    np.each{|p|
+      if p['intersects'] == 't'
+        state  ||= p['name'] if p['admin_level'] == '4'
+        county ||= p['name'] if p['admin_level'] == '6'
+        city   ||= p['name'] if p['admin_level'] == '8'
+        inside << p['name']
+      else
+        near << [p['name'], p['dist'].to_f]
+      end
+    }
+
+    nl = nearby_osm_lines(lat,lon)
+    nl.each{|p|
+      near   << [p['name'], p['dist'].to_f]
+    }
+
+    nl = nearby_osm_points(lat,lon)
+    nl.each{|p|
+      near   << ["a bank"            , p['dist'].to_f] if p['amenity'] == 'bank'
+      near   << ["a school"          , p['dist'].to_f] if p['amenity'] == 'school'
+      near   << ["a library"         , p['dist'].to_f] if p['amenity'] == 'library'
+      near   << ["a place of worship", p['dist'].to_f] if p['amenity'] == 'place of worship'
+      near   << [p['name'], p['dist'].to_f]
+    }
+
+    inside.uniq!
+
+    done_near = {}
+    uniq_near = []
+    near.sort_by{|n,d| d}.each{|n,d|
+      next if done_near[n]
+      uniq_near << [n,d]
+      done_near[n] = true
+    }
+
+    english = nearby_landmarks_to_english(lat,lon,state,county,city,zip,inside,uniq_near)
+    return({state:state,county:county,city:city,zip:zip,inside:inside,near:uniq_near,english:english})
+  end
+
+  def join_as_english(a)
+    if a.length > 1
+      last_fragment = a[-1]
+      return "#{a[0..-2].join(", ")}, and #{last_fragment}"
+    elsif a.length == 1
+      return a.first
+    else
+      return nil
+    end
+  end
+
+  def nearby_landmarks_to_english(lat,lon,state,county,city,zip,inside,near)
+    return nil unless near.length > 0 or inside.length > 0
+    return nil if lat.nil? or lon.nil?
+    near_fragments = near.map{|n,d| "#{n} (%d ft)" % [(d * @@feet_per_meter)]}
+    result  = "The location %6.4f°N, %6.4f°E is" % [lat,lon]
+    result += " in #{join_as_english(inside)}" if inside.length > 0
+    result += "; and" if inside.length > 0 and near.length > 0
+    result += " near #{join_as_english(near_fragments)}" if near.length > 0
+    result += "."
+    return result
+  end
+
+  def self.hi(language)
+    translator = Translator.new(language)
+    translator.hi
+  end
+end
+
+#### TODO - Maybe later, refactor to move stuff here:
+# require 'gis_convenience_functions/osm'
+# require 'gis_convenience_functions/census_tiger'
+
+cgi = CGI.new
+
+lat,lon = cgi['q'].split(',').map{|x| x.to_f}
+gcf = GisConvenienceFunctions.new('gis','gis',"<%= ENV['PGHOST'] %>","<%= ENV['PGPORT'] %>","<%= ENV['PGPASSWORD'] %>")
+crg = gcf.nearby_landmarks(lon,lat)
+
+polys = gcf.nearby_polygons(lon,lat)
+poly_txt = polys.map{|x|
+    if x['json_tags']
+        x = x.merge(JSON::parse(x['json_tags']))
+    end
+    interesting_keys = (x.keys - ['osm_id','name','json_tags','tags'])
+    %Q{<b>#{x['osm_id']}:#{x['name']}</b><br>}+
+    interesting_keys.map{|k| "<b>#{k}:</b>#{x[k]}"}.join("<br>")
+}.join("<hr>")
+
+puts cgi.header
+
+puts "<!DOCTYPE html>\n<html>#{poly_txt}</html>"
+
+

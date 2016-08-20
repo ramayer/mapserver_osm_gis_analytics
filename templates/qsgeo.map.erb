@@ -1,0 +1,2909 @@
+ <%
+   # see http://wiki.openstreetmap.org/wiki/Key:highway
+   # https://github.com/mapserver/basemaps
+
+   # translation table from tilecache scales to mapserver ratios
+   $scales = [
+       {minscaledenom:0        , maxscaledenom:5010     ,   zoom:17},
+       {minscaledenom:5010     , maxscaledenom:10010    ,   zoom:16},
+       {minscaledenom:10010    , maxscaledenom:25010    ,   zoom:15},
+       {minscaledenom:25010    , maxscaledenom:50010    ,   zoom:14},
+       {minscaledenom:50010    , maxscaledenom:100010   ,   zoom:13},
+       {minscaledenom:100010   , maxscaledenom:175010   ,   zoom:12},
+       {minscaledenom:175010   , maxscaledenom:250010   ,   zoom:11},
+       {minscaledenom:250010   , maxscaledenom:500010   ,   zoom:10},
+       {minscaledenom:500010   , maxscaledenom:1000010  ,   zoom:9},
+       {minscaledenom:1000010  , maxscaledenom:2500010  ,   zoom:8},
+       {minscaledenom:2500010  , maxscaledenom:5000010  ,   zoom:7},
+       {minscaledenom:5000010  , maxscaledenom:10000010 ,   zoom:6},
+       {minscaledenom:10000010 , maxscaledenom:20000010 ,   zoom:5},
+    ]
+
+   $colors = $map_options
+
+   def database_username()
+       ENV["PGUSER"] || 'gis'
+   end
+
+   def database_host()
+       ENV["PGHOST"] || 'postgis-01'
+   end
+
+   def database_password()
+       ENV["PGPASSWORD"] ||
+        `grep $PGHOST:$PGPORT:.:$PGUSER ~/.pgpass | perl -pe 's/.*://'` ||
+     $stderr.puts("Can't find find password for the mapserver to access the spatial database.")
+   end
+
+   def default_connection
+       %Q{
+         CONNECTIONTYPE postgis
+         CONNECTION "host=#{ database_host() } dbname=gis user=#{ database_username() } password=#{ database_password() } port=5432"
+         PROCESSING "CLOSE_CONNECTION=DEFER"
+       }
+   end
+
+   def get_color(f,c='color')
+       feature = $map_colors[f.to_sym]
+       unless feature
+           $stderr.puts("CAN'T FIND COLOR FOR #{f}")
+           return '#FF0000'
+       end
+
+       clr = feature[c.to_sym]
+       unless clr
+           $stderr.puts("CAN'T FIND COLOR FOR #{f} #{c}")
+           clr='#FF0000'
+       end
+       clr
+   end
+
+   def road_label(color,size,priority)
+      # NOTE: 
+      # minfeaturesize doesn't work well on roads, because
+      # some are made up of many tiny segments
+      #     MINFEATURESIZE AUTO
+      #     MINFEATURESIZE 50
+      %Q{
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY #{ priority || 4 }
+            SIZE #{ size || 8 }
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "#{get_color(color)}"
+            OUTLINECOLOR "#{get_color(color,"outline")}"
+			OUTLINEWIDTH 2
+        END
+        }
+   end
+
+   def all_highways
+    # nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
+	nicename = %Q{CASE WHEN highway='motorway' THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
+    return %Q{(
+           SELECT way, osm_id ,highway,ref, railway, route, name, #{nicename} AS nicename, tunnel
+       FROM planet_osm_line
+           WHERE highway is not null or railway is not null
+       ORDER by z_order
+       ) as highways
+    }.gsub(/\s+/," ")
+   end
+
+   # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql put tertiary roads there.
+   def minor_highways
+    nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END}
+    return %Q{(
+           SELECT way, osm_id ,highway,ref, name, #{nicename} AS nicename, tunnel
+       FROM planet_osm_line
+           WHERE highway in ('motorway','trunk','primary','secondary','tertiary')
+       ORDER by z_order
+       ) as highways
+    }.gsub(/\s+/," ")
+   end
+
+   def major_highways(types=['motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link'])
+    type_string = types.map{|t| "'#{t}'"}.join(",")
+    nicename = %Q{CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') WHEN highway='motorway' THEN coalesce(ref,name) ELSE coalesce(name,ref) END}
+    return %Q{(
+           SELECT way, osm_id ,highway,ref, name, #{nicename} AS nicename, tunnel
+       FROM planet_osm_roads
+           WHERE highway in (#{type_string})
+       ORDER by z_order
+       ) as highways
+    }.gsub(/\s+/," ")
+   end
+
+
+   def road_class(highway,width,font_size,label_priority)
+
+       road_type = highway.gsub(/_link$/,"")
+       label = %Q{
+         LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            PRIORITY #{ label_priority || 4 }
+            SIZE #{ font_size || 8 }
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "#{get_color('road_label')}"
+            OUTLINECOLOR "#{get_color(road_type)}"
+            OUTLINEWIDTH 2
+         END
+       }
+       label = '' if label_priority == 0
+
+       color        = get_color(road_type)
+       outlinecolor = get_color(road_type,"outline")
+       if highway =~ /_link$/
+          width /= 2
+       end
+
+       return %Q{
+        CLASS
+            EXPRESSION "#{highway}"
+            STYLE
+                WIDTH 1
+                COLOR "#{get_color('road_line')}"
+            END
+            #{label}
+        END
+        } if width == 0
+
+       %Q{
+        CLASS
+            EXPRESSION "#{highway}"
+            STYLE
+                WIDTH #{width}
+                COLOR "#{color}"
+                OUTLINECOLOR "#{outlinecolor}"
+                OUTLINEWIDTH 1
+            END
+            #{label}
+        END
+        }
+   end
+
+
+
+   def poly_label(color,size,priority)
+      %Q{
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY #{ priority || 4 }
+            SIZE #{ size || 8 }
+            MINDISTANCE 250
+            COLOR "#{get_color(color)}"
+            OUTLINECOLOR "#{get_color(color,"outline")}"
+        MINFEATURESIZE AUTO
+        WRAP ' '
+        MAXLENGTH 15
+        END
+        }
+   end
+
+
+%>
+MAP
+
+OUTPUTFORMAT
+    NAME agg
+    DRIVER AGG/PNG
+    IMAGEMODE RGB
+    FORMATOPTION "INTERLACE=false"
+    MIMETYPE "image/png"
+END
+#FONTSET "/opt/mapserver/etc/fonts.lst"
+FONTSET "./fonts.lst"
+IMAGETYPE agg
+MAXSIZE 10000
+SIZE 800 800
+#EXTENT 47586 1621243 1197769 2679357
+EXTENT 16805492 -4049385 16857351 -3975830
+UNITS meters
+IMAGECOLOR "<%= get_color("water") %>"
+WEB
+    LOG '/tmp/mapserver.log'
+    METADATA
+        wms_srs "epsg:3857 epsg:900913 epsg:4326"
+        labelcache_map_edge_buffer "-10"
+        wms_title "osm france"
+        "ows_enable_request" "*"
+    END
+END
+DEBUG 5
+# CONFIG "PROJ_LIB" "/opt/mapserver/etc"
+CONFIG "PROJ_LIB" "/usr/share/proj"
+CONFIG "MS_ERRORFILE" "stderr"
+PROJECTION  "init=epsg:3857"  END
+
+#  The land background color.
+#  For nice printable maps, "#FFFFFF" is good
+#  For beige web maps "#F2EFE9" is good
+#
+# wonder if it's the same as http://data.openstreetmapdata.com/coastlines-split-3857.zip
+# TODO -- see if this works with a newer different shapefile
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "land"
+    PROJECTION "init=epsg:3857" END
+    # DATA "coastlines/simplified-land-polygons-complete-3857/simplified_land_polygons"
+    # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    DATA "shapefiles/simplified_land_polygons"
+    MINSCALEDENOM 500000   # size of the bay area or bigger
+    CLASS
+        STYLE
+           COLOR "<%= get_color("land") %>"
+        END
+    END
+END
+
+
+# Note that we could render it directly from the shapefile as shown in
+# the alternative DATA satements, but this requires about 600MB for
+# each mapserver instance.  Loading the shapefile into the database
+# and rendering it from there is much faster.
+
+LAYER
+    TYPE POLYGON
+    STATUS ON
+    GROUP "default"
+    NAME "land"
+    PROJECTION "init=epsg:3857" END
+
+    # DATA "coastlines/land-polygons-split-3857/land_polygons"
+    # DATA "shapefiles/land_polygons"
+
+    <%= default_connection() %>
+    DATA "geom from land_polygons using unique gid using srid=3857"
+
+    MAXSCALEDENOM 500000 # size of the oakland or smaller
+    CLASS
+        STYLE
+           COLOR "<%= get_color("land") %>"
+        END
+    END
+END
+
+# http://www.mercatorgeosystems.com/blog-articles/2008/05/30/using-ogr2ogr-to-re-project-a-shape-file/
+LAYER
+    TYPE POLYGON
+    STATUS ON #  FIGURE OUT HOW TO FIX THIS SHAPEFILE !!! WAS: ON
+    GROUP "default"
+    NAME "STATES1"
+    PROJECTION       "init=epsg:4326"     END
+    # DATA "states/st99_d00"
+    # Even though it's the same shapefile, mapserver won't load it.  File length?
+    # DATA "cb_2014_us_state_20m/cb_2014_us_state_20m"
+    # DATA "shapefiles/cb_2014_us_state_20m"
+    DATA "shapefiles/states"
+    MINSCALEDENOM 250000
+    CLASS
+        STYLE
+            OUTLINECOLOR "<%= get_color("land","outline") %>"
+        END
+    END
+END
+
+
+
+
+
+# This layer can take over 30 seconds on our production server at zoom level 9 if it uses planet_osm_line
+# Seems most of the boundaries are also in planet_osm_roads?
+
+LAYER
+    TYPE LINE
+    STATUS ON 
+    GROUP "default"
+    NAME "country borders zoom 8+"
+    MAXSCALEDENOM 1000010
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id,admin_level,name from planet_osm_roads where admin_level in ('2','4')) as foo using unique osm_id using srid=900913"
+    CLASSITEM "admin_level"
+    CLASS
+    EXPRESSION ('[admin_level]'='2')
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("country","outline") %>"
+        END
+    END
+    CLASS
+    EXPRESSION ('[admin_level]'='4')
+    STYLE
+            COLOR "<%= get_color("state","outline") %>"
+        WIDTH 1.0
+            # LINECAP round #[butt|round|square|triangle]
+            # LINEJOIN miter #[round|miter|bevel]
+            # LINEJOINMAXSIZE 3
+            # PATTERN 8 4 0 4 0 4 0 4 END
+        END # STYLE
+    END
+END
+
+
+
+
+LAYER
+    TYPE LINE
+    STATUS ON 
+    GROUP "default"
+    MINSCALEDENOM 1000010
+    NAME "country borders zoom 0 to 7"
+    <%= default_connection() %>
+    DATA "way from (select sway as way,rowid,admin_level,name from planet_admin_boundaries where admin_level in ('2','4')) as foo using unique rowid using srid=900913"
+    CLASSITEM "admin_level"
+    CLASS
+    EXPRESSION ('[admin_level]'='2')
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("country","outline") %>"
+        END
+    END
+    CLASS
+    EXPRESSION ('[admin_level]'='4')
+    STYLE
+            COLOR "<%= get_color("state","outline") %>"
+        WIDTH 1.0
+            # LINECAP round #[butt|round|square|triangle]
+            # LINEJOIN miter #[round|miter|bevel]
+            # LINEJOINMAXSIZE 3
+            # PATTERN 8 4 0 4 0 4 0 4 END
+        END # STYLE
+    END
+END
+
+
+
+
+
+
+
+#### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
+#### without land should be water).
+####
+#### However the April 18th land polygons from http://openstreetmapdata.com/data/land-polygons
+#### were missing the great lakes, so these were temporarily added.
+#
+#   LAYER
+#       TYPE POLYGON
+#       STATUS ON
+#       PROJECTION "init=epsg:3857" END
+#       NAME "water_polygons"
+#       GROUP "default"
+#   
+#   #    DATA "geom from water_polygons using unique gid using srid=3857"
+#   
+#          DATA "shapefiles/water_polygons"
+#   
+#       MAXSCALEDENOM 5000010
+#       CLASS
+#           STYLE
+#               OUTLINECOLOR '#ff00ff' # "<%= get_color("water") %>"
+#               OUTLINEWIDTH 3
+#           END
+#       END
+#   END
+#   LAYER
+#       TYPE POLYGON
+#       STATUS ON
+#       PROJECTION "init=epsg:3857" END
+#       NAME "simplified_water_polygons"
+#       GROUP "default"
+#       DATA "geom from simplified_water_polygons using unique gid using srid=3857"
+#   
+#   
+#   
+#       MINSCALEDENOM 5000010
+#       CLASS
+#           STYLE
+#               COLOR '#ff0000' # "<%= get_color("water") %>"
+#           END
+#       END
+#   END
+#   
+#   
+
+SYMBOL
+    NAME "rail"
+    TYPE TRUETYPE
+    FONT sc
+    CHARACTER '|'
+    #GAP -3
+END
+
+SYMBOL
+  NAME "hatch"
+  TYPE hatch
+END
+
+
+# TODO - PATTERN in a SYMBOL is deprecated and no longer works.
+# See: http://mapserver.org/mapfile/symbology/construction.html#sym-construction
+
+# SYMBOL
+#     NAME "path"
+#     TYPE SIMPLE
+#     #PATTERN 1 1 END
+# END
+
+SYMBOL
+    NAME "dash"
+    TYPE SIMPLE
+    # PATTERN 2 2 END
+END
+SYMBOL
+    NAME "butt"
+    TYPE SIMPLE
+    # LINECAP butt
+END
+
+
+<%
+
+   # other aeroway values are more like buildings
+   # that should always be on top of these sometimes larger areas
+
+   # interesting polygons to shade:
+   #    EXPRESSION ("[amenity]"="school" or "[amenity]"="college" or "[amenity]"="university" )
+   #    EXPRESSION ("[amenity]"="parking")
+   #    EXPRESSION ("[amenity]"="hospital")
+   #    EXPRESSION ("[amenity]"="swimming_pool")
+   #    EXPRESSION ("[aeroway]"="aerodrome")
+   #    EXPRESSION ('[landuse]'='industrial' or '[landuse]'='commercial' or '[landuse]'='brownfield' or '[landuse]'='military' or '[landuse]'='railway')
+   #    EXPRESSION ('[landuse]'='residential')
+   #    EXPRESSION ('[landuse]'='cemetery')
+   #    EXPRESSION ('[landuse]'='recreation_ground')
+   #    EXPRESSION ('[leisure]'='park')
+   #    EXPRESSION ('[leisure]'='track' or "[leisure]"='pitch' or "[leisure]"='golf_course')
+   #    EXPRESSION ('[leisure']='golf_course')
+   #    EXPRESSION ('[nature]'='wood' or '[landuse]'="forest")
+   #    EXPRESSION ('[landuse]'='grass' or '[landuse]'='farm' or '[landuse]'='greenfield' or '[landuse]'='allotments' or '[landuse]'='meadow' or '[landuse]'='field')
+   #    EXPRESSION ('[highway]'='pedestrian')
+   #
+   # [name] [sport] is a good label
+   # DATA "way from (select way,osm_id, coalesce(name,sport) as nicelabel from planet_osm_polygon where leisure='track' or leisure='pitch' or leisure='golf_course') as foo using unique osm_id using srid=900913"
+
+   # consider 'wetland'='saltmarsh' too.
+
+   polysql = %q{
+        SELECT way,
+           osm_id,
+           name,
+           amenity,
+           aeroway,
+           landuse,
+           leisure,
+           military,
+           sport,
+           tourism,
+           highway,
+           waterway,
+           boundary,
+           \"natural\" as nature,
+	   power,
+           coalesce(name,sport) as nicelabel
+        FROM planet_osm_polygon
+    WHERE amenity is not null
+       OR aeroway='aerodrome'
+       OR landuse is not null
+       OR waterway is not null
+       OR leisure is not null
+       OR tourism is not null
+       OR \"natural\" is not null
+       OR highway is not null
+       OR power is not null
+        ORDER by way_area desc 
+   }.gsub(/\s+/," ")
+
+  def darken(color,degree)
+     rgb           = color.scan(/[0-9a-fA-F]{2}/).map{|x| x.to_i(16)}
+     min_rgb       = rgb.sort.first
+     darken_amount = (min_rgb > degree) ? degree : min_rgb
+     "#%02x%02x%02x" % rgb.map{|x| x - darken_amount}
+  end
+
+  def poly_class(tag,values,colorname,outlinecolorname)
+      style = ''
+      hatchelem  = ''
+      expressions  = tag ? values.map{|v| %Q{"[#{tag}]"="#{v}"}}.join(" or ") : values
+      color    = colorname && get_color(colorname)
+      darker       = color && darken(color,32)
+      colorelem    = color ? %Q{COLOR "#{color}"} : ""
+      outlinecolor = outlinecolorname ? get_color(outlinecolorname,'outline') :
+                 color ? darken(color,32) : nil
+
+      outlineelem  = outlinecolor ? %Q{OUTLINEWIDTH 1 OUTLINECOLOR "#{outlinecolor}"} : ""
+
+      labelcolor = (colorname == 'water') ? get_color('water_label') : get_color('land_label')
+      labeloutlinecolor = (colorname == 'water') ? get_color('water_label','outline') : get_color('land_label','outline')
+
+      if (outlinecolor && !color)
+         hatchelem = %Q{
+      	   STYLE
+	       SYMBOL "hatch"
+	       COLOR "#{outlinecolor}"
+	       SIZE 5
+	       WIDTH 0.5
+	       ANGLE 45
+	       PATTERN 10 5 5 5 END
+	   END # STYLE
+         }
+      end
+
+      %Q{
+         CLASS
+            EXPRESSION (#{expressions})
+        MINFEATURESIZE 20 
+        STYLE
+           #{colorelem}    
+           #{outlineelem}
+        END
+	#{hatchelem}
+        LABEL
+        TYPE TRUETYPE
+        FONT arial
+        PARTIALS FALSE
+        OUTLINEWIDTH 1
+        PRIORITY 4
+        SIZE 7
+        MINDISTANCE 100
+        COLOR "#{labelcolor}"
+        OUTLINECOLOR "#{labeloutlinecolor}"
+        MINFEATURESIZE AUTO
+        WRAP ' '
+        MAXLENGTH 12
+        END
+     END
+      }
+  end
+
+
+
+%>
+
+# The 'order by way_area desc' clause is an interesting hack to handle cases where you may have:
+#    a large grass polygon, surrounding a smaller school polygon, surrounding a smaller grass polygon
+# 
+# It doesn't seem guaranteed to work, though, because it pushes the "order by" clause into a subquery so the ordering of the outer query is undefined, though.
+# 
+#  execute <unnamed>: select "amenity","name",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,amenity,aeroway, name from planet_osm_polygon where amenity is not null or aeroway='aerodrome' order by way_area desc) as foo where way && ST_GeomFromText('POLYGON((-13570947.0959847 4512525.05572228,-13570947.0959847 4514076.48853071,-13569395.6631763 4514076.48853071,-13569395.6631763 4512525.05572228,-13570947.0959847 4512525.05572228))',900913)
+
+
+        # Do not fill polygon's with a 'boundary' tag.
+    # Emerald Bay State Park's polygon would fill Emerald Bay if we do.
+    #
+        # Similar for osm_id -3945021 ... Don Edwards Bay north of the Dumbarton Bridge
+    #
+    # TODO - find why 160032399 / Biscayne National Park is still covering the water.
+
+    # hmm, the island in the middle of lake elisabeth in fremont
+    # claims to be rock (according to OSM tags), even though
+    # it's covered with trees
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "landuse_layer3"
+    TYPE POLYGON
+    <%= default_connection() %>
+    DATA "way from (<%= polysql %>) as foo using unique osm_id using srid=900913"
+    LABELITEM "nicelabel"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MAXSCALEDENOM 220000
+
+    <%= poly_class('nature'  ,%W{water bay pond}                                          ,'water'   ,nil) %>
+    <%= poly_class('landuse' ,%W{pond basin reservoir}                     		  ,'water'   ,nil) %>
+    <%= poly_class('waterway',%W{riverbank stream}                        		  ,'water'   ,nil) %>
+    <%= poly_class('amenity' ,%W{fountain swimming_pool}                   		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{swimming_pool}                         		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{water_park}                      			  ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                   	  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                      ,'hospital',nil) %>
+    <%= poly_class('amenity' , %W{school college university}                              ,'school'  ,nil) %>
+    <%= poly_class('aeroway' , %W{aerodrome}                                              ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{parking bicycle_parking}                                ,'parking' ,nil ) %>
+    <%= poly_class('landuse' , %W{railway}                                                ,'parking' ,nil ) %>
+
+    <%= poly_class('leisure' , %W{garden common sports_centre fairgrounds dog_park}       ,'grass'    ,nil ) %>
+    <%= poly_class('amenity' , %W{theater}                                                ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{wood ridge}                                             ,'forest'   ,nil ) %>
+    <%= poly_class('landuse' , %W{forest}                                                 ,'forest'   ,nil ) %>
+
+    <%= poly_class('nature'  , %W{marsh wetland mud}                                    ,'mud'      ,nil ) %>
+    <%= poly_class('leisure' , %W{brownfield}                                           ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{brownfield landfill salt_pond}                        ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{military}                                             ,'military' ,nil ) %>
+    <%= poly_class('nature'  , %W{sand beach rock rocks}                                ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{quarry}                                               ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{grass farm greenfield allotments meadow field}        ,'grass'    ,nil ) %>
+    <%= poly_class('leisure' , %W{recreation_ground}                                    ,'forest'   ,nil ) %>
+    <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
+    <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
+    <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
+    <%= poly_class('leisure' , %W{playground}                                           ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{heath scrub scree grassland}                          ,'grass'    ,nil ) %>
+    <%= poly_class('power'   , %W{station line compensator yes transformer substation generator sub_station plant converter switchgear}                                              ,'military' ,nil ) %>
+    <%= poly_class('name'    , ['Emerald Bay State Park',
+    			        'D.L. Bliss State Park'
+    			       ]                                                          ,nil        ,'forest' ) %>
+    <%= poly_class('leisure' , %W{park}                                                   ,'park'      ,nil ) %>
+    <%= poly_class('boundary', %W{national_park protected_area}                           ,nil        ,'forest' ) %>
+    <%= poly_class('leisure',  %W{nature_reserve}                                         ,nil        ,'forest' ) %>
+
+     # Intentionally not coloring these; because different cities and
+     # counties are very inconsistent in how they use them.
+
+     CLASS
+         EXPRESSION ('[landuse]'='farmland' or '[landuse]'='farmyard')
+     <%= poly_label('place_label',7,5) %>
+     END
+
+     # not rendered because cities are inconsistent on if the marina is land or water
+     CLASS
+         EXPRESSION ('[leisure]'='marina' or '[waterway]'='boatyard')
+     <%= poly_label('place_label',7,5) %>
+     END
+
+     CLASS
+         EXPRESSION ('[landuse]'='residential' or '[landuse]'='industrial' or '[amenity]'='trailer_park' or '[amenity]'='marketplace' or '[amenity]'='restaurant' or '[landuse]'='institutional')
+     <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='special_use' or '[landuse]'='commercial' or '[landuse]'='construction' or '[landuse]'='retail' or '[landuse]'='public_facility' or '[amenity]'='fire_station')
+     <%= poly_label('place_label',7,5) %>
+     END
+
+     # Silly layers
+     CLASS
+         EXPRESSION ('[landuse]'='greenhouse_horticulture')
+     <%= poly_label('place_label',7,5) %>
+     END
+
+     CLASS
+         #STYLE
+         #    COLOR "#000000"
+         #    OUTLINECOLOR "#ff0000"
+         #END
+     #TEXT "[osm_id] L:[landuse] N:[nature] T:[tourism] A:[amenity]"
+     <%= poly_label('place_label',7,5) %>
+     END
+
+END
+
+
+
+
+#  This was copy&pasted from above, with the only differences being
+#         DATA 
+#  and
+#         MINSCALEDENOM 220000
+#  Until it can be updated, it's probably best to not edit here, and just copy&paste the above.
+#
+#  It gets painfully slow to render this at anything beyond "MAXSCALEDENOM 500010" without pre-computing cached tiles.
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "landuse_layer3"
+    TYPE POLYGON
+    <%= default_connection() %>
+    DATA "sway from (<%= polysql.sub('planet_osm_polygon','simple_large_polygons').sub(' way,',' sway,') %>) as foo using unique osm_id using srid=900913"
+    LABELITEM "nicelabel"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MINSCALEDENOM 220000
+    MAXSCALEDENOM 2000010
+
+    <%= poly_class('nature'  ,%W{water bay pond}                                          ,'water'   ,nil) %>
+    <%= poly_class('landuse' ,%W{pond basin reservoir}                     		  ,'water'   ,nil) %>
+    <%= poly_class('waterway',%W{riverbank stream}                        		  ,'water'   ,nil) %>
+    <%= poly_class('amenity' ,%W{fountain swimming_pool}                   		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{swimming_pool}                         		  ,'water'   ,nil) %>
+    <%= poly_class('leisure' , %W{water_park}                      			  ,'tourism' ,nil) %>
+    <%= poly_class('tourism' , %W{zoo theme_park attraction museum}                   	  ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{hospital doctors place_of_worship}                      ,'hospital',nil) %>
+    <%= poly_class('amenity' , %W{school college university}                              ,'school'  ,nil) %>
+    <%= poly_class('aeroway' , %W{aerodrome}                                              ,'tourism' ,nil) %>
+    <%= poly_class('amenity' , %W{parking bicycle_parking}                                ,'parking' ,nil ) %>
+    <%= poly_class('landuse' , %W{railway}                                                ,'parking' ,nil ) %>
+
+    <%= poly_class('leisure' , %W{garden common sports_centre fairgrounds dog_park}       ,'grass'    ,nil ) %>
+    <%= poly_class('amenity' , %W{theater}                                                ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{wood ridge}                                             ,'forest'   ,nil ) %>
+    <%= poly_class('landuse' , %W{forest}                                                 ,'forest'   ,nil ) %>
+
+    <%= poly_class('nature'  , %W{marsh wetland mud}                                    ,'mud'      ,nil ) %>
+    <%= poly_class('leisure' , %W{brownfield}                                           ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{brownfield landfill salt_pond}                        ,'mud'      ,nil ) %>
+    <%= poly_class('landuse' , %W{military}                                             ,'military' ,nil ) %>
+    <%= poly_class('nature'  , %W{sand beach rock rocks}                                ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{quarry}                                               ,'sand'     ,nil ) %>
+    <%= poly_class('landuse' , %W{grass farm greenfield allotments meadow field}        ,'grass'    ,nil ) %>
+    <%= poly_class('leisure' , %W{recreation_ground}                                    ,'forest'   ,nil ) %>
+    <%= poly_class('highway' , %W{pedestrian}                                           ,'parking'   ,nil ) %>
+    <%= poly_class('leisure' , %W{track pitch golf_course}                              ,'grass'    ,nil ) %>
+    <%= poly_class('tourism' , %W{picnic_site camp_site attraction}                     ,'forest'    ,nil ) %>
+    <%= poly_class('leisure' , %W{playground}                                           ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{recreation_ground village_green}                      ,'grass'    ,nil ) %>
+    <%= poly_class('landuse' , %W{orchard vineyard plant_nursery conservation cemetery} ,'grass'    ,nil ) %>
+    <%= poly_class('nature'  , %W{heath scrub scree grassland}                          ,'grass'    ,nil ) %>
+    <%= poly_class('power'   , %W{station line compensator yes transformer substation generator sub_station plant converter switchgear}                                              ,'military' ,nil ) %>
+    <%= poly_class('name'    , ['Emerald Bay State Park',
+    			        'D.L. Bliss State Park'
+    			       ]                                                          ,nil        ,'forest' ) %>
+    <%= poly_class('leisure' , %W{park}                                                   ,'park'      ,nil ) %>
+    <%= poly_class('boundary', %W{national_park protected_area}                           ,nil        ,'forest' ) %>
+    <%= poly_class('leisure',  %W{nature_reserve}                                         ,nil        ,'forest' ) %>
+
+     # Intentionally not coloring these; because different cities and
+     # counties are very inconsistent in how they use them.
+
+     CLASS
+         EXPRESSION ('[landuse]'='farmland' or '[landuse]'='farmyard')
+     <%= poly_label('place_label',7,5) %>
+     END
+
+     # not rendered because cities are inconsistent on if the marina is land or water
+     CLASS
+         EXPRESSION ('[leisure]'='marina' or '[waterway]'='boatyard')
+		 <%= poly_label('water_label',7,5) %>
+     END
+
+     CLASS
+         EXPRESSION ('[landuse]'='residential' or '[landuse]'='industrial' or '[amenity]'='trailer_park' or '[amenity]'='marketplace' or '[amenity]'='restaurant' or '[landuse]'='institutional')
+         <%= poly_label('place_label',7,5) %>
+     END
+     CLASS
+         EXPRESSION ('[landuse]'='special_use' or '[landuse]'='commercial' or '[landuse]'='construction' or '[landuse]'='retail' or '[landuse]'='public_facility' or '[amenity]'='fire_station')
+         <%= poly_label('place_label',7,5) %>
+     END
+
+     # Silly layers
+     CLASS
+         EXPRESSION ('[landuse]'='greenhouse_horticulture')
+         <%= poly_label('place_label',7,5) %>
+     END
+
+     CLASS
+         #STYLE
+         #    COLOR "#000000"
+         #    OUTLINECOLOR "#ff0000"
+         #END
+     #TEXT "[osm_id] L:[landuse] N:[nature] T:[tourism] A:[amenity]"
+     <%= poly_label('place_label',7,5) %>
+     END
+
+END
+
+
+
+
+################################################################################
+################################################################################
+##  WATER
+################################################################################
+################################################################################
+# Ideally, much of this wouldn't be needed, but 
+#    http://openstreetmapdata.com/data/land-polygons
+# occasionally misses important bodies of water, like the great lakes.
+#
+# Zoomed out, only include large water polygons by filtering on way_area
+#    way_area>10000000 will get the San Luis Reservoir, way_area>100000000 won't.
+# In 2016, openstreetmap has about 50,000 that match this expression with 10000000
+# In 2016, openstreetmap has about 6,000  that match this expression with 100000000
+#
+# Note -- we should make sure the expression in this layer matches the index in 
+# the load_spatial_data script.
+# create index big_water on planet_osm_polygon (way_area) where ("natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank' or waterway='stream') and way_area>10000000 ;
+# or consider
+# create index "polygons_over(10000000)" on planet_osm_polygon(way_area) where way_area>10000000;
+# Or consider a materialized view with all big polygons instead.
+#
+#
+#
+#   CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE ("natural" = 'water' OR landuse='reservoir') AND way_area>100 * 1000 * 1000;
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "big_water"
+    TYPE POLYGON
+    <%= default_connection() %>
+    # DATA "sway from (select st_simplify(way,500) as sway,* from planet_osm_polygon where (\"natural\" = 'water' or landuse='reservoir') and way_area>100 * 1000 * 1000) as a using unique osm_id using srid=900913"
+    DATA "sway from simple_large_water using unique osm_id using srid=900913"
+    LABELITEM "name"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MINSCALEDENOM 220000
+    CLASS
+        STYLE
+            COLOR "<%= get_color("water") %>"
+        END
+    END
+END
+
+# Try
+#     SIZEUNITS meters
+# This scales nicely. Consider using SIZEUNITS for everything (roads in meters, etc).
+# But unfortunately it makes labeling painful.
+LAYER
+    TYPE LINE
+    NAME "landuse_layer6"
+    GROUP "default"
+    <%= default_connection() %>
+    DATA 'way from (select name,way,waterway,osm_id from planet_osm_line where waterway is not null) as foo using unique osm_id using srid=900913'
+    CLASSITEM "waterway"
+    MAXSCALEDENOM 1500000
+    LABELITEM "name"
+    SIZEUNITS meters
+    CLASS
+        EXPRESSION "river"
+        STYLE
+            COLOR "<%= get_color("water") %>"
+            WIDTH 30
+        END
+        LABEL
+			MAXSCALEDENOM 25010
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 5
+            SIZE 10
+            MINDISTANCE 250
+            ANGLE FOLLOW
+			COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "stream"
+        STYLE
+            COLOR "<%= get_color("water") %>"
+            WIDTH 10
+        END
+        LABEL
+			MAXSCALEDENOM 25010
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 8
+            MINDISTANCE 250
+            ANGLE FOLLOW
+			COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+        END
+    END
+    CLASS
+        EXPRESSION "canal"
+        STYLE
+            COLOR "<%= get_color("water") %>"
+            WIDTH 10
+        END
+        LABEL
+			MAXSCALEDENOM 25010
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 8
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+        END
+    END
+
+    CLASS
+        # the man-made stream in some parks are labled 'ditch'
+        STYLE
+            COLOR "<%= get_color("water") %>"
+            WIDTH 5
+        END
+        LABEL
+	    MAXSCALEDENOM 25010
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 8
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color("water_label") %>"
+            OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+        END
+    END
+END
+################################################################################
+################################################################################
+##  END OF WATER
+################################################################################
+################################################################################
+
+
+################################################################################
+################################################################################
+##  AIRPORTS
+################################################################################
+################################################################################
+## Airport details
+## If we want whole airports shaded, put a polygon for ( aeroway = 'aerodrome' ) above the grass layers
+################################################################################
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "airport_aeroways"
+    TYPE POLYGON
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id,aeroway,ref,name, CASE WHEN aeroway = 'runway' THEN 'runway' else '' END AS runway from planet_osm_polygon where aeroway is not null and aeroway != 'aerodrome') as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    MAXSCALEDENOM 110000
+    CLASSITEM "aeroway"
+    CLASS
+        STYLE
+            COLOR "<%= get_color('parking') %>"
+            OUTLINECOLOR "<%= get_color('parking','outline') %>"
+        END
+    text '[runway] [ref] [name]'
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 400
+          MINFEATURESIZE 50   # slow, but quite a bit nicer.
+          SIZE 8
+          COLOR "<%= get_color("water_label") %>"
+          OUTLINECOLOR "<%= get_color("water_label", "outline") %>"
+          WRAP ' '
+          MAXLENGTH 12
+          ALIGN CENTER
+        END
+    END
+END
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50000
+    TYPE LINE
+    NAME "airport lines"
+    DATA "way from (select way, osm_id ,aeroway,ref,name from planet_osm_line where aeroway is not null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "ref"
+    CLASSITEM "aeroway"
+    CLASS
+     STYLE
+        COLOR 102 102 102
+            WIDTH 4.0
+     END # STYLE
+     STYLE
+          COLOR 255 255 255
+          WIDTH 2.0
+          LINECAP BUTT
+          PATTERN 8 12 END
+     END # STYLE
+    text '[ref] [name]'
+        LABEL
+          TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+          MAXSCALEDENOM 110000
+          MINDISTANCE 400
+          MINFEATURESIZE AUTO
+          SIZE 8
+          COLOR "<%= get_color("road_label") %>"
+          OUTLINECOLOR "<%= get_color("road_label", "outline") %>"
+          ANGLE FOLLOW
+      PARTIALS FALSE
+        END
+    END
+END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 0
+    TYPE LINE
+    NAME "routes"
+    DATA "way from (select * from planet_osm_line where route is not null) as l using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASSITEM "route"
+    CLASS
+        EXPRESSION ("[route]"="ferry")
+        STYLE
+	    WIDTH 1
+            COLOR "<%= get_color('ferry')%>"
+            PATTERN 1 1 END
+        END
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('ferry','label')%>"
+            OUTLINECOLOR "<%= get_color('water') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+    CLASS
+        LABEL
+	    MAXSCALEDENOM 10000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('road_label')%>"
+            OUTLINECOLOR "<%= get_color('road_label','outline') %>"
+	    OUTLINEWIDTH 1
+        END
+    END
+END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 0
+    TYPE LINE
+    NAME "barriers"
+    DATA "way from (select *,coalesce(name,barrier) as nicename from planet_osm_line where barrier is not null or power is not null) as l using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "route"
+    CLASS
+	EXPRESSION ("[barrier]"  != "")
+        STYLE
+	    WIDTH 1
+            COLOR "<%= get_color('barrier')%>"
+            PATTERN 5 5 END
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('barrier','label')%>"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+    CLASS
+	EXPRESSION ("[power]"  != "")
+        STYLE
+	    WIDTH 1
+            COLOR "#880000"
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "#880000"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+END
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 0
+    TYPE LINE
+    NAME "man_made"  # mostly piers, also pipelines
+    DATA "way from (select *,coalesce(name,man_made) as nicename from planet_osm_line where man_made is not null) as l using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "man_made"
+
+    CLASS
+        EXPRESSION "pipeline"
+        STYLE
+	    WIDTH 2
+	    COLOR "<%= get_color('barrier') %>"
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('barrier','label')%>"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+
+    CLASS
+        STYLE
+	    WIDTH 5
+	    COLOR "<%= get_color('residential') %>"
+	    OUTLINECOLOR "<%= get_color('residential','outline') %>"
+	    OUTLINEWIDTH 1
+        END
+        LABEL
+            MAXSCALEDENOM 5000
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            OUTLINEWIDTH 1
+            PRIORITY 1
+            SIZE 7
+            MINDISTANCE 250
+            ANGLE FOLLOW
+            COLOR "<%= get_color('barrier','label')%>"
+            OUTLINECOLOR "<%= get_color('barrier','outline') %>"
+	    OUTLINEWIDTH 2
+        END
+    END
+END
+
+
+
+
+################################################################################
+################################################################################
+################################################################################
+## Road layers
+## See:   http://wiki.openstreetmap.org/wiki/Key:highway
+################################################################################
+################################################################################
+################################################################################
+
+# The most zoomed in road and rail layers - scaledenom 0 to 5010
+# About 1 city block
+# Zoom 17 or closer.
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 5010 minscaledenom 0
+    TYPE LINE
+    NAME "roads 17"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    CLASS
+        EXPRESSION ("[tunnel]"="yes")
+        STYLE
+            WIDTH 5
+            COLOR "<%= get_color("motorway") %>"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 4 12 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+
+    CLASS
+        EXPRESSION ("[railway]"!="")
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR  "<%= get_color("rail") %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR  "<%= get_color("rail","symbol") %>"
+        END
+        <%= road_label("road_label",9,6) %>
+    END
+    <%= road_class('motorway'        ,14  ,10,5) %>
+    <%= road_class('trunk'           ,13  , 9,5) %>
+    <%= road_class('primary'         ,12  , 8,5) %>
+    <%= road_class('secondary'       ,11  , 8,5) %>
+    <%= road_class('tertiary'        ,10  , 8,4) %>
+    <%= road_class('unclassified'    , 9  , 8,3) %>
+    <%= road_class('residential'     , 8  , 8,2) %>
+    <%= road_class('service'         , 5  , 7,1) %>     <% # perhaps these should be a different class %>
+    <%= road_class('road'            , 5  , 7,1) %>
+    <%= road_class('motorway_link'   , 7  , 0,0) %>
+    <%= road_class('trunk_link'      , 6.5, 0,0) %>
+    <%= road_class('primary_link'    , 6  , 0,0) %>
+    <%= road_class('secondary_link'  , 5.5, 0,0) %>
+    <%= road_class('tertiary_link'   , 5  , 0,0) %>
+
+
+    CLASS
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway]'='steps')
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 3 2 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+END
+
+
+#
+# TODO -- occasionally turn this bright red to see what new Line Types OSM added
+# 
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 5010 minscaledenom 0
+    TYPE LINE
+    NAME "other_lines"
+    DATA "way from (select * from planet_osm_line where man_made is null and waterway is null and route is null and highway is null and railway is null order by z_order) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    CLASS
+	# TEXT "[osm_id] [name]"
+        EXPRESSION (length('[name]') > 0)
+        STYLE
+            WIDTH 1
+            COLOR "#888888"
+	    PATTERN 8 4 0 4 4 4 0 4 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+END
+
+
+
+
+
+
+
+# The second most zoomed in road and rail layers - scaledenom 5010 to 10010
+# A single tile-set where a tile is about as large as a shopping center.
+# zoom 16
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 10010 minscaledenom 5010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','spur','subway','light_rail','monorail','miniature')) as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 10010 minscaledenom 5010
+    TYPE LINE
+    NAME "roads 16"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    CLASS
+        EXPRESSION ("[tunnel]"="yes")
+        STYLE
+            WIDTH 4
+            COLOR "<%= get_color("motorway") %>"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 4 12 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+
+    <%= road_class('motorway'        ,13  ,10,5) %>
+    <%= road_class('trunk'           ,12  , 9,5) %>
+    <%= road_class('primary'         ,11  , 8,5) %>
+    <%= road_class('secondary'       ,10  , 8,5) %>
+    <%= road_class('tertiary'        , 9  , 8,4) %>
+    <%= road_class('unclassified'    , 8  , 8,3) %>
+    <%= road_class('residential'     , 7  , 8,2) %>
+    <%= road_class('road'            , 5  , 7,1) %>
+    <%= road_class('service'         , 5  , 7,1) %>     <% # perhaps these should be a different class %>
+    <%= road_class('motorway_link'   , 7  , 0,0) %>
+    <%= road_class('trunk_link'      , 6.5, 0,0) %>
+    <%= road_class('primary_link'    , 6  , 0,0) %>
+    <%= road_class('secondary_link'  , 5.5, 0,0) %>
+    <%= road_class('tertiary_link'   , 5  , 0,0) %>
+
+
+    CLASS
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway]'='steps')
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 3 2 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+
+END
+
+# The third most zoomed in road and rail layers - scaledenom 10010 to 25010
+# About the size of an elementary school neighborhood.
+# zoom 15
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
+
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE LINE
+    NAME "roads 15"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    CLASS
+        EXPRESSION ("[tunnel]"="yes")
+        STYLE
+            WIDTH 2
+            COLOR "<%= get_color("motorway") %>"
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("motorway","outline") %>"
+	    PATTERN 4 12 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+
+    <%= road_class('motorway'        ,10  ,10,5) %>
+    <%= road_class('trunk'           , 9  , 9,5) %>
+    <%= road_class('primary'         , 8  , 8,5) %>
+    <%= road_class('secondary'       , 7  , 7,4) %>
+    <%= road_class('tertiary'        , 6  , 7,3) %>
+    <%= road_class('unclassified'    , 4  , 7,2) %>
+    <%= road_class('residential'     , 4  , 7,1) %>
+    <%= road_class('road'            , 1  , 7,1) %>
+    <%= road_class('service'         , 1  , 7,1) %>     <% # perhaps these should be a different class %>
+    <%= road_class('motorway_link'   , 7  , 0,0) %>
+    <%= road_class('trunk_link'      , 6.5, 0,0) %>
+    <%= road_class('primary_link'    , 6  , 0,0) %>
+    <%= road_class('secondary_link'  , 5.5, 0,0) %>
+    <%= road_class('tertiary_link'   , 5  , 0,0) %>
+
+    CLASS
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway]'='steps')
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 3 2 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+END
+
+
+# The fourth most zoomed in road and rail layers - scaledenom 25010 to 50010
+# Zoom 14
+# a small town will fit on a page.
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 2
+            OUTLINEWIDTH 1
+            OUTLINECOLOR "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color('rail') %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 5
+            COLOR "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE LINE
+    NAME "roads 14"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    <%= road_class('motorway'        , 7  ,10,5) %>
+    <%= road_class('trunk'           , 6  , 9,5) %>
+    <%= road_class('primary'         , 5  , 8,4) %>
+    <%= road_class('secondary'       , 4  , 8,3) %>
+    <%= road_class('tertiary'        , 3  , 7,2) %>
+    <%= road_class('unclassified'    , 2  , 0,0) %>
+    <%= road_class('residential'     , 2  , 0,0) %>
+    <%= road_class('road'            , 1  , 0,0) %>
+    <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
+    <%= road_class('motorway_link'   , 7  , 0,0) %>
+    <%= road_class('trunk_link'      , 6.5, 0,0) %>
+    <%= road_class('primary_link'    , 6  , 0,0) %>
+    <%= road_class('secondary_link'  , 5.5, 0,0) %>
+    <%= road_class('tertiary_link'   , 5  , 0,0) %>
+
+    CLASS
+        EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway]'='steps')
+        STYLE
+            WIDTH 1
+            COLOR "<%= get_color('footway') %>"
+            LINECAP BUTT
+            PATTERN 3 2 END
+        END
+        <%= road_label("road_label",7,1) %>
+    END
+END
+
+# The fifth most zoomed in road and rail layers - scaledenom 50010 to 100010
+# zoom 13
+# A small town can almost fit in a map tile, and a large city on a page.
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR "<%= get_color("rail") %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 3
+            COLOR "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE LINE
+    NAME "roads 13"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    <%= road_class('motorway'        , 6  , 9,5) %>
+    <%= road_class('trunk'           , 5  , 7,4) %>
+    <%= road_class('primary'         , 4  , 7,3) %>
+    <%= road_class('secondary'       , 3  , 7,2) %>
+    <%= road_class('tertiary'        , 2  , 7,1) %>
+    <%= road_class('unclassified'    , 1  , 0,0) %>
+    <%= road_class('residential'     , 1  , 0,0) %>
+    <%= road_class('road'            , 1  , 0,0) %>
+    <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
+    <%= road_class('motorway_link'   , 3  , 0,0) %>
+    <%= road_class('trunk_link'      , 2  , 0,0) %>
+    <%= road_class('primary_link'    , 1  , 0,0) %>
+    <%= road_class('secondary_link'  , 1  , 0,0) %>
+    <%= road_class('tertiary_link'   , 1  , 0,0) %>
+
+END
+
+# The sixth most zoomed in road and rail layers - scaledenom 100010 to 250010
+# zoom 12 - east palo alto is about a map tile
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 175010 minscaledenom 100010
+    TYPE LINE
+    NAME "railways"
+    DATA "way from (select way, osm_id ,railway, name from planet_osm_line where railway in ('rail','subway','light_rail')) as foo using unique osm_id using srid=900913"
+    CLASS
+        STYLE
+            WIDTH 1
+            OUTLINEWIDTH 1
+            OUTLINECOLOR  "<%= get_color("rail","outline") %>"
+            COLOR  "<%= get_color("rail") %>"
+        END
+        STYLE
+            SYMBOL rail
+            SIZE 3
+            COLOR  "<%= get_color("rail","symbol") %>"
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 175010 minscaledenom 100010
+    TYPE LINE
+    NAME "roads 12"
+    DATA "way from <%= all_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+
+    <%= road_class('motorway'        , 4  , 9,5) %>
+    <%= road_class('motorway_link'   , 2  , 0,0) %> # or else you can't see CA 85 x US 101
+    <%= road_class('trunk'           , 3  , 7,4) %>
+    <%= road_class('primary'         , 2.5, 0,0) %>
+    <%= road_class('secondary'       , 2  , 0,0) %>
+    <%= road_class('tertiary'        , 1  , 0,0) %>
+    <%= road_class('unclassified'    , 0  , 0,0) %>
+    <%= road_class('residential'     , 0  , 0,0) %>
+END
+
+# zoom 11 - palo alto is about a map tile
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 250010 minscaledenom 175010
+    TYPE LINE
+    NAME "roads 11"
+    DATA "way from <%= minor_highways %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 4  , 9,5) %>
+    <%= road_class('trunk'           , 2  , 7,4) %>
+    <%= road_class('primary'         , 2  , 0,0) %>
+    <%= road_class('secondary'       , 1  , 0,0) %>
+    <%= road_class('tertiary'        , 0  , 0,0) %>
+END
+
+# Zoom 10
+# The seventh most zoomed in road and rail layers - scaledenom 250010 to 500010
+# The greater SF bay area doesn't quite fit a page.  San Francisco fits on a tile
+# In some parts of the country we would really like to show minor roads; but in urban
+# areas they get quite busy.
+# Similar issue to those discussed here: http://www.imagico.de/map/osm_populated_en.php
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 500010 minscaledenom 250010
+    TYPE LINE
+    NAME "roads 10"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary tertiary}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 3  , 8,5) %>
+    <%= road_class('trunk'           , 2  , 7,4) %>
+    <%= road_class('primary'         , 1  , 0,0) %>
+    <%= road_class('secondary'       , 0.8, 0,0) %>
+    <%= road_class('tertiary'        , 0.5, 0,0) %>
+END
+
+# The eight most zoomed in road and rail layers - scaledenom 500010 to 1000010
+# Zoom level 9  - the SF bay area can fit on a page.   San Jose can fit on a tile.
+
+# Note - the where clause here helps a lot!
+#    msDrawMap(): Layer 24 (roadsclose_08), 1.618s
+#    msDrawMap(): Layer 24 (roadsclose_08), 0.267s
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 1000010 minscaledenom 500010
+    TYPE LINE
+    NAME "roads 9"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary tertiary}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 3  , 8,5) %>
+    <%= road_class('trunk'           , 2  , 0,0) %>
+    <%= road_class('primary'         , 1  , 0,0) %>
+    <%= road_class('secondary'       , 0  , 0,0) %>
+    <%= road_class('tertiary'        , 0  , 0,0) %>
+END
+
+
+# The nineth most zoomed in road and rail layers - scaledenom 1000010 to 2500010
+# Zoom level 8
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 2500010 minscaledenom 1000010
+    TYPE LINE
+    NAME "roads 8"
+    DATA "way from <%= major_highways(%W{motorway trunk primary secondary}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 3  , 8,5) %>
+    <%= road_class('trunk'           , 1  , 0,0) %>
+    <%= road_class('primary'         , 0.5, 0,0) %>
+    <%= road_class('secondary'       , 0  , 0,0) %>
+END
+
+
+# The tenth most zoomed in road and rail layers - scaledenom 2500010 to 5000010
+# Zoom level 7
+#
+# Note - don't turn on 'trunk' without also turning on 'primary'
+# in many cases, a single road switches between those values
+# as it passes between counties
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 5000010 minscaledenom 2500010
+    TYPE LINE
+    NAME "roads 7"
+    DATA "way from <%= major_highways(%W{motorway trunk primary}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 1  , 8,5) %>
+    <%= road_class('trunk'           , 0  , 0,0) %>
+    <%= road_class('primary'         , 0  , 0,0) %>   
+END
+
+# The 11th most zoomed in road and rail layers - scaledenom 5000010 to 10000010
+# Zoom level 6 - california fits on a page, small states fit in a tile.
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 10000010
+    MINSCALEDENOM 5000010
+    TYPE LINE
+    NAME "roads 6"
+
+    DATA "way from <%= major_highways(%W{motorway}) %> using unique osm_id using srid=900913"
+    LABELITEM "nicename"
+
+    CLASSITEM "highway"
+    <%= road_class('motorway'        , 0  , 0,0) %>
+
+END
+
+
+
+################################################################################
+################################################################################
+################################################################################
+# End of road layers
+################################################################################
+################################################################################
+################################################################################
+
+################################################################################
+# Building layers
+# building: {yes,farm_auxiliary}  (very few haves 'no' or 'false', and mostly
+# those seem like buildings too)
+################################################################################
+
+LAYER
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "buildings"
+    TYPE POLYGON
+    <%= default_connection() %>
+    DATA "way from (select way,osm_id, coalesce(coalesce(name,\"addr:housenumber\"),amenity) as name from planet_osm_polygon where (building is not null and building !='no') or aeroway='terminal' or leisure='stadium' or amenity='library' or amenity='cinema' or amenity='townhall' or amenity='prison' or amenity='public_building' ORDER by way_area desc ) as foo using unique osm_id using srid=900913"
+    LABELITEM "name"
+    PROCESSING "LABEL_NO_CLIP=ON"
+    MAXSCALEDENOM 60000
+    CLASS
+        MAXSCALEDENOM 7000
+        STYLE
+            COLOR "<%= get_color("building","offset") %>"
+            OFFSET 2 2
+        END
+        STYLE
+            COLOR "<%= get_color("building") %>"
+        END
+        LABEL
+        TYPE TRUETYPE FONT arial PARTIALS FALSE OUTLINEWIDTH 1
+		    MAXSCALEDENOM 7000
+            SIZE 7
+            COLOR "<%= get_color("building_label") %>"
+            OUTLINECOLOR "<%= get_color("building_label", "outline") %>"
+            PRIORITY 1
+            WRAP ' '
+            MAXLENGTH 12
+            ALIGN CENTER
+			MINFEATURESIZE 15
+        END
+    END
+    CLASS
+        MAXSCALEDENOM 11000
+        STYLE
+            COLOR "<%= get_color("building","offset") %>"
+            OFFSET 1 1
+        END
+        STYLE
+            COLOR "<%= get_color("building") %>"
+        END
+    END
+    CLASS
+	    MAXSCALEDENOM 25010 #  zoom:15
+        STYLE
+            COLOR "<%= get_color("building") %>"
+            OUTLINECOLOR "<%= get_color("building","offset") %>"
+            OUTLINEWIDTH 0.5
+        END
+    END
+    CLASS
+	    MAXSCALEDENOM 25010 #  zoom:15
+        STYLE
+            COLOR "<%= get_color("building") %>"
+        END
+    END
+END
+
+################################################################################
+################################################################################
+## END OF POLYGON LAYERS
+################################################################################
+################################################################################
+
+
+################################################################################
+################################################################################
+## Annotations and labels
+################################################################################
+################################################################################
+
+SYMBOL
+    NAME "citycircle"
+    TYPE ELLIPSE
+    POINTS 1 1 END
+    FILLED TRUE
+END
+SYMBOL
+ NAME "oneway"
+ TYPE TRUETYPE
+ FONT arialbold
+ CHARACTER "&#8594;"
+ # GAP -150
+END
+
+
+#   http://www.fileformat.info/info/unicode/block/transport_and_map_symbols/utf8test.htm
+
+
+# Many more here -- skiier, horse racing, golfer, tents, beer mugs and cocktail glasses
+# http://www.fileformat.info/info/unicode/category/So/list.htm
+
+# More good ones here
+# http://www.fileformat.info/info/unicode/block/miscellaneous_symbols_and_pictographs/list.htm
+#  skull, dagger, money bag, mailbox etc,  tent, hot dog, football 
+# many animals for zoos
+
+# http://www.fileformat.info/info/unicode/block/miscellaneous_symbols/list.htm
+#  wheelchair, recycle, merge, truck, mountain, fountain, ski, fuel pump
+
+
+# http://www.fileformat.info/info/unicode/block/transport_and_map_symbols/list.htm
+# helicopter
+
+# &#9057;  == not a bad pole holding up transmission lines
+# &#9889;  == high voltage lightning bolt
+# &#9917; == soccer ball
+# &#9918; == baseball
+# &#9971; == golf
+# &#9978; == tent
+# &#9992; == airplane
+# &#128699; == restroom
+# &#127829; == pizza
+
+
+# &#127869; == Dining (plate with fork and knife)
+# &#127794; == "Evergreen Tree"
+# &#127795; == "Deciduous Tree"
+# &#127796; == "Palm Tree"
+# &#127966; == "National Park"
+# &#127876; == "Christmas Tree"
+
+# &#128688; == "potable water"
+# &#128689; == "non-potable water"
+#
+# &#9281;   == chair   <-- surely there's a better one somewhere
+
+# &#128137; == syringe -- good for drug crimes?
+
+# &#128673; == aerial tramway (ski lift)
+
+# &#128658; == "fire engine"
+
+# Probably want to avoid these due to questionable licensing.
+# http://stackoverflow.com/questions/31197596/google-map-api-marker-icon-url
+#
+# https://github.com/gravitystorm/openstreetmap-carto/tree/master/symbols
+# http://wiki.openstreetmap.org/wiki/Map_Icons/Map_Icons_Collection
+
+SYMBOL
+ NAME "traffic_light"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#128678;"
+END
+
+SYMBOL
+ NAME "power_tower"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#9057;"
+END
+
+SYMBOL
+ NAME "tree"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#127796;"  # consider 1f384
+ # GAP -150
+END
+
+SYMBOL
+ NAME "fire"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#128293;"
+ # GAP -150
+END
+
+SYMBOL
+ NAME "hot_dog"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#127789;"
+ # GAP -150
+END
+
+SYMBOL
+ NAME "potable_water"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#128688;"
+ # GAP -150
+END
+
+SYMBOL
+ NAME "chair"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#9281;"
+ # GAP -150
+END
+
+
+SYMBOL
+ NAME "table"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#8511;"
+ # GAP -150
+END
+
+SYMBOL
+ NAME "bench"
+ TYPE TRUETYPE
+ FONT symbola
+ CHARACTER "&#9281;"
+ # GAP -150
+END
+
+
+LAYER
+    TYPE LINE
+    STATUS ON
+    PROJECTION "init=epsg:3857" END
+    GROUP "default"
+    NAME "oneways"
+    <%= default_connection() %>
+    DATA "way from (select way, osm_id from planet_osm_line where oneway='yes' and (highway ~ 'link' or highway in ('residential','tertiary','secondary','primary','service')) order by z_order) as foo using unique osm_id using srid=900913"
+    MAXSCALEDENOM 10010
+    CLASS
+        STYLE
+            SYMBOL "oneway"
+            SIZE 11
+            COLOR "<%= get_color("oneway") %>"
+        END
+    END
+END
+
+
+################################################################################
+## Point details
+################################################################################
+
+
+# consider    SIZEUNITS meters
+<%
+  iconsize = 15
+  nicename = %q{regexp_replace( coalesce(name,\"natural\",amenity,leisure,highway),'_',' ','g') as nicename}
+%>
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    MAXSCALEDENOM 1000
+    <%= default_connection() %>
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place, capital, name,\"natural\",amenity,highway,leisure,power,<%= nicename %> from planet_osm_point) as foo using unique osm_id using srid=900913"
+    LABELITEM 'nicename'
+    CLASSITEM 'place'
+    # consider apt-cache search unidings
+    CLASS
+        EXPRESSION ('[natural]'='tree')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "tree"
+            COLOR '<%= get_color("tree") %>'
+        END
+	TEXT "[name]"
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='drinking_water')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "potable_water"
+            COLOR '<%= get_color("water_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+	    BUFFER 15
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='bench')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "chair"
+            COLOR '<%= get_color("road_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[leisure]'='picnic_table')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "table"
+            COLOR '<%= get_color("road_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[power]'='tower')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "power_tower"
+            COLOR '<%= get_color("road_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='bbq')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "hot_dog"
+            COLOR '<%= get_color("road_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[highway]'='traffic_signals')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "traffic_light"
+            COLOR '<%= get_color("road_label") %>'
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+
+    CLASS
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#ffffff"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+END
+
+
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    MINSCALEDENOM 1000
+    MAXSCALEDENOM 2500
+    <%= default_connection() %>
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place, capital, name,\"natural\",amenity,highway,leisure,power from planet_osm_point) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    # consider apt-cache search unidings
+    CLASS
+        EXPRESSION ('[natural]'='tree')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "tree"
+            COLOR '<%= get_color("tree") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='drinking_water')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "potable_water"
+            COLOR '<%= get_color("water_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='bench')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "chair"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[leisure]'='picnic_table')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "table"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[power]'='tower')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "power_tower"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[amenity]'='bbq')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "hot_dog"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[highway]'='traffic_signals')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "traffic_light"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[name]')
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR "#000000"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#ffffff"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 15
+        END
+    END
+END
+
+# consider    SIZEUNITS meters
+<% iconsize = 10 %>
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    MINSCALEDENOM 2500
+    MAXSCALEDENOM 5000
+    <%= default_connection() %>
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place, capital, name,\"natural\",amenity,highway,leisure,power from planet_osm_point) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+
+    CLASS
+        EXPRESSION ('[natural]'='tree')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "tree"
+            COLOR '<%= get_color("tree") %>'
+        END
+    END
+    CLASS
+        EXPRESSION ('[power]'='tower')
+        STYLE
+            SIZE <%= iconsize %>
+            SYMBOL "power_tower"
+            COLOR '<%= get_color("road_label") %>'
+        END
+    END
+
+    CLASS
+        EXPRESSION ('[name]' != '')
+        TEXT  ('[name]')
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "#ffffff"
+            OUTLINECOLOR "#000000"
+            OUTLINEWIDTH 2
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            WRAP ' '
+            MAXLENGTH 12
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            PRIORITY 1
+            PARTIALS FALSE
+            POSITION AUTO
+	    BUFFER 10
+        END
+    END
+END
+
+################################################################################
+## End of point details
+################################################################################
+
+################################################################################
+## End of cities
+################################################################################
+
+
+<% if false %>
+<%
+# zoom level 13 is reasonable for showing neighborhoods like these
+# but by zoom 15 its too cluttered
+%>
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 25010 minscaledenom 10010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 6
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 4
+            MAXLENGTH 12
+            ALIGN CENTER
+            PRIORITY 1
+            PARTIALS FALSE
+        END
+    END
+END
+<% end %>
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 50010 minscaledenom 25010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ('[place]'='village')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 10
+            MAXLENGTH 12
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            BUFFER 4
+            MAXLENGTH 12
+            ALIGN CENTER
+            PRIORITY 7
+            PARTIALS FALSE
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 100010 minscaledenom 50010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION 'town'
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='village')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 7
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='suburb' or '[place]'='hamlet')
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 4
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 6
+            PARTIALS FALSE
+        END
+    END
+END
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 250010 minscaledenom 100010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,capital,place , name from planet_osm_point where place is not null) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "<%= get_color("citycircle","inner") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+    CLASS
+        EXPRESSION ('[place]'='village')
+        STYLE
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+            SIZE 3
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 7
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MAXSCALEDENOM 2500010
+    MINSCALEDENOM 250010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place ,capital, name from planet_osm_point where place in ('town','city')) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"!="")
+        STYLE
+            SIZE 6
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "<%= get_color("citycircle","inner") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 10
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'town'
+        STYLE
+            SIZE 3
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 3
+            WRAP ' '
+            MAXLENGTH 12
+            BUFFER 10
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 8
+            PARTIALS FALSE
+            POSITION AUTO
+        END
+    END
+END
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MINSCALEDENOM 2500010            # zoom 7 to 5
+    MAXSCALEDENOM 20000010 
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city') order by population desc) as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"!="")
+        STYLE
+            SIZE 7
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "<%= get_color("citycircle","inner") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 9
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            PRIORITY 10
+            BUFFER 5
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'city'
+        STYLE
+            SIZE 4
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 2
+            WRAP ' '
+            BUFFER 5
+            MAXLENGTH 12
+            PRIORITY 5
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+END
+
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    MINSCALEDENOM 20000010       # zoom level 4 to ?
+    MAXSCALEDENOM 80000010
+    TYPE POINT # was ANNOTATION
+    NAME "places"
+    DATA "way from (select way,osm_id ,place , capital, name from planet_osm_point where capital='yes' or place='country') as foo using unique osm_id using srid=900913"
+    LABELITEM 'name'
+    CLASSITEM 'place'
+    CLASS
+        EXPRESSION ("[place]"="city" and "[capital]"="yes")
+        STYLE
+            SIZE 5
+            SYMBOL "citycircle"
+            COLOR "<%= get_color('citycircle') %>"
+            OUTLINECOLOR "<%= get_color("citycircle","outline") %>"
+        END
+        STYLE
+            SIZE 2
+            SYMBOL "citycircle"
+            COLOR "<%= get_color("citycircle","inner") %>"
+        END
+        LABEL
+            FONT arial
+            TYPE TRUETYPE
+            SIZE 7
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            OUTLINEWIDTH 4
+            WRAP ' '
+            MAXLENGTH 12
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 10
+            BUFFER 10
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+    CLASS
+        EXPRESSION 'country'
+        LABEL
+            FONT arialbold
+            TYPE TRUETYPE
+            SIZE 8
+            COLOR "<%= get_color("place_label") %>"
+            OUTLINECOLOR "<%= get_color("place_label", "outline") %>"
+            WRAP ' '
+            MAXLENGTH 12
+            #MAXLENGTH 8
+            ALIGN CENTER
+            PRIORITY 9
+            BUFFER 1
+            PARTIALS FALSE
+            POSITION auto
+        END
+    END
+END
+
+
+<% if false %>
+
+################################################################################
+################################################################################
+## Extra overlays so that mapserver can render large printable maps
+## without having to composite tiles on top of the base map, risking
+## labels colliding
+################################################################################
+################################################################################
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    TYPE POLYGON
+    NAME "poly_body"
+    DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
+    LABELITEM 'featurename'
+    CLASS
+        STYLE
+            COLOR [color]
+            OPACITY 20
+        END
+    END
+END
+
+LAYER
+    STATUS ON GROUP "default"
+    PROJECTION "init=epsg:3857" END
+    <%= default_connection() %>
+    TYPE POLYGON
+    NAME "polys_outlines"
+    DATA "geom from (select id,geom,featurename,color from layers_from_shapefiles) as foo using unique id using srid=900913"
+    LABELITEM 'featurename'
+    CLASS
+        STYLE
+            OUTLINECOLOR "#0000ff"
+            OUTLINEWIDTH 15   # this seems to be ignored
+        END
+       LABEL
+        ANGLE auto
+        TYPE truetype
+        ANTIALIAS TRUE
+        COLOR 0 0 192
+        OUTLINECOLOR 255 255 200
+        FONT arial
+        SIZE 12
+        WRAP ' '
+        MAXLENGTH 12
+        MINFEATURESIZE 30
+        MINDISTANCE 255
+        POSITION CC
+        PARTIALS FALSE
+        BUFFER 3
+      END
+    END
+END
+
+
+<% end %>
+
+END

@@ -1,23 +1,46 @@
 #!/bin/bash
 #
-# get Ansible >= 2.0 (not bundled with Ubuntu 15.10)
-# see http://docs.ansible.com/ansible/intro_installation.html
+# For Ubuntu 15.0: 
+#   get Ansible >= 2.0 (not bundled with Ubuntu 15.10)
+#   see http://docs.ansible.com/ansible/intro_installation.html
+#   Ansible's ppa is no longer needed with Ubuntu 16.04.
+# sudo apt-get install -y software-properties-common
+# sudo apt-add-repository -y ppa:ansible/ansible 
 
 
-sudo apt-get install -y software-properties-common
-sudo apt-add-repository -y ppa:ansible/ansible 
+[ -f /etc/sudoers.d/$USER ] || ( (echo "$USER ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/$USER) && sudo visudo -cf /etc/sudoers.d/$USER )
+
+if ( grep -q ':gis:' ~/.pgpass ); then
+    echo "Found 'gis' entries in .pgpass. Not modifying them" 
+else
+    echo "Please pick a default password for the 'gis' database user."
+    echo -n "GIS database user password:"
+    read -s gis_password
+    echo "password will be $password"
+    echo postgis-01:5432:*:gis:$gis_password >> $HOME/.pgpass
+    echo localhost:5432:*:gis:$gis_password >> $HOME/.pgpass
+    chmod og-rwx $HOME/.pgpass
+fi
+
 sudo apt-get update
-sudo apt-get install -y ansible
+# python-keyczar is needed for the 'accelerate: true' ansible optimization
+sudo apt-get install -y ansible git ruby jq  python-keyczar postgresql-client osm2pgsql gdal-bin libwww-perl osmctools
 
-sudo apt-get install -y git 
+mkdir -m 0700 -p ~/.ssh
+[ -f ~/.ssh/id_rsa ] ||  ssh-keygen -b 2048 -f ~/.ssh/id_rsa -t rsa -q -N ""
+[ -f ~/.ssh/authorized_keys ] || install -m 0600 ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys
+[ -f ~/.ssh/known_hosts ] || touch ~/.ssh/known_hosts
+grep -q localhost  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa localhost  >> ~/.ssh/known_hosts)
+grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
+grep -q 127.0.0.2  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.2  >> ~/.ssh/known_hosts)
+grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
 
 cd
-git clone https://github.com/ramayer/mapserver_osm_templates
-cd mapserver_osm_templates
-bin/download_shapefiles
-bin/rebuild_map_files
 
+# some users may prefer  git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
+[ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
-grep -q 127.0.0.1  ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa 127.0.0.1  >> ~/.ssh/known_hosts)
-grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~/.ssh/known_hosts)
+cd ~/mapserver_osm_gis_analytics
+
+git pull
 

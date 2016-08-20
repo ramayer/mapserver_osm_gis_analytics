@@ -1,0 +1,89 @@
+#!/bin/bash
+
+optspec=":hv-:"
+environment=""
+resourcegroup=""
+azure_public_key=~/.ssh/id_rsa.pub
+
+linuximg=Canonical:UbuntuServer:16.04.0-LTS:16.04.201604203
+windowsimg=MicrosoftWindowsServer:WindowsServer:2012-R2-Datacenter:4.0.20150825
+azure_acct='BizSpark'
+azure_region='westus'
+
+mkdir -p ~/.azure/
+
+function show_usage {
+    echo "usage:" >&2
+    echo "     $0 --resource-group=<group> --azure-region=<region>" >&2
+    echo "note:" >&2
+    echo "  This script assumes a resource group configured in a way that matches"
+    echo "  that from the create_azure_environment script"
+    echo "examples:"  >&2
+    echo "     $0 --resource-group=map-test"
+    exit 2
+}
+
+while getopts "$optspec" optchar; do
+    case "${optchar}" in
+        -)
+            case "${OPTARG}" in
+                enabled)
+                    val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+                    echo "Parsing option: '--${OPTARG}', value: '${val}'" >&2;
+                    ;;
+                resource-group=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    resourcegroup=$val
+                    ;;
+                azure-region=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_region=$val
+                    ;;
+                *)
+                    if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+                        echo "Unknown option --${OPTARG}" >&2
+                    fi
+                    ;;
+            esac;;
+        h)
+            show_usage
+            exit 2
+            ;;
+        v)
+            echo "Parsing option: '-${optchar}'" >&2
+            ;;
+        *)
+            if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
+                echo "Non-option argument: '-${OPTARG}'" >&2
+            fi
+            ;;
+    esac
+done
+
+if [ "$resourcegroup" = "" ]; then
+    echo "ERROR: --resource-group=<name> required" >&2
+    show_usage
+    exit 2
+fi
+
+
+set -x
+azure='/usr/bin/time azure'
+
+now=`date +'%Y%m%d%T' | perl -pe 's/://g'` 
+
+nic_name="app-"$now
+vm_name=mapserv-$now
+
+adm_vm_size=Standard_D1
+web_vm_size=Standard_D1
+app_vm_size=Standard_D1_v2
+db_vm_size=Standard_DS12
+
+$azure network nic create $resourcegroup $nic_name $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+$azure vm create $resourcegroup $vm_name   $azure_region "Linux"   -z $app_vm_size -N $nic_name -u gisadmin -Q $linuximg --ssh-publickey-file $azure_public_key    
+
+
+

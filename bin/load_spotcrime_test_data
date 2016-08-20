@@ -1,0 +1,82 @@
+#!/bin/bash
+
+echo "NOTE - this requires a copy of the data SpotCrime released in 2010:"
+echo "See http://blog.spotcrime.com/2012/12/spotcrime-historical-crime-data-still.html for instructions to get the data"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+#ignore
+#   gis=#  \copy spotcrime from '2008-3.csv'  csv header;
+#   ERROR:  invalid input syntax for type date: "2008-03-07 1/15:00 0:00"
+#   CONTEXT:  COPY spotcrime, line 37554, column dat: "2008-03-07 1/15:00 0:00"
+#
+#ignore
+#   gis=#  \copy spotcrime from '2010-5.csv'  csv header;
+#   ERROR:  extra data after last expected column
+#   CONTEXT:  COPY spotcrime, line 341757: "2010-05-17,Theft,"8XX 78TH PLACE, DESMONIES",41.57915100000000,-93.81489200000000,http://spotcrime.c..."
+
+psql <<EOF
+
+CREATE TABLE spotcrime(dat date,cat text,addr text, lat float, lon float, url text, title text);
+CREATE OR REPLACE FUNCTION transform_ignoring_errors(geom1 geometry, srid int)
+          RETURNS geometry AS
+      $$
+      BEGIN
+         RETURN ST_Transform($1, $2);
+	 EXCEPTION WHEN others THEN
+	      RAISE NOTICE 'TopologyException'; -- this is a guess
+	      RETURN null;
+      END;
+      $$
+      LANGUAGE plpgsql;
+
+
+
+
+with y as (select * from generate_series(2007,2010) as y), m as (select * from generate_series(1,12) as m)  select E'\\copy spotcrime from \''||y||'-'||m||E'.csv\'  csv header;' from y,m;
+
+alter table spotcrime add column geom geometry(Point,3857);
+update spotcrime set geom = transform_ignoring_errors(ST_SetSRID(ST_Point(lon,lat),4326),3857);
+
+create index spotcrime_geom on spotcrime using gist(geom);
+alter table spotcrime add column id serial;
+
+
+INSERT INTO additional_layers (layer,source) values ('spotcrime_states','derived from OSM and SpotCrime');
+INSERT INTO additional_layers (layer,source) values ('spotcrime_zips','derived from OSM and SpotCrime');
+
+
+
+EOF
+
+cat <<EOF
+
+      the following would probably be cool, but takes forever
+
+
+      INSERT INTO additional_polygons (layer,label,color,geom)
+          select 'spotcrime_zips',
+                 count(*)::text || ' in ' || zcta5ce10,
+                 null,
+                 zcta_2010census_dp1.geom
+          FROM spotcrime
+          JOIN zcta_2010census_dp1 ON ( ST_Intersects(spotcrime.geom,ST_transform(zcta_2010census_dp1.geom,3857)))
+          group by zcta5ce10,zcta_2010census_dp1.geom
+           ;
+
+
+
+      INSERT INTO additional_polygons (layer,label,color,geom)
+          select 'spotcrime_states',
+                 count(*)::text || ' ' || planet_osm_polygon.name, 
+                 null,
+                 planet_osm_polygon.way
+          FROM planet_osm_polygon
+          JOIN spotcrime ON ( ST_Intersects(geom,way))
+          AND  planet_osm_polygon.admin_level='4'
+          group by way,name
+           ;
+         
+
+EOF

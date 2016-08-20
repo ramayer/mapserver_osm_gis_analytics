@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# Two good Oakland LPR sources: 
+#     https://data.oaklandnet.com/browse?q=alpr&sortBy=relevance&utf8=
+#     https://www.eff.org/deeplinks/2015/01/what-we-learned-oakland-raw-alpr-data
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+layername='opd_lpr'
+source='https://data.oaklandnet.com/api/views/7axi-hi5i/rows.csv'
+tmp_table='tmp_'$layername
+tmp_filename='/tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv'
+
+mkdir -p /tmp/lpr
+wget -nc $source -O $tmp_filename
+
+psql << EOF
+
+     DROP TABLE IF EXISTS $tmp_table CASCADE;
+
+     CREATE TABLE $tmp_table (plate TEXT ,ts TEXT,lat_lon TEXT);
+
+     \COPY $tmp_table FROM $tmp_filename CSV HEADER
+
+     ALTER TABLE $tmp_table ADD COLUMN geom geometry(Point,3857);
+
+     UPDATE $tmp_table
+        SET geom = ST_Transform(ST_SetSRID(ST_FlipCoordinates(GeomFromEWKT('POINT' || regexp_replace(lat_lon,',',''))),4326),3857);
+
+     CREATE INDEX $tmp_table__geom ON $tmp_table using GIST (geom);
+
+     DELETE FROM additional_layers WHERE layer='$layername' AND source='$source';
+
+     INSERT INTO additional_layers (layer,source) VALUES ('$layername','$source');
+
+     INSERT INTO additional_points (layer,label,color,tags,geom)
+     	     SELECT '$layername',
+	     	    plate,
+		    '#ff0000',
+		    hstore(t),
+		    st_transform(geom,3857)
+                FROM $tmp_table as t;
+
+     ALTER TABLE tmp_opd_lpr ADD COLUMN dttm TIMESTAMP WITH TIME ZONE;
+     UPDATE tmp_opd_lpr SET dttm=ts::TIMESTAMP WITH TIME ZONE;
+     ALTER TABLE tmp_opd_lpr ADD COLUMN id serial;
+
+EOF
+
+mkdir -p $INSTALL_DIR/var/www/mapcache
+
+egrep '(red_Timestamp|04/01/2014)'  /tmp/lpr/opd_lpr_2014-01-04-to-2014-05-31.csv | perl -pe 's/[\"\(\)]//g; s/Location 1/lat,lon/'   > $INSTALL_DIR/var/www/mapcache/lpr.csv
+
+cat $INSTALL_DIR/var/www/mapcache/lpr.csv | 
+  jq --slurp --raw-input --raw-output \
+    'split("\n") | .[1:] | map(split(",")) |
+        map({"red_VRM": .[0],
+             "red_Timestamp": .[1],
+             "lat": .[2],
+             "lon": .[3]})' \
+     > $INSTALL_DIR/var/www/mapcache/lpr.json
+

@@ -1,30 +1,48 @@
 #!/bin/bash
+#
+# TODO -- consider if we need to set
+#    vm.overcommit_memory=1
+# as described here: https://switch2osm.org/loading-osm-data/
+# 
 
 function usage {
-       echo "usage: "
+       echo "Usage: "
        echo "  bash $0 --create-database=[dbname]"
        echo "  "
-       echo "assumes:"
+       echo "Assumes:"
        echo "  port = environment varible PGPORT or 5432"
        echo "  host = environment varible PGHOST or localhost"
        echo "  user = environment variable PGUSER or gis"
        echo "  db   = environment variable PGUDATABASE or gis"
        echo "  pass = in ~/.pgpass for the host/port/username/database"
        echo "  "
-       echo "options: "
+       echo "Options: "
        echo "  --set-pgpass=[password]" # convenience function to add a row in ~/.pgpass
        echo "  --create-default-users"  # creates a 'gisadmin' superuser, and a 'gis' read-only user
        echo "  --create-db"
        echo "  --load_osm_data=(tiny|smaller|small|planet)"
        echo " "
-       echo "examples: "
+       echo "Examples: "
        echo ""
-       echo sudo -u postgres $0 --clear-all
-       echo sudo -u postgres $0 --create-default-users
-       echo sudo -u postgres $0 --create-default-database
+       echo "  sudo -u postgres $0 --clear-all"
+       echo "  sudo -u postgres $0 --create-default-users"
+       echo "  sudo -u postgres $0 --create-default-database"
        echo ""
-       echo env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --configure-database
-       echo env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --load-osm-data=tiny
+       echo "  env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --configure-database"
+       echo "  env PGUSER=gis PGHOST=localhost PGDATABASE=gis $0 --load-osm-data=tiny"
+       echo "  nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet $0 --load-osm-data=planet &> planet.out"
+       echo ""
+       echo "Notes:"
+       echo "   --load-osm-data=tiny"
+       echo "        Loads about 5 city blocks. It uses a under a GB and loads in minutes in a tiny VM on a desktop."
+       echo "   --bbox=-121.98,37.54,-121.94,37.57    --load-osm-data=tiny"
+       echo "        Loads about 5 city blocks. It uses a under a GB and loads in minutes in a tiny VM on a desktop."
+       echo "   --load-osm-data=smaller"
+       echo "        Loads dozens of cities around the SF Bay Area. It uses about a dozen GB and loads in about an hour on a mediocre desktop."
+       echo "   --load-osm-data=small"
+       echo "        Loads hundreds of major cities around the world. It uses almost 100GB and loads in many hours on a strong VM."
+       echo "   --load-osm-data=planet"
+       echo "        Loads the whole OSM database.  Uses about 1TBt and loads in days on a large physical machine."
        exit
 }
 
@@ -40,6 +58,7 @@ tmpdir=$HOME/tmp
 gis_data_dir=$tmpdir/gisdata
 osm_data=none
 create_db=false
+bbox=-122.26463,37.79822,-122.24828,37.81079
 
 if [ -d "/mnt/gisdata" ] ; then
    tmpdir=/mnt/gisdata/tmp
@@ -77,11 +96,12 @@ function create_default_users {
   unset PGHOST
   unset PGUSER
   unset PGDATABASE
+  echo -n "GIS database user password:"
+  read -s gis_password
   psql -c "CREATE ROLE admins   SUPERUSER NOLOGIN CREATEDB CREATEROLE"
   psql -c "CREATE ROLE readonly"
-  psql -c "CREATE USER gis       SUPERUSER CREATEDB INHERIT IN ROLE admins   ENCRYPTED PASSWORD 'changeme'"
+  psql -c "CREATE USER gis       SUPERUSER CREATEDB INHERIT IN ROLE admins   ENCRYPTED PASSWORD '$gis_password'"
   psql -c "CREATE USER mapserver INHERIT IN ROLE readonly ENCRYPTED PASSWORD 'mapserver'" postgres
-  echo "the default username for the gis user is 'changeme' and should be changed"
 }
 
 function create_default_database {
@@ -107,7 +127,7 @@ function load_osm_data {
 
   # cd /tmp
   # wget http://download.bbbike.org/osm/bbbike/SanFrancisco/SanFrancisco.osm.pbf
-  # osm2pgsql SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
+  # osm2pgsql --flat-nodes $gis_data_dir/osm2pgsql.flat_nodes SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
   # for states and continents see http://download.geofabrik.de/osm/north-america/
   # 
   # 
@@ -126,19 +146,24 @@ function load_osm_data {
 
   mkdir -p $gis_data_dir
   cd $gis_data_dir
+  flat_node_file=osm2pgsql.flat_nodes.$PGDATABASE
 
-  # view needs to be dropped before running osm2pgsql
-  echo 'DROP VIEW planet_osm_polygon_view' | psql gis
+  # view needs to be dropped before running osm2pgsql --flat-nodes $flat_node_file
+  echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_water;" | psql
+  echo "DROP MATERIALIZED VIEW IF EXISTS simple_large_polygons;" | psql
+  echo "DROP MATERIALIZED VIEW IF EXISTS planet_admin_boundaries;" | psql
+  echo "DROP TABLE IF EXISTS planet_osm_roads CASCADE;" | psql
+  echo "DROP TABLE IF EXISTS planet_osm_polygon CASCADE;" | psql
 
   if [ "$map_data" == "planet" ]; then 
      wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
      # Warning - you need a huge machine to build the whole planet.
-     osm2pgsql --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
   fi
 
   if [ "$map_data" == "california" ]; then 
      wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
   fi
 
   if [ "$map_data" == "states" ]; then 
@@ -150,7 +175,7 @@ function load_osm_data {
      wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
      wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
      # note that you can not use the "--slim" mode with states that touch each other.
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
   fi
 
   if [ "$map_data" == "small" ]; then 
@@ -256,18 +281,18 @@ function load_osm_data {
      # sudo chmod 0600 /mnt/swap/10GB
      # sudo mkswap /mnt/swap/10GB
      # sudo swapon /mnt/swap/10GB
-     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
+     osmconvert  tmp/*.o5m -o=./new.o5m
 
-     # Even though osm2pgsql supports multiple files we can not use it like this
-     #    osm2pgsql --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
+     # Even though osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this
+     #    osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
      # because some of these extracts have redundant data, and with the option it gives the following error
      #
-     # osm2pgsql failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
+     # osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
      # 
      # However we can also not use it without the option due to this issue:
-     #    https://github.com/openstreetmap/osm2pgsql/issues/151
+     #    https://github.com/openstreetmap/osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST/issues/151
      # that requires that nodes (apparently even across files) need to be ordered
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs ./new.o5m
 
 
     # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
@@ -277,8 +302,10 @@ function load_osm_data {
   fi
 
   if [ "$map_data" == "smaller" ]; then 
-     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     osm2pgsql --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
+      # This one seems to have pretty old data
+      # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
+      wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/san-francisco-bay_california.osm.pbf
+      osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs san-francisco-bay_california.osm.pbf
   fi
 
   if [ "$map_data" == "tiny" ]; then 
@@ -288,21 +315,129 @@ function load_osm_data {
      #    37.81079 -122.26463,-122.24828 37.79822
      # or the missing roads in NRH
      #    32.85531 -97.25333 -97.24225 32.84897
-     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
-     osm2pgsql --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
+     echo GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox"
+     GET "http://api.openstreetmap.org/api/0.6/map?bbox=$bbox" > lake_merrit.osm
+     osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
   fi
 
-  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql
   echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql
-  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
+
+  echo "CREATE MATERIALIZED VIEW simple_large_water AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE (\"natural\" = 'water' OR landuse='reservoir') AND way_area>50 * 1000 * 1000;"  | psql
+  echo "CREATE MATERIALIZED VIEW simple_large_polygons AS SELECT st_simplify(way,500) AS sway,* FROM planet_osm_polygon WHERE way_area > 200 * 1000 * 1000;"  | psql
+
+  echo "CREATE INDEX simple_large_polygons__way on simple_large_polygons using GIST (way);"  | psql
+  echo "CREATE INDEX simple_large_water__way on simple_large_water using GIST (way);"  | psql
+  echo "CREATE INDEX simple_large_polygons__sway on simple_large_polygons using GIST (sway);"  | psql
+  echo "CREATE INDEX simple_large_water__sway on simple_large_water using GIST (sway);"  | psql
+  # TODO - temporarily creating redundant indexes on the simplified and original geometries
+  # TODO - remove them after all code refers to the simplified geometries instead
+
+# Hopefully the following index will help this query:
+#
+# explain analyze select "nicelabel","boundary","nature","landuse","waterway","amenity","leisure","tourism","aeroway","highway",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id, name, amenity, aeroway, landuse, leisure, military, sport, tourism, highway, waterway, boundary, "natural" as nature, coalesce(name,sport) as nicelabel FROM planet_osm_polygon WHERE amenity is not null OR aeroway='aerodrome' OR landuse is not null OR waterway is not null OR leisure is not null OR tourism is not null OR "natural" is not null OR highway is not null ORDER by way_area desc ) as foo where way && ST_GeomFromText('POLYGON((605878.104702143 6671920.66941414,605878.104702143 6771212.36915685,705169.804444857 6771212.36915685,705169.804444857 6671920.66941414,605878.104702143 6671920.66941414))',900913);
+#
+#
+#                                                                                                                       QUERY PLAN                                                                                                                        
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Subquery Scan on foo  (cost=3271839.37..3275522.73 rows=184168 width=346) (actual time=45296.591..45985.614 rows=189822 loops=1)
+#   ->  Sort  (cost=3271839.37..3272299.79 rows=184168 width=343) (actual time=45296.424..45506.181 rows=189822 loops=1)
+#         Sort Key: planet_osm_polygon.way_area DESC
+#         Sort Method: external merge  Disk: 71120kB
+#         ->  Bitmap Heap Scan on planet_osm_polygon  (cost=79158.85..3226774.27 rows=184168 width=343) (actual time=468.130..44620.895 rows=189822 loops=1)
+#               Recheck Cond: (way && '010300002031BF0D000100000005000000F0849B356C7D224168AED72A8C735941F0849B356C7D22410D44A01783D459414132E09B238525410D44A01783D459414132E09B2385254168AED72A8C735941F0849B356C7D224168AED72A8C735941'::geometry)
+#               Filter: ((amenity IS NOT NULL) OR (aeroway = 'aerodrome'::text) OR (landuse IS NOT NULL) OR (waterway IS NOT NULL) OR (leisure IS NOT NULL) OR (tourism IS NOT NULL) OR ("natural" IS NOT NULL) OR (highway IS NOT NULL))
+#               Rows Removed by Filter: 1090449
+#               Heap Blocks: exact=48572
+#               ->  Bitmap Index Scan on planet_osm_polygon_index  (cost=0.00..79112.81 rows=1163768 width=0) (actual time=450.157..450.157 rows=1280271 loops=1)
+#                     Index Cond: (way && '010300002031BF0D000100000005000000F0849B356C7D224168AED72A8C735941F0849B356C7D22410D44A01783D459414132E09B238525410D44A01783D459414132E09B2385254168AED72A8C735941F0849B356C7D224168AED72A8C735941'::geometry)
+# Planning time: 26.681 ms
+# Execution time: 46037.147 ms
+#(13 rows)
+
+  echo "CREATE INDEX medium_polygons on planet_osm_polygon using GIST(way) where ((amenity IS NOT NULL) OR (aeroway = 'aerodrome'::text) OR (landuse IS NOT NULL) OR (waterway IS NOT NULL) OR (leisure IS NOT NULL) OR (tourism IS NOT NULL) OR (\"natural\" IS NOT NULL) OR (highway IS NOT NULL))" | psql
+
+
+  # Instead of doing a bitmap merge like this...
+  # echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql
+  # which can take a long time.
+  # That index actually even made things worse -- since scanning the index for highways like this: 
+  # ->  Bitmap Index Scan on "planet_osm_line(highway)"  (cost=0.00..216950.50 rows=10907314 width=0) (actual time=2189.536..2189.536 rows=11505845 loops=1)
+  # was is often slower than brute-force filtering all the results of the geospatial where clause.
+  #
+  # The following partial indexes may be better.
+  #
+  # explain analyze select "highway","nicename",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from ( SELECT way, osm_id ,highway,ref, name, CASE WHEN highway='motorway' and (ref like 'I-%' or ref like 'I %' or ref like 'US%') THEN regexp_replace(ref,';.*','') ELSE coalesce(name,ref) END AS nicename, tunnel FROM planet_osm_line WHERE highway in ('motorway','trunk','primary','secondary','motorway_link','trunk_link','primary_link','secondary_link','tertiary','tertiary_link') ORDER by z_order ) as highways where way && ST_GeomFromText('POLYGON((1486432.67054764 6574081.27320914,1486432.67054764 6673372.97295186,1585724.37029036 6673372.97295186,1585724.37029036 6574081.27320914,1486432.67054764 6574081.27320914))',900913);
+  #
+  # Too bad planet_osm_roads doesn't have many tertiary highways --- perhaps better to avoid this and make osm2pgsql --proj 3857 put tertiary roads there.
+  echo "create index planet_osm_line__major_highways on planet_osm_line using GIST(way) where highway in ('motorway','trunk','primary','secondary','tertiary');" | psql
+  echo 'create index "planet_osm_line__all_highways" on planet_osm_line using GIST(way) where highway is not null;' | psql
+
+
+
   echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql
 
+
+  # echo 'create index "planet_osm_point(place)" on planet_osm_point(place);' | psql
+  # 
+  # That index was intended to help queries like
+  # 
+  #  explain analyze select "place","name","capital",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo where way && ST_GeomFromText('POLYGON((4962903.37249963 -1298817.98462188,4962903.3724 9963 5055850.79889488,11317572.1560164 5055850.79889488,11317572.1560164 -1298817.98462188,4962903.37249963 -1298817.98462188))',900913);
+  # which would do a bitmap-and of the 40000 rows found in by the "place" index and the 2,570,112 rows found by the geospatial index
+  # Must faster to create a specialized geometry index with just the places: 
+  echo "create index "planet_osm_point__cities" on planet_osm_point using GIST(way) where place in ('town','city')" | psql 
+  # Much better!!!!
+  # 
+  # gis=# explain analyze select "place","name","capital",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id ,place , capital, name from planet_osm_point where place in ('city')) as foo where way && ST_GeomFromText('POLYGON((4962903.37249963 -1298817.98462188,4962903.37249963 5055850.79889488,11317572.1560164 5055850.79889488,11317572.1560164 -1298817.98462188,4962903.37249963 -1298817.98462188))',900913);
+  # QUERY PLAN
+  # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  # Bitmap Heap Scan on planet_osm_point  (cost=965.98..984.81 rows=1441 width=66) (actual time=4.882..11.616 rows=917 loops=1)
+  # Recheck Cond: ((way && '010300002031BF0D000100000005000000B008D7D795EE5241F62D10FC81D133C1B008D7D795EE5241FE1721B35A4953411B16FE8428966541FE1721B35A4953411B16FE8428966541F62D10FC81D133C1B008D7D795EE5241F62D10FC81D133C1'::geometry) AND (place = ANY ('{town,city}'::text[])) AND (place = 'city'::text))
+  # Heap Blocks: exact=831
+  # ->  BitmapAnd  (cost=965.98..965.98 rows=2 width=0) (actual time=4.710..4.710 rows=0 loops=1)
+  # ->  Bitmap Index Scan on planet_osm_point__cities  (cost=0.00..105.89 rows=2882 width=0) (actual time=2.472..2.472 rows=9537 loops=1)
+  # Index Cond: (way && '010300002031BF0D000100000005000000B008D7D795EE5241F62D10FC81D133C1B008D7D795EE5241FE1721B35A4953411B16FE8428966541FE1721B35A4953411B16FE8428966541F62D10FC81D133C1B008D7D795EE5241F62D10FC81D133C1'::geometry)
+  # ->  Bitmap Index Scan on "planet_osm_point(place)"  (cost=0.00..859.11 rows=46206 width=0) (actual time=1.544..1.544 rows=8096 loops=1)
+  # Index Cond: (place = 'city'::text)
+  # Planning time: 0.562 ms
+  # Execution time: 11.815 ms
+  # (10 rows)
+
+
+
+  # One of the slowest queries remaining is processing waterways.    This partial index makes it much faster.
+  echo "create index "planet_osm_line__waterways" on planet_osm_line using GIST(way) where waterway is not null" | psql 
+
+
+
+
+  # This query is slow at zoom level 9 going to planet_osm_line.
+  # explain analyze select "admin_level",encode(ST_AsBinary(ST_Force2D("way"),'NDR'),'hex') as geom,"osm_id" from (select way,osm_id,admin_level,name from planet_osm_line where admin_level in ('2','4')) as foo where way && ST_GeomFromText('POLYGON((-11039188.4990014 3441042.13934157,-11039188.4990014 3838208.93831143,-10642021.7000316 3838208.93831143,-10642021.7000316 3441042.13934157,-11039188.4990014 3441042.13934157))',900913);
+
+ echo "CREATE INDEX planet_osm_line_admin_boundary on planet_osm_roads using GIST(way) where admin_level in ('2','4')" | psql
+
+
+ echo "CREATE MATERIALIZED VIEW planet_admin_boundaries AS SELECT row_number() over (order by st_xmin(sway)) as rowid,* FROM (select admin_level,name, st_xmin(way)::int/1000000 as xref,st_xmin(way)::int/1000000 as yref,st_simplify(st_union(way),500) as sway FROM planet_osm_roads WHERE boundary='administrative' AND admin_level in ('2','3','4') GROUP BY admin_level, name, st_xmin(way)::int/1000000,st_xmin(way)::int/1000000,osm_id) as a;" | psql
+
+ # Lol, seems someone from russia has been tagging benches made out of wooden logs.
+ #    https://www.google.com/#q=%D0%B1%D1%80%D0%B5%D0%B2%D0%BD%D0%BE
+ # I guess it's cool trivia, but looks distracting to see russian on maps in the US.
+ # TODO - consider fixing this in the OpenStreetMap Source data instead.
+ echo "UPDATE planet_osm_point set name=null where name='бревно' and way && ST_buffer(ST_GeomFromText('POINT(-13576592.09 4515882.91)', 3857),10000);" | psql 
+  
   # TODO: consider if those should be partial indexes instead.
   #   (yes, they should, but mapfile will need rewrite)
 
   psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO mapserver"
 
 }
+
+
+
+function load_shapefile {
+   shapefile=$1
+   shp2pgsql /tmp/beats/PoliceBeats.shp | psql
+}
+
 
 for i in "$@"
 do
@@ -312,6 +447,10 @@ case $i in
     ;;
     --password=*)
        password=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
+    --load-shapefile=*)
+       shapefile=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+       load_shapefile $shapefile
     ;;
     --set-pgpass=*)
        set_pgpass $i
@@ -332,17 +471,21 @@ case $i in
        map_data=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
        load_osm_data map_data
     ;;
+    --bbox=*)
+       bbox=`echo $i | sed 's/[-a-zA-Z0-9]*=//'`
+    ;;
     *)
       usage
     ;;
 esac
 done
 
-exit
-
 if test $# -lt 1 ; then
   usage
 fi
+
+exit
+
 
 ################################################################################
 ## Clean everything except downloaded source and data
@@ -383,8 +526,8 @@ if [ "$create_db" == "true" ]; then
     # echo 'create extension plpgsql' | psql $dbname fli   # already installed in template
     # echo 'create extension intagg' | psql $dbname fli
     # echo 'create extension intarray' | psql $dbname fli
-    #    While required for earlier versions of osm2pgsql, intarray 
-    #    is now unnecessary and will interfere with osm2pgsql's array
+    #    While required for earlier versions of osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST, intarray 
+    #    is now unnecessary and will interfere with osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST's array
     #    handling. Please use a database without intarray.
     # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/postgis.sql
     # psql -d $dbname -f $HOME/share/postgresql/contrib/postgis-$postgis_script_num/spatial_ref_sys.sql
@@ -398,204 +541,6 @@ if [ "$create_db" == "true" ]; then
   echo now perhaps try:  https://github.com/migurski/HighRoad
 fi
 
-if [ "$map_data" != "none" ]; then 
-  # cd /tmp
-  # wget http://download.bbbike.org/osm/bbbike/SanFrancisco/SanFrancisco.osm.pbf
-  # osm2pgsql SanFrancisco.osm.pbf --port=$PGPORT --hstore --slim --database=gis
-  # for states and continents see http://download.geofabrik.de/osm/north-america/
-  # 
-  # wget -nc http://download.geofabrik.de/north-america/canada-latest.osm.pbf
-  # 
-  # for metro areas excerpts see http://metro.teczno.com/
-  #
-  # Note that the current OpenStreetMap wiki increased the recommened cache size to from 12000 to 22000.
-  # This will make all except our largest ASA servers to raise OOM exceptions
-  # so before running on a larger data set, we need to
-  #      sudo fallocate -l 64G /data/64G.swap
-  #      sudo mkswap /data/64G.swap
-  #      sudo swapon /data/64G.swap
-  # this will probably be painfully slow on our smaller servers, but at least
-  # should work.
-
-  startpg
-
-  mkdir -p $gis_data_dir
-  cd $gis_data_dir
-
-  # view needs to be dropped before running osm2pgsql
-  echo 'DROP VIEW planet_osm_polygon_view' | psql
-
-  if [ "$map_data" == "planet" ]; then 
-     # Warning - you need a large machine and many days to build the whole planet.
-     wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
-     osm2pgsql --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
-  fi
-  if [ "$map_data" == "california" ]; then 
-     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
-  fi
-  if [ "$map_data" == "states" ]; then 
-     wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/texas-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/florida-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
-     # note that you can not use the "--slim" mode with states that touch each other.
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
-  fi
-  if [ "$map_data" == "small" ]; then 
-     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     # wget -nc http://osm-metro-extracts.s3.amazonaws.com/dallas.osm.pbf
-     arr=(
-          chicago_illinois.osm.pbf
-          dallas_texas.osm.pbf
-          miami_florida.osm.pbf
-          las-vegas_nevada.osm.pbf
-          reno_nevada.osm.pbf
-          dc-baltimore_maryland.osm.pbf
-          san-francisco-bay_california.osm.pbf
-          san-juan_puerto-rico.osm.pbf
-          
-          singapore.osm.pbf
-          yerevan_armenia.osm.pbf
-          reykjavik_iceland.osm.pbf
-          ankara_turkey.osm.pbf
-          
-          bogota_colombia.osm.pbf
-          guatemala-city_guatemala.osm.pbf
-          lima_peru.osm.pbf
-          medellin_colombia.osm.pbf
-          mexico-city_mexico.osm.pbf
-          quito_ecuador.osm.pbf
-          rio-de-janeiro_brazil.osm.pbf
-          san-jose_costa-rica.osm.pbf
-          santiago_chile.osm.pbf
-          trinidad-tobago.osm.pbf
-          trondheim_norway.osm.pbf
-          rome_italy.osm.pbf
-          stockholm_sweden.osm.pbf
-          moscow_russia.osm.pbf
-          
-          albany_new-york.osm.pbf
-          atlanta_georgia.osm.pbf
-          austin_texas.osm.pbf
-          boise_idaho.osm.pbf
-          boston_massachusetts.osm.pbf
-          columbus_ohio.osm.pbf
-          denver-boulder_colorado.osm.pbf
-          des-moines_iowa.osm.pbf
-          honolulu_hawaii.osm.pbf
-          indianapolis_indiana.osm.pbf
-          kansas-city-lawrence-topeka_kansas.osm.pbf
-          lincoln_nebraska.osm.pbf
-          madison_wisconsin.osm.pbf
-          minneapolis-saint-paul_minnesota.osm.pbf
-          nashville_tennessee.osm.pbf
-          oklahoma-city_oklahoma.osm.pbf
-          phoenix_arizona.osm.pbf
-          providence_rhode-island.osm.pbf
-          raleigh_north-carolina.osm.pbf
-          richmond_virginia.osm.pbf
-          salt-lake-city_utah.osm.pbf
-          santa-fe_new-mexico.osm.pbf
-          
-          vancouver_canada.osm.pbf 
-          
-          berlin_germany.osm.pbf
-          munich_germany.osm.pbf
-          london_england.osm.pbf
-          moscow_russia.osm.pbf
-          
-          lagos_nigeria.osm.pbf
-          dhaka_bangladesh.osm.pbf
-          dubai_abu-dhabi.osm.pbf
-          baghdad_iraq.osm.pbf
-          bangkok_thailand.osm.pbf
-          mexico-city_mexico.osm.pbf
-          beijing_china.osm.pbf
-          taipei_taiwan.osm.pbf
-          hong-kong_china.osm.pbf
-          ulaanbaatar_mongolia.osm.pbf
-          taichung_taiwan.osm.pbf
-          seoul_south-korea.osm.pbf
-          thessaloniki_greece.osm.pbf
-          tokyo_japan.osm.pbf
-     )
-     mkdir -p tmp
-     for item in ${arr[*]}; do
-         wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/$item
-         if [ ! -f tmp/$item.o5m ]; then
-             osmconvert  $item -o=tmp/$item.o5m
-         fi
-     done
-     echo combining tmp/*.o5m
-
-     # warning -- on Azure's vms, the following command gets killed by the OOM-killer"
-     # [3627992.636610] Out of memory: Kill process 14391 (osmconvert) score 643 or sacrifice child
-     # [3627992.653675] Killed process 14391 (osmconvert) total-vm:12158980kB, anon-rss:2262076kB, file-rss:4kB
-     #
-     # Docs suggest this might make it work --- but it still doesn't.
-     #  osmconvert --hash-memory=400 tmp/*.o5m -o=/tmp/new.o5m
-     # 
-     # Workaround is to add 10GB of swap space like this:
-     #
-     # sudo mkdir /mnt/swap
-     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
-     # sudo chown root:root /mnt/swap/10GB
-     # sudo chmod 0600 /mnt/swap/10GB
-     # sudo mkswap /mnt/swap/10GB
-     # sudo swapon /mnt/swap/10GB
-     osmconvert  tmp/*.o5m -o=/tmp/new.o5m
-
-     # Even though osm2pgsql supports multiple files we can not use it like this
-     #    osm2pgsql --port=$PGPORT --hstore --slim -C 12000 --number-processes $parallel_jobs --user=$pg_admin_user --database=gis ${arr[*]}
-     # because some of these extracts have redundant data, and with the option it gives the following error
-     #
-     # Osm2pgsql failed due to ERROR: insert_way failed: ERROR:  duplicate key value violates unique constraint \"planet_osm_ways_pkey\"\nDETAIL:  Key (id)=(321693450) already exists.\n(7)\nArguments were: 321693450, {3284588697,3284588697}, {\"wikipedia\",\"en:Bermuda Triangle\",\"name:fr\",\"Triangle des Bermudes\",\"name:en\",\"Bermuda Triangle\",\"note\",\"boundaries given by Vincent Gaddis in a 1964 issue of the magazine Argosy\",\"name\",\"Bermuda Triangle\"}
-     # 
-     # However we can also not use it without the option due to this issue:
-     #    https://github.com/openstreetmap/osm2pgsql/issues/151
-     # that requires that nodes (apparently even across files) need to be ordered
-     osm2pgsql --hstore --slim --number-processes $parallel_jobs /tmp/new.o5m
-
-
-    # Can't load even the "small" one on the small azure instances used for dev.  Fails with this error: 
-    # Processing: Node(154550k 76.7k/s) Way(0k 0.00k/s) Relation(0 0.00/s)COPY_END for COPY planet_osm_nodes FROM STDIN;
-    # failed: ERROR:  could not extend file "base/59648/71418.12": wrote only 4096 of 8192 bytes at block 1674031
-    # HINT:  Check free disk space.
-
-
-  fi
-
-  if [ "$map_data" == "smaller" ]; then 
-     wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-     osm2pgsql --hstore --slim  --number-processes $parallel_jobs sf-bay-area.osm.pbf
-  fi
-  if [ "$map_data" == "tiny" ]; then 
-     # Note the bbox flag here:
-     # http://wiki.openstreetmap.org/wiki/Mapnik
-     # to debug the missing lakes in oakland
-     #    37.81079 -122.26463,-122.24828 37.79822
-     # or the missing roads in NRH
-     #    32.85531 -97.25333 -97.24225 32.84897
-     GET 'http://api.openstreetmap.org/api/0.6/map?bbox=-122.26463,37.79822,-122.24828,37.81079' > lake_merrit.osm
-     osm2pgsql --hstore --slim -C 1000 --number-processes $parallel_jobs lake_merrit.osm
-  fi
-
-  echo 'CREATE VIEW planet_osm_polygon_view as SELECT planet_osm_polygon.osm_id, planet_osm_polygon."natural" AS nature, planet_osm_polygon.landuse, planet_osm_polygon.waterway, planet_osm_polygon.highway, planet_osm_polygon.name, boundary, planet_osm_polygon.way  FROM planet_osm_polygon;' | psql 
-  echo "create index planet_osm_point__important_points on planet_osm_point(capital) where capital='yes' or place='country';" | psql 
-  echo 'create index "planet_osm_line(highway)" on planet_osm_line(highway);' | psql 
-  echo 'create index "planet_osm_polygon(name)" on planet_osm_polygon(name);' | psql 
-
-  # TODO: consider if those should be partial indexes instead.
-  #   (yes, they should, but mapfile will need rewrite)
-
-
-  psql -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO gis"
-
-fi
 
 if [ "$install_munin_plugins" == "true" ]; then 
     plugins_with_db=`(cd /usr/share/munin/plugins/; ls postgres_*) | grep _$`

@@ -1,0 +1,73 @@
+<IfModule mod_ssl.c>
+
+	<VirtualHost _default_:443>
+
+		ServerName   mapcache.example.com
+		ServerAlias  mapcache*
+		ServerAdmin  webmaster@localhost
+		DocumentRoot "/var/www/mapcache"
+		ErrorLog     ${APACHE_LOG_DIR}/mapcache.error.log
+		CustomLog    ${APACHE_LOG_DIR}/mapcache.access.log combined
+	
+		################################################################
+		# SSL Options
+		################################################################		
+		SSLEngine on
+		Header always set Strict-Transport-Security "max-age=63072000; includeSubdomains; preload"
+		SSLProtocol all -SSLv2 -SSLv3
+		SSLHonorCipherOrder on
+		SSLCipherSuite "EECDH+ECDSA+AESGCM:EECDH+aRSA+AESGCM:EECDH+ECDSA+SHA384:EECDH+ECDSA+SHA256:EECDH+aRSA+SHA384:EECDH+aRSA+SHA256:EECDH:EDH+aRSA:RSA+AES:!RC4:!aNULL:!eNULL:!LOW:!3DES:!MD5:!EXP:!PSK:!SRP:!DSS:!CAMELLIA:!SEED:!DH"
+	
+		{% if (stat_https_certs.stat.exists) %}
+		SSLCertificateFile	/etc/ssl/mapcache/mapcache.crt
+		SSLCertificateKeyFile	/etc/ssl/mapcache/mapcache.key
+		SSLCertificateChainFile /etc/ssl/mapcache/chain_for_apache.crt
+		{% else %}
+		SSLCertificateFile	/etc/ssl/certs/ssl-cert-snakeoil.pem
+		SSLCertificateKeyFile  /etc/ssl/private/ssl-cert-snakeoil.key
+		{% endif %}
+	
+		BrowserMatch "MSIE [2-6]" \
+				nokeepalive ssl-unclean-shutdown \
+				downgrade-1.0 force-response-1.0
+		BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
+	
+		################################################################
+		# Let browsers cache map tiles for a week.
+		# Long enough to feel fast, but short enough
+		# that they'll see new neighborhoods soon enough.
+		################################################################
+		ExpiresActive on
+		ExpiresDefault "now plus 1 week"
+		FileETag MTime Size
+	
+		################################################################
+		# MapCache - for cached tiles
+		################################################################
+		<IfModule mapcache_module>
+			<Directory "/etc/mapcache/">
+				Require all granted
+			</Directory>
+			MapCacheAlias /mapcache "/etc/mapcache/mapcache.xml"
+		</IfModule>
+	
+		################################################################
+		# Proxy requests for non-cached tiles to an app server.
+		################################################################
+		ProxyPass	 "/mapserv" "http://localhost:20080/mapserv"
+		ProxyPassReverse "/mapserv" "http://localhost:20080/mapserv"
+
+		ProxyPass	 "/haproxy" "http://localhost:30080/haproxy"
+		ProxyPassReverse "/haproxy" "http://localhost:30080/haproxy"
+
+		ProxyPass	 "/map_data" "http://localhost:20080/map_data"
+		ProxyPassReverse "/map_data" "http://localhost:20080/map_data"
+
+	</VirtualHost>
+
+</IfModule>
+
+ServerSignature Off
+ServerTokens Min
+
+# vim: syntax=apache ts=4 sw=4 sts=4 sr noet

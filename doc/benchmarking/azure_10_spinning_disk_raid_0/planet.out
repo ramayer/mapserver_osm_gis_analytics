@@ -1,0 +1,414 @@
+nohup: ignoring input
+starting mapserver_osm_gis_analytics/bin/load_spatial_data  at Tue Apr 5 14:47:01 UTC 2016
+32583 (process ID) old priority 0, new priority 19
+DROP VIEW
+File ‘planet-latest.osm.pbf’ already there; not retrieving.
+
+osm2pgsql SVN version 0.88.1 (64bit id space)
+
+Using built-in tag processing pipeline
+Using projection SRS 900913 (Spherical Mercator)
+Setting up table: planet_osm_point
+Setting up table: planet_osm_line
+Setting up table: planet_osm_polygon
+Setting up table: planet_osm_roads
+Allocating memory for dense node cache
+Allocating dense node cache in one big chunk
+Allocating memory for sparse node cache
+Sharing dense sparse
+Node-cache: cache=22000MB, maxblocks=2816000*8192, allocation method=11
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Allocated space for persistent node cache file
+Maximum node in persistent node cache: 0
+Mid: pgsql, scale=100 cache=22000
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+
+Reading in file: planet-latest.osm.pbf
+Processing: Node(10k 10.0k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(327680k 1070.8k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(655350k 1139.7k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(983020k 1108.3k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(1310690k 1169.2k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(1638360k 1194.1k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(1966030k 1195.9k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(2293700k 1111.8k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(2621370k 1081.0k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(2949040k 1104.5k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(3276710k 1124.5k/s) Way(0k 0.00k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(32273k 3.51k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(65040k 5.12k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(97807k 5.88k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(130574k 6.45k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(163341k 6.82k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(196108k 7.21k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(228875k 7.64k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(261642k 7.88k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(294409k 8.15k/s) Relation(0 0.00/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(327176k 8.38k/s) Relation(0 0.00/s) [...]
+Standard exception processing relation id=67081: TopologyException: side location conflict at 13467738.119999999 1641416.51
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(37860 18.73/s) [...]
+Standard exception processing relation id=333974: TopologyException: side location conflict at 1063826.9399999999 7151578.3899999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(226640 23.67/s) [...]
+Standard exception processing relation id=1015843: TopologyException: side location conflict at 240632.66 6247417.9500000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(478250 30.01/s) [...]
+Standard exception processing relation id=1060345: TopologyException: side location conflict at 257230.39999999999 6252011.0700000003
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(489030 30.02/s) [...]
+Standard exception processing relation id=1297018: TopologyException: side location conflict at 1833713.6499999999 6286239.25
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(627950 28.32/s) [...]
+Standard exception processing relation id=1352308: TopologyException: side location conflict at -98046.860000000001 5109738.8700000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(665560 28.06/s) [...]
+Standard exception processing relation id=1404893: TopologyException: side location conflict at 979814.12 6924804.9500000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(702080 27.53/s) [...]
+Standard exception processing relation id=1806494: TopologyException: side location conflict at 3451016.6499999999 8379274.6399999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(971210 26.59/s) [...]
+Standard exception processing relation id=1891326: TopologyException: side location conflict at 3097645.1699999999 5399840.2199999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1025170 26.59/s) [...]
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1352840 27.22/s) [...]
+Standard exception processing relation id=2397342: TopologyException: side location conflict at 275946.54999999999 5188408.96
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1388890 27.33/s) [...]
+Standard exception processing relation id=2539009: TopologyException: side location conflict at 878049.18000000005 5695435.2199999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1480200 27.36/s) [...]
+Standard exception processing relation id=2924598: TopologyException: side location conflict at 1079471.78 6870629.1299999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1791050 27.65/s) [...]
+Standard exception processing relation id=2927303: TopologyException: side location conflict at 1079300.3500000001 6870596.2999999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1793010 27.65/s) [...]
+Standard exception processing relation id=2932778: TopologyException: side location conflict at 6912368.1900000004 7750238.6799999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1797660 27.64/s) [...]
+Standard exception processing relation id=3138557: TopologyException: side location conflict at 905505.02000000002 6334990.5499999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(1944080 27.84/s) [...]
+Standard exception processing relation id=3224624: TopologyException: side location conflict at -9662027.5099999998 3960681.52
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2006250 28.05/s) [...]
+Standard exception processing relation id=3249697: TopologyException: side location conflict at 15567297.189999999 4254793.1600000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2025910 28.12/s) [...]
+Standard exception processing relation id=3257444: TopologyException: side location conflict at 535189.59999999998 5486331.2000000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2032310 28.14/s) [...]
+Standard exception processing relation id=3267077: TopologyException: side location conflict at 15552254.59 4268918.1699999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2040760 28.18/s) [...]
+Standard exception processing relation id=3428155: TopologyException: side location conflict at -935808.40000000002 5370896.9699999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2176750 28.47/s) [...]
+Standard exception processing way_id=3510853: TopologyException: side location conflict at 1234057.8200000001 5537920.2400000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2241060 28.57/s) [...]
+Standard exception processing way_id=3515410: TopologyException: side location conflict at 1234057.8200000001 5537920.2400000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2244660 28.58/s) [...]
+Standard exception processing relation id=3638005: TopologyException: side location conflict at 431249.47999999998 5405788.5800000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2349080 28.80/s) [...]
+Standard exception processing relation id=3677975: TopologyException: side location conflict at -9407963.0399999991 3984049.7000000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2384970 28.95/s) [...]
+Standard exception processing relation id=3759753: TopologyException: side location conflict at -13087902.65 4017570.0299999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2451360 29.16/s) [...]
+Standard exception processing relation id=3832310: TopologyException: side location conflict at -13625662.619999999 4548788.0099999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2513320 29.34/s) [...]
+Standard exception processing relation id=3873639: TopologyException: side location conflict at -6866480.0700000003 1808423.05
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2546350 29.44/s) [...]
+Standard exception processing relation id=3975091: TopologyException: side location conflict at 248369.37 6223816.6600000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2630210 29.67/s) [...]
+Standard exception processing relation id=3989078: TopologyException: side location conflict at -14725118.48 7019032.3499999996
+
+Standard exception processing relation id=3989080: TopologyException: side location conflict at -14706450.199999999 7024320.4100000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2641800 29.69/s) [...]
+Standard exception processing relation id=3989103: TopologyException: side location conflict at -14720881.66 7022914.8799999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2641830 29.69/s) [...]
+Standard exception processing relation id=4013057: TopologyException: side location conflict at 1079474.01 6870561.6399999997
+
+Standard exception processing relation id=4013061: TopologyException: side location conflict at 1079477.3500000001 6870567.1200000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2660770 29.74/s) [...]
+Standard exception processing relation id=4051785: TopologyException: side location conflict at 1197417.01 5917229.0099999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2691410 29.77/s) [...]
+Standard exception processing relation id=4085096: TopologyException: side location conflict at 2026633.6699999999 10917247.460000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2720080 29.82/s) [...]
+Standard exception processing relation id=4086953: TopologyException: side location conflict at 2085619.6399999999 10965597.32
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2721790 29.82/s) [...]
+Standard exception processing relation id=4107602: TopologyException: side location conflict at -14593865.01 6828111.2000000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2739100 29.84/s) [...]
+Standard exception processing relation id=4114062: TopologyException: side location conflict at 255329.06 6250860.4400000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2745000 29.85/s) [...]
+Standard exception processing relation id=4193002: TopologyException: side location conflict at 272594.71999999997 5093228.0700000003
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2810840 29.95/s) [...]
+Standard exception processing relation id=4271958: TopologyException: side location conflict at 13538285.74 2884209.8100000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2876800 30.09/s) [...]
+Standard exception processing relation id=4285305: TopologyException: side location conflict at 824417.68000000005 6692475.9800000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2888380 30.11/s) [...]
+Standard exception processing relation id=4445096: TopologyException: side location conflict at 849900.93000000005 6739485.7999999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(2927080 30.15/s) [...]
+Standard exception processing relation id=4548079: TopologyException: side location conflict at -13126595.08 4003780.3399999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3007500 30.19/s) [...]
+Standard exception processing relation id=4731768: TopologyException: side location conflict at -198222.16 6364821.7300000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3147730 30.35/s) [...]
+Standard exception processing relation id=4769506: TopologyException: side location conflict at -140289.26999999999 6389772.9699999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3178400 30.37/s) [...]
+Standard exception processing relation id=4801459: TopologyException: side location conflict at 91643.770000000004 6286497.5099999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3202510 30.39/s) [...]
+Standard exception processing relation id=4830566: TopologyException: side location conflict at 4403254.7000000002 5996662.5999999996
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3229000 30.39/s) [...]
+Standard exception processing relation id=4831651: TopologyException: side location conflict at 2338077.77 6842899.3799999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3230010 30.39/s) [...]
+Standard exception processing relation id=5135919: TopologyException: side location conflict at 1839857.3700000001 6143249.3200000003
+
+Standard exception processing relation id=5135920: TopologyException: side location conflict at 1839927.5 6143257.6699999999
+
+Standard exception processing relation id=5135921: TopologyException: side location conflict at 1839870.73 6143202.54
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3283380 30.43/s)
+Standard exception processing relation id=5135922: TopologyException: side location conflict at 1839870.73 6143202.54
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3283390 30.43/s) [...]
+Standard exception processing relation id=5461169: TopologyException: side location conflict at -45619.830000000002 5181368.9000000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3574910 30.68/s)
+Standard exception processing relation id=5461170: TopologyException: side location conflict at -45608.699999999997 5181430.4500000002
+
+Standard exception processing relation id=5461172: TopologyException: side location conflict at -45578.639999999999 5181421.4400000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3574920 30.68/s) [...]
+Standard exception processing relation id=5471773: TopologyException: side location conflict at 1619845.53 7062016.5700000003
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3584030 30.70/s) [...]
+Standard exception processing relation id=5478224: TopologyException: side location conflict at 1617646.97 7062524.7300000004
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3589810 30.71/s) [...]
+Standard exception processing relation id=5515607: TopologyException: side location conflict at -98046.860000000001 5109738.8700000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3623060 30.77/s) [...]
+Standard exception processing relation id=5543660: TopologyException: side location conflict at 1895588.3600000001 6639021.1600000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3639540 30.80/s) [...]
+Standard exception processing relation id=5549030: TopologyException: side location conflict at 1615615.3899999999 7064937.0599999996
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3643080 30.81/s) [...]
+Standard exception processing relation id=5559518: TopologyException: side location conflict at 1617790.5700000001 7063685.0199999996
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3652700 30.83/s) [...]
+Standard exception processing relation id=5563722: TopologyException: side location conflict at 1614262.8600000001 7066793.0499999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3656520 30.84/s) [...]
+Standard exception processing relation id=5568919: TopologyException: side location conflict at 1613019.4199999999 7056257.21
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3661530 30.84/s) [...]
+Standard exception processing relation id=5578224: TopologyException: side location conflict at -9230517.5399999991 4873084.29
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3670230 30.86/s) [...]
+Standard exception processing relation id=5709817: TopologyException: side location conflict at 1073314.7 7676870.8799999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3783830 31.01/s) [...]
+Standard exception processing relation id=5747230: TopologyException: side location conflict at 1369629.3700000001 7546009.5599999996
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3818280 31.04/s) [...]
+Standard exception processing relation id=5747279: TopologyException: side location conflict at 1369624.9199999999 7545997.6299999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3818320 31.04/s) [...]
+Standard exception processing relation id=5747330: TopologyException: side location conflict at 1369587.0700000001 7545938.0099999998
+
+Standard exception processing relation id=5747331: TopologyException: side location conflict at 1369676.1299999999 7545880.3700000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3818370 31.04/s)
+Standard exception processing relation id=5747332: TopologyException: side location conflict at 1369707.3 7545957.8799999999
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3818380 31.04/s) [...]
+Standard exception processing relation id=5748215: TopologyException: side location conflict at 12852974.01 4200937.9299999997
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3819210 31.04/s) [...]
+Standard exception processing relation id=5816534: TopologyException: side location conflict at 1386528.78 5146331.7400000002
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(3862600 31.13/s) [...]
+Standard exception processing relation id=6032081: TopologyException: side location conflict at -9081491.9199999999 3302190.8700000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(4055580 31.29/s) [...]
+Standard exception processing relation id=6053219: TopologyException: side location conflict at -13126579.5 4002708.5299999998
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(4074690 31.29/s) [...]
+Standard exception processing relation id=6055773: TopologyException: side location conflict at -9081574.2899999991 3301525.1000000001
+Processing: Node(3281658k 1124.6k/s) Way(337952k 8.48k/s) Relation(4077090 31.29/s) [...]
+Node stats: total(3281658200), max(4082257728) in 2918s
+Way stats: total(337952108), max(406115841) in 39848s
+Relation stats: total(4105824), max(6086235) in 131082s
+Maximum node in persistent node cache: 4083154943
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from /datadisks/disk1/nodecaches/osm2pgsql.flat_nodes.gis_planet
+Maximum node in persistent node cache: 4083154943
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+
+Going over pending ways...
+	227417225 ways are pending
+
+Using 8 helper-processes
+Finished processing 227417225 ways in 37906 sec
+
+227417225 Pending ways took 37906s at a rate of 5999.50/s
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+
+Going over pending relations...
+	0 relations are pending
+
+Using 8 helper-processes
+Finished processing 0 relations in 0 sec
+
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Sorting data and creating indexes for planet_osm_point
+Sorting data and creating indexes for planet_osm_polygon
+Sorting data and creating indexes for planet_osm_line
+Sorting data and creating indexes for planet_osm_roads
+Stopping table: planet_osm_nodes
+Stopping table: planet_osm_ways
+Building index on table: planet_osm_ways
+Stopping table: planet_osm_rels
+Building index on table: planet_osm_rels
+Stopped table: planet_osm_nodes in 0s
+Stopped table: planet_osm_rels in 6527s
+Copying planet_osm_roads to cluster by geometry finished
+Creating geometry index on  planet_osm_roads
+Creating osm_id index on  planet_osm_roads
+Creating indexes on  planet_osm_roads finished
+All indexes on  planet_osm_roads created  in 9177s
+Completed planet_osm_roads
+Copying planet_osm_point to cluster by geometry finished
+Creating geometry index on  planet_osm_point
+Creating osm_id index on  planet_osm_point
+Creating indexes on  planet_osm_point finished
+All indexes on  planet_osm_point created  in 26045s
+Completed planet_osm_point
+Copying planet_osm_line to cluster by geometry finished
+Creating geometry index on  planet_osm_line
+Creating osm_id index on  planet_osm_line
+Creating indexes on  planet_osm_line finished
+All indexes on  planet_osm_line created  in 58427s
+Completed planet_osm_line
+Copying planet_osm_polygon to cluster by geometry finished
+Creating geometry index on  planet_osm_polygon
+Creating osm_id index on  planet_osm_polygon
+Creating indexes on  planet_osm_polygon finished
+All indexes on  planet_osm_polygon created  in 112651s
+Completed planet_osm_polygon
+Stopped table: planet_osm_ways in 227966s
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+Maximum node in persistent node cache: 4083154943
+node cache: stored: 2637220622(80.36%), storage efficiency: 91.46% (dense blocks: 2602585, sparse nodes: 109268481), hit rate: -936.86%
+
+Osm2pgsql took 440291s overall

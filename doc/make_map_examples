@@ -1,0 +1,8 @@
+ruby make_map > tmp/6.newer.png
+ruby make_map --size=5000 > tmp/6-5000.newer.png
+
+# echo '-128 -80' | pg91 cs2cs -f  '%10f' +init=epsg:4326 +to +init=epsg:900913  | perl -pe 's/[ \t]+/,/g' | cut -d , -f 1,2
+# echo '128 80' | pg91 cs2cs -f  '%10f' +init=epsg:4326 +to +init=epsg:900913 | perl -pe 's/[ \t]+/,/g' | cut -d , -f 1,2
+
+
+ruby make_map --size=5000 --bounds=-14248894.821539,-15538711.096309,14248894.821539,15538711.096309  > tmp/world.newer.png

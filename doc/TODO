@@ -1,0 +1,181 @@
+*  Track down why Azure's limiting us to a tiny number of Dv2 cores.
+
+
+    $ azure vm list-usage westus
+    info:    Executing command vm list-usage
+    data:    Name                         Unit   CurrentValue  Limit
+    data:    ---------------------------  -----  ------------  -----
+    data:    Availability Sets            Count  0             2000 
+    data:    Total Regional Cores         Count  45            200  
+    data:    Virtual Machines             Count  30            10000
+    data:    Virtual Machine Scale Sets   Count  0             50   
+    data:    Standard D Family Cores      Count  8             200  
+    data:    Standard A0-A7 Family Cores  Count  4             200  
+    data:    Standard DS Family Cores     Count  5             200  
+    data:    Standard Dv2 Family Cores    Count  20            20   
+    data:    Standard DSv2 Family Cores   Count  8             20   
+    info:    vm list-usage command OK
+    $ 
+
+
+
+* Automate the RAID DISK and Swap Space configuration defined at the bottom of
+  mapserver_osm_gis_analytics/bin/add_web_server_to_azure_environment
+
+
+#   sudo umount /datadisks/disk1
+#   sudo dd if=/dev/zero of=/dev/md0 bs=1000 count=10
+#   sudo mkfs.ext4 -i 4096 /dev/md0
+#   sudo mount /dev/md0 /datadisks/disk1
+#   sudo mkdir -p /datadisks/disk1/cache/mapcache
+#   sudo chown www-data /datadisks/disk1/cache/mapcache
+#   sudo rm -rf /var/cache/mapcache
+#   sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache
+
+
+#     sudo mkdir /mnt/swap
+#     sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+#     sudo chown root:root /mnt/swap/10GB 
+#     sudo chmod 0600 /mnt/swap/10GB
+#     sudo mkswap  /mnt/swap/10GB
+#     sudo swapon /mnt/swap/10GB
+
+
+
+* Automate:
+  shp2pgsql -I -s 3857 '/etc/mapserver/shapefiles/land_polygons.shp' > /tmp/land_polygons.sql
+  psql -q -h localhost gis gis < /tmp/land_polygons.sql 
+  to avoid the disk I/O of reading that 600MB shapefile for every map tile.
+
+* Consider adding polygons like PG&E substations and transmission lines.
+
+
+* Consider indexes:
+
+  create index water on planet_osm_polygon("natural") where "natural"='water' or landuse='basin' or landuse='reservoir' or waterway='riverbank';
+
+* Find out why the great lakes disappeared.
+  Water polygons from
+  http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip
+
+
+* Census demographic data:
+   wget -x -p www2.census.gov/geo/tiger/TIGER2010BLKPOPHU/tabblock2010_06_pophu.zip
+
+
+* Miami Dade police districts and grids: 
+
+     http://gis.mdc.opendata.arcgis.com/datasets/1f42ddb43bfb4fc2b98a5b14f06388a0_6
+     http://gis.mdc.opendata.arcgis.com/datasets/c8031ec7fd0c4aa4ad6d0c90da784beuc_4
+     http://gis.mdc.opendata.arcgis.com/datasets?q=Buildings&sort_by=name&sort_order=asc
+     http://gis.mdc.opendata.arcgis.com/
+     http://gis.mdc.opendata.arcgis.com/datasets/f4cbc17d8e5e4e2e994e573baf8bedfa_3
+     http://gis.mdc.opendata.arcgis.com/datasets/13584874642449d48725253bab30c958_0
+     http://gis.mdc.opendata.arcgis.com/datasets/48aa304e1c8b4a049ea638e32275236e_3
+
+* Seed tiles:
+   http://www.mapserver.org/mapcache/seed.html#mapcache-seed
+   sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t subtle_color -g g2 -z 0,12
+   But note that we need to increase swap space on the app server for this to not fail.
+     # sudo mkdir /mnt/swap
+     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+     # sudo chown root:root /mnt/swap/10GB
+     # sudo chmod 0600 /mnt/swap/10GB
+     # sudo mkswap /mnt/swap/10GB
+     # sudo swapon /mnt/swap/10GB
+
+
+ select st_extent(way) from planet_osm_polygon where osm_id=-2833530;
+
+ ... take those results, and run: 
+
+ sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t dark_roads -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66
+
+ Or for all layers: 
+  
+ for i in `ls /var/cache/mapcache`; do echo $i; sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t $i -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66 ; done
+
+
+
+* Make the map as big as
+  http://13.91.253.215/
+
+* Ubuntu 16.04 port
+
+* Zoom level 14 may look better with small roads as single pixel lines instead of areas.
+
+* Non-bold fonts may look nicer
+
+* Zoom level 11 may need fewer road labels (like old) in san jose
+
+* Zoom level 6 may look better with fewer roads [done - removed all except 'motorway']
+
+* Zoom level 5 may look better with no roads and more major cities
+
+* Start adding more detail at zoom level 14 or 15 around Lake Tahoe
+
+* Add lake labels starting at zoom level 9 for large lakes
+
+* Remove cities and states;  add country labels at zoom 2.
+
+* Restore the Great Lakes.
+
+* Darker green grass layers would be nice. [done]
+
+* On
+  http://13.91.253.215/test_maps.html#map=12/-13576878.71/4532333.65/0
+  the secondary roads and grass looks better on dark_roads
+
+* airport runways are missing
+
+* Old has nicer buildings at: 
+  http://13.91.253.215/test_maps.html#map=17/-13624226.34/4543081.61/0
+
+
+* consider
+  [defaults]
+  host_key_checking = False
+  http://stackoverflow.com/questions/30226113/ansible-ssh-prompt-known-hosts-issue
+
+  to workaround
+  https://github.com/forensiclogic/mapserver_osm_gis_analytics/commit/cd304f71e4fb2ad0934dc961b5cbca34653c7c0c
+  https://github.com/ansible/ansible-modules-core/issues/3136
+
+
+
+* Probe the hardware for more sane values than the defaults. 
+  Perhaps: 
+  alter system set work_mem='100MB';
+  alter system set max_wal_size='10GB';
+  alter system set shared_buffers='1024MB';
+
+  
+
+* Consider:
+  crime icons:
+  https://thenounproject.com/term/crime/8847/
+  http://www.flaticon.com/packs/criminal-minds🔫
+
+
+
+* Need gis_convenience_functions gem on app server: 
+
+  git clone https://github.com/ramayer/gis_convenience_functions.git
+  cd gis_convenience_functions/
+  env GIS_PORT=5432 GIS_HOST='postgis-01' GIS_PASSWORD='changeme' rake test
+  gem build gis_convenience_functions.gemspec 
+  sudo gem install gis_convenience_functions
+
+
+* Another interesting data set 
+
+  http://www.dc.state.fl.us/pub/obis_request.html
+
+* Another: 
+
+  http://data.denvergov.org/
+
+ And another:
+
+   https://fusiontables.googleusercontent.com/fusiontables/embedviz?viz=GVIZ&t=TABLE&q=select+col0,+col1,+col2,+col3,+col4,+col5,+col6,+col7,+col8,+col9,+col10,+col11,+col12,+col13,+col14,+col15,+col16,+col17,+col18+from+1YK-hPbypQWCg2Uj35SRgNgwQ5yLyYnOANjY-wYkh&containerId=googft-gviz-canvas
+https://www.reddit.com/r/datasets/comments/4gqq5z/request_human_trafficking_or_missing/

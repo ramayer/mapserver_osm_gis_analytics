@@ -1,0 +1,11 @@
+#!/bin/bash
+
+
+# assume the admin server has a ssd mounted on /mnt
+
+sudo fallocate -l 10G /mnt/10G.swap
+sudo chmod 0600 /mnt/10G.swap
+sudo mkswap /mnt/10G.swap
+sudo swapon /mnt/10G.swap
+
+

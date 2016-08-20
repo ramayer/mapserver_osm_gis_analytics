@@ -1,0 +1,146 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+shapefiledir=$INSTALL_DIR/etc/mapserver/shapefiles
+
+function load_shapefile {
+   url=$1
+   shapefilename=$2
+   tablename=$3
+   srid=$4
+   shapefiletype=$5
+
+   zipfile=$GIS_DATA_DIR/shapefiles/`echo $url | perl -pe 's/https?:\/\///'`
+
+   if [ -f $zipfile ];
+   then
+       echo "already had zipfile $zipfile"
+   else
+       echo "need $zipfile"
+       mkdir -p $GIS_DATA_DIR/shapefiles/
+       (cd $GIS_DATA_DIR/shapefiles; wget -N -x $url)
+   fi
+
+   shapefile=$shapefiledir/$shapefilename
+
+   if [ -f $shapefile ];
+   then
+       echo already had shapefile $shapefile
+   else
+       echo need shapefile $shapefile
+       mkdir -p $shapefiledir
+       unzip -o -j $zipfile -d $shapefiledir
+   fi
+
+   if ( psql -q -c "COPY (select table_catalog,table_name from information_schema.tables where table_name='$tablename') to stdout csv header"  | grep -qw $tablename ); 
+   then
+      echo "Already had table $tablename"
+   else
+      echo "Missing database table $tablename for $shapefile"
+      mkdir -p /tmp/shp2pgsql
+      shp2pgsql -I -s $srid $shapefile $tablename > /tmp/shp2pgsql/$tablename.sql
+      psql -q < /tmp/shp2pgsql/$tablename.sql
+   fi
+
+   if [ "$shapefiletype" = "poly"  ]; then
+   psql <<EOF
+     DELETE FROM additional_layers where (layer,source) = ('$shapefilename','$url');
+     INSERT INTO additional_layers (layer,source) values ('$shapefilename','$url');
+     INSERT INTO additional_polygons (layer,label,color,tags,geom)
+            SELECT '$shapefilename',
+                   'TODO-fixme',
+                   null,
+                   null,
+                   st_transform(geom,3857)
+             FROM $tablename
+EOF
+   fi
+
+   if [ "$shapefiletype" = "point"  ]; then
+   psql <<EOF
+     DELETE FROM additional_layers where (layer,source) = ('$shapefilename','$url');
+     INSERT INTO additional_layers (layer,source) values ('$shapefilename','$url');
+     INSERT INTO additional_points (layer,label,color,tags,geom)
+            SELECT '$shapefilename',
+                   'TODO-fixme',
+                   null,
+                   null,
+                   st_transform(geom,3857)
+             FROM $tablename
+EOF
+   fi
+
+      
+}
+
+load_shapefile http://data.openstreetmapdata.com/land-polygons-split-3857.zip	                    land_polygons.shp	         land_polygons	           3857 poly
+load_shapefile http://data.openstreetmapdata.com/simplified-land-polygons-complete-3857.zip         simplified_land_polygons.shp simplified_land_polygons  3857 poly
+load_shapefile http://www2.census.gov/geo/tiger/GENZ2014/shp/cb_2014_us_state_20m.zip		    cb_2014_us_state_20m.shp	 cb_2014_us_state_20m	   4269 poly
+load_shapefile http://data.openoakland.org/sites/default/files/Oak_CommunityPoliceBeats_0.zip	    Oak_PoliceBeats.shp		 oak_policebeats	   4326 poly 
+load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/689f41305d8b46d3b708113ce1444734_5.zip' Police_Grid.shp		 mdc_mdpd_police_grid	   4326 poly
+load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/ca807c842bca47cdac87fc880442150c_1.zip' Police_Station.shp		 mdc_police_stations	   4326 point
+
+
+#################################################################################
+# Demographic data 
+# TODO - for production we will eventually want the national file instead https://www2.census.gov/geo/tiger/TIGER_DP/2014ACS/ACS_2014_5YR_BG.gdb.zip
+#################################################################################
+#
+# Note that instead of shapefiles, these are "ESRI Geodatabase" files.
+# http://gis.stackexchange.com/questions/83016/how-to-import-esri-geodatabase-format-gdb-into-postgis
+#
+#
+# mkdir /tmp/census
+# cd /tmp/census
+# wget https://www2.census.gov/geo/tiger/TIGER_DP/2014ACS/ACS_2014_5YR_BG_06.gdb.zip
+# ogr2ogr -f "PostgreSQL" PG:"host=localhost port=5432 dbname=census user=gis" ACS_2014_5YR_BG_06_CALIFORNIA.gdb -progress --config PG_USE_COPY YES
+# Nope - that doesn't work.
+# ERROR 1: ALTER TABLE "x25_housing_characteristics" ADD COLUMN "b25093m29" INTEGER
+# ERROR:  tables can have at most 1600 columns
+#
+# Also no luck converting it to a shapefile
+#
+#  ogr2ogr acs ACS_2014_5YR_BG_06_CALIFORNIA.gdb
+#   Warning 6: Normalized/laundered field name: 'B07202PRm10' to 'B07202PR_2'
+#   Warning 1: Creating a 256th field, but some DBF readers might only support 255 fields
+#   ... 
+#   Warning 1: Value 384825000 of field B25082e1 of feature 345 not successfully written. Possibly due to too larger number with respect to field width
+#   More than 1000 errors or warnings have been reported. No more will be reported from now.
+#
+# TODO - A different format of demographic data can be found here: 
+# http://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+# I think it's the same data, but not joined to the geospatial information.
+#
+# TODO - also look into if the counties have better demographic data
+# This may
+#   https://data.oaklandnet.com/dataset/Alameda-County-Census-Tract-Results-2010/az9z-tyn9
+#
+# https://www.census.gov/geo/maps-data/data/tiger-data.html
+# https://www2.census.gov/geo/tiger/TIGER2010DP1/
+#   http://www2.census.gov/geo/tiger/TIGER2010DP1/Tract_2010Census_DP1.zip
+
+
+
+
+# load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/1f42ddb43bfb4fc2b98a5b14f06388a0_6.zip' Municipal_Police_Grid.shp mdc_municipal_police_grid 4326
+# load_shapefile 'http://gis.mdc.opendata.arcgis.com/datasets/e9f4fcf584974b9996326186467a8a3e_0.zip' Municipal_Police_Station.shp  mdc_municipal_police_stations 4326
+
+## # http://data.openoakland.org/group/public-safety TODO - double-check if OPD's is SRID 4326
+#### If we have a correct land polygon file above, we don't need these water polygons (since everywhere
+#### without land should be water).
+####
+#### However the April 18th land polygons from http://openstreetmapdata.com/data/land-polygons
+#### were missing the great lakes, so these were temporarily added.
+#load_shapefile http://data.openstreetmapdata.com/simplified-water-polygons-complete-3857.zip simplified_water_polygons.shp simplified_water_polygons 3857
+#load_shapefile http://data.openstreetmapdata.com/water-polygons-split-3857.zip water_polygons.shp water_polygons 3857
+
+# On our large memory physical servers, it was more efficient to
+# render the large polygons directly from the shapefiles rather than
+# loading them into a database.  If we want to go back to that
+# approach, note that the shapefile cb_2014_us_state_20m.shp can not be
+# rendered directly by mapserver, but if converted to another
+# shapefile with the same information using ogr2ogr, it works.
+
+[ -f $shapefiledir/states.shp ] || ogr2ogr -f "ESRI Shapefile"  $shapefiledir/states.shp  $shapefiledir/cb_2014_us_state_20m.shp

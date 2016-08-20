@@ -1,0 +1,51 @@
+---
+  - name: ensure apache is at the latest version
+    apt: pkg={{ item }} state=latest
+    with_items:
+      - apache2
+      - cgi-mapserver
+      - ttf-unifont
+      - proj-bin
+      - libproj9
+      - libproj-dev
+      - gdal-bin   # ogr2ogr
+      - ruby-pg    # querying the road network
+
+    # php5-mapscript seems to be no longer available on Ubuntu 16.04
+    #  - php5-mapscript
+    #
+    #  - ruby-json isn't needed?
+
+
+  - name: Apache | Enable module | Enable $module
+    command: a2enmod {{ item }} creates=/etc/apache2/mods-enabled/{{ item }}.load
+    notify:
+      - restart apache
+    with_items:
+      - rewrite
+      - cgid
+
+  - name: write the apache config files
+    template: src={{ item }} dest=/etc/apache2/sites-available/{{ item }}
+    with_items:
+      - 002-apache-mapserver.conf
+
+  - name: Enable sites
+    command: a2ensite {{ item }} creates=/etc/apache2/sites-enabled/{{ item }}
+    with_items:
+      - 002-apache-mapserver.conf
+
+  - name: Make sure mapserver config directory exists
+    file: dest=/etc/mapserver mode=775 state=directory owner={{ lookup("env","USER") }}
+
+  - name: ensure apache is enabled at boot
+    service: name=apache2 enabled=yes
+
+##
+## Don't try to start it here.
+## Until the templates are installed, with the "deploy..." script it's reasonable for
+## it to error our on startup.
+## 
+#  - name: ensure apache is running
+#    service: name=apache2 state=started
+

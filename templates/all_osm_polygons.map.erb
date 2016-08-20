@@ -1,0 +1,145 @@
+<%
+   $scales = [
+       {minscaledenom:0        , maxscaledenom:5010     ,   zoom:17},
+       {minscaledenom:5010     , maxscaledenom:10010    ,   zoom:16},
+       {minscaledenom:10010    , maxscaledenom:25010    ,   zoom:15},
+       {minscaledenom:25010    , maxscaledenom:50010    ,   zoom:14},
+       {minscaledenom:50010    , maxscaledenom:100010   ,   zoom:13},
+       {minscaledenom:100010   , maxscaledenom:175010   ,   zoom:12},
+       {minscaledenom:175010   , maxscaledenom:250010   ,   zoom:11},
+       {minscaledenom:250010   , maxscaledenom:500010   ,   zoom:10},
+       {minscaledenom:500010   , maxscaledenom:1000010  ,   zoom:9},
+       {minscaledenom:1000010  , maxscaledenom:2500010  ,   zoom:8},
+       {minscaledenom:2500010  , maxscaledenom:5000010  ,   zoom:7},
+       {minscaledenom:5000010  , maxscaledenom:10000010 ,   zoom:6},
+       {minscaledenom:10000010 , maxscaledenom:20000010 ,   zoom:5},
+    ]
+
+   def database_username()
+       ENV["PGUSER"] || 'gis'
+   end
+
+   def database_host()
+       ENV["PGHOST"] || 'postgis-01'
+   end
+
+   def database_password()
+       ENV["PGPASSWORD"] || 'changeme'
+   end
+
+   def default_connection
+       %Q{
+         CONNECTIONTYPE postgis
+         CONNECTION "host=#{ database_host() } dbname=gis user=#{ database_username() } password=#{ database_password() } port=5432"
+         PROCESSING "CLOSE_CONNECTION=DEFER"
+       }
+   end
+
+   def get_color(f,c='color')
+       return '#ff0000'
+   end
+
+%>
+MAP
+
+OUTPUTFORMAT
+    NAME agg
+    DRIVER AGG/PNG
+    IMAGEMODE RGBA
+    FORMATOPTION "INTERLACE=false"
+    MIMETYPE "image/png"
+END
+
+FONTSET "./fonts.lst"
+IMAGETYPE agg
+MAXSIZE 10000
+SIZE 800 800
+EXTENT 16805492 -4049385 16857351 -3975830
+UNITS meters
+
+
+WEB
+    LOG '/tmp/mapserver.log'
+    METADATA
+        wms_srs "epsg:3857 epsg:900913 epsg:4326"
+        labelcache_map_edge_buffer "-10"
+        wms_title "osm france"
+        "ows_enable_request" "*"
+    END
+END
+
+DEBUG 10
+CONFIG "PROJ_LIB" "/usr/share/proj"
+CONFIG "MS_ERRORFILE" "stderr"
+PROJECTION  "init=epsg:3857"  END
+
+<%
+ sql = %Q{
+     way from (
+       SELECT *, CASE WHEN ((osm_id % 2) = 1) THEN '#ff000022' ELSE '#00ff0022' END as color
+        FROM planet_osm_polygon
+	WHERE (building is null)
+   ) as foo using unique osm_id using srid=900913  order by way_area
+ }.gsub(/\s+/," ")
+%> 
+
+
+LAYER
+    TYPE LINE
+    STATUS ON 
+    GROUP "default"
+    NAME "Polygons"
+    MAXSCALEDENOM 100010
+    <%= default_connection() %>
+    DATA "<%= sql %>"
+    <%
+        color='#ff0000'
+    %>
+    CLASS
+        STYLE
+            COLOR [color]
+        END
+    END
+END
+
+
+# Seems a mapserver bug.
+# You can't specify "COLOR [color]" and have the database provide a value of '#0000ff11' and get transparency.
+# but you can specify "COLOR '#0000ff11'".
+# DATA "way from (select way,osm_id,name,way_area, CASE WHEN ((osm_id % 2) = 1) THEN '#0000ff11' ELSE '#00ff0022' END as color from planet_osm_polygon) as foo using unique osm_id using srid=900913  order by way_area limit 1000"
+
+LAYER
+    TYPE POLYGON
+    STATUS ON 
+    GROUP "default"
+    NAME "Beats"
+    <%= default_connection() %>
+    DATA "<%= sql %>"
+    <%
+        color='#ff0000'
+    %>
+    CLASS
+        MAXSCALEDENOM 100010
+        STYLE
+		 COLOR [color]
+		 OPACITY 10
+        END
+        TEXT '[osm_id] N:[name] A:[amenity] L:[landuse] L:[leisure]'
+        LABEL
+            TYPE TRUETYPE
+            FONT arial
+            PARTIALS FALSE
+            SIZE 8
+            OUTLINEWIDTH 2
+            PRIORITY 5
+            COLOR '#000000'
+	    WRAP ' '
+            OUTLINECOLOR '#ffffff'
+	    FORCE true
+	    POSITION cc
+        END
+    END
+END
+
+
+END
