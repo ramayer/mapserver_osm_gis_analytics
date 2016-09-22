@@ -58,7 +58,6 @@ function layer_should_be_visible(name) {
     return (default_view.active_layers.indexOf(name) >= 0);
 }
 
-
 /*
 ** Updates the URL so it can act as a permalink, and so the back
 ** button can restore the view state when navigating through the
