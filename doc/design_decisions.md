@@ -13,3 +13,7 @@ Much more detail than
 https://www.mapbox.com/maps/light-dark/
 https://www.mapbox.com/maps/streets/
 https://api.mapbox.com/styles/v1/mapbox/light-v9.html?title=true&access_token=pk.eyJ1IjoidGF0aWFuYSIsImEiOiJjaWs1bzRiZGQwMDdjcHRrc285bTdwcWU5In0.0EWPVHyjaE9jTzNvOiIO-w#9.26/35.5762/-106.2018
+
+
+* More political information -- Shows capitals like Carson City at zoom levels where Google and Bing don't.
+
