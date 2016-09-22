@@ -258,8 +258,10 @@ fi
 ######################################################################
 
 now=`date +'%Y%m%d%T'` 
-storage_acct=`echo $resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g; $_ = substr($_,0,23);'`
-premium_storage_acct=`echo P$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g; $_ = substr($_,0,23);'` 
+storage_acct=`echo $resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g'; $_ = substr($_,0,23);'`
+premium_storage_acct=`echo P$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g; $_ = substr($_,0,23);'` 
+
+
 echo Using Storage Account: $storage_acct
 echo Using Premium Storage Account: $premium_storage_acct
 
