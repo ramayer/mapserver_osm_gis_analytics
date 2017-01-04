@@ -91,10 +91,9 @@ if [ "$environment" = "" ]; then
 fi
 
 
-eval `ssh-agent`
-ssh-add ~/.azure/azure-keypair
+# eval `ssh-agent`
+# ssh-add ~/.azure/azure-keypair
 # but read: http://unix.stackexchange.com/questions/52092/how-to-use-ssh-agent-with-multiple-valid-keys-and-yet-choose-which-one-to-use
-
 
 echo "setting up $environment environment in $resourcegroup at "`date`
 
@@ -258,7 +257,7 @@ fi
 ######################################################################
 
 now=`date +'%Y%m%d%T'` 
-storage_acct=`echo $resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g'; $_ = substr($_,0,23);'`
+storage_acct=`echo S$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g; $_ = substr($_,0,23);'` 
 premium_storage_acct=`echo P$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g; $_ = substr($_,0,23);'` 
 
 
@@ -353,6 +352,7 @@ $azure vm create $resourcegroup "map-db-01"      $azure_region "Linux"   -z $db_
 #  sudo mkdir /datadisks/disk1/gisdata
 #  sudo ln -s /datadisks/disk1/gisdata /mnt/gisdata
 #  sudo chmod a+w /mnt/gisdata/.
+#  sudo service postgresql start
 #
 # And on a DS12 server, the following is also needed so osm2pgsql doesn't fail: 
 # 
