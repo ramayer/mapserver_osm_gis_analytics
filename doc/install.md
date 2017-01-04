@@ -42,3 +42,45 @@ instructions
 # And to load map data.
 
     nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &
+
+
+--------------------------------------------------------------------------------
+
+
+Copy&paste of each command to create an environment on 2017-01-04: 
+
+
+     bin/create_azure_environment --environment=3-tier --resource-group=maps-prod-7  --azure-acct='Microsoft Azure Sponsorship'
+
+
+     ssh gisadmin@[the-admin-machine]
+     ssh-keygen
+     sudo apt-get install git ansible
+
+     mkdir ~/.ansible
+     cp mapserver_osm_gis_analytics/ansible/hosts.small  ~/.ansible/hosts
+    ./mapserver_osm_gis_analytics/bin/install_prerequesites
+    ./mapserver_osm_gis_analytics/bin/install_using_ansible 
+
+
+    ### on the database servers:
+
+    git clone https://github.com/Azure/azure-quickstart-templates
+    sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+    #  [ assume that created /datadisks/disk1 ]
+    sudo service postgresql stop
+    sudo mv /var/lib/postgresql /datadisks/disk1
+    sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
+    sudo mkdir /datadisks/disk1/gisdata
+    sudo ln -s /datadisks/disk1/gisdata /mnt/gisdata
+    sudo chmod a+w /mnt/gisdata/.
+    sudo service postgresql start
+
+    sudo mkdir /mnt/swap
+    sudo dd if=/dev/zero of=/mnt/swap/20GB bs=1M count=20480
+    sudo chown root:root /mnt/swap/20GB
+    sudo chmod 0600 /mnt/swap/20GB
+    sudo mkswap /mnt/swap/20GB
+    sudo swapon /mnt/swap/20GB
+
+    git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
