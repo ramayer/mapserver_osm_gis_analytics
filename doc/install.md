@@ -59,8 +59,7 @@ Copy&paste of each command to create an environment on 2017-01-04:
 
      mkdir ~/.ansible
      cp mapserver_osm_gis_analytics/ansible/hosts.small  ~/.ansible/hosts
-    ./mapserver_osm_gis_analytics/bin/install_prerequesites
-    ./mapserver_osm_gis_analytics/bin/install_using_ansible 
+     ./mapserver_osm_gis_analytics/bin/install_all
 
 
     ### on the database servers:
@@ -77,10 +76,11 @@ Copy&paste of each command to create an environment on 2017-01-04:
     sudo service postgresql start
 
     sudo mkdir /mnt/swap
-    sudo dd if=/dev/zero of=/mnt/swap/20GB bs=1M count=20480
-    sudo chown root:root /mnt/swap/20GB
-    sudo chmod 0600 /mnt/swap/20GB
-    sudo mkswap /mnt/swap/20GB
-    sudo swapon /mnt/swap/20GB
+    sudo dd if=/dev/zero of=/mnt/swap/40GB bs=1M count=40480
+    sudo chown root:root /mnt/swap/40GB
+    sudo chmod 0600 /mnt/swap/40GB
+    sudo mkswap /mnt/swap/40GB
+    sudo swapon /mnt/swap/40GB
 
     git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
+    nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &

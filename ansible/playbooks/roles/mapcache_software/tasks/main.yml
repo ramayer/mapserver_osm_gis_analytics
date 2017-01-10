@@ -87,6 +87,8 @@
     become: no
     synchronize: src={{ lookup('env','HOME') }}/certs/etc/ssl/mapcache/. dest=/etc/ssl/mapcache/.
     when: stat_https_certs.stat.exists == true
+    notify:
+      - restart apache
 
 # WARNING - WITH SOME VERSIONS OF ANSIBLE, THE "/." AT THE END OF THE LINE
 # IS LOST IF YOU USE THE "~".
