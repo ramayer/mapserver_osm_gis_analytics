@@ -84,3 +84,10 @@ Copy&paste of each command to create an environment on 2017-01-04:
 
     git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
     nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &
+
+
+# It's convenient on the admin server to add the following lines to .bashrc
+export PGPORT=5432
+export PGUSER=gis
+export PGDATABASE=gis
+export PGHOST=postgis-01
