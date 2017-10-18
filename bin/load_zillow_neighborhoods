@@ -56,12 +56,17 @@ wget -x -p http://www.zillow.com/static/shp/ZillowNeighborhoods-WI.zip
 
 mkdir -p $GIS_DATA_DIR/zillow/tmp
 
-for i in $GIS_DATA_DIR/zillow/www.zillow.com/static/shp/ZillowNeighborhoods-* ;do unzip $i; done;
+for i in $GIS_DATA_DIR/zillow/www.zillow.com/static/shp/ZillowNeighborhoods-* ;do unzip -n $i; done;
+
+
+echo "drop table zillow_neighborhoods;" | psql
 
 shp2pgsql -p -s 4326 -I ZillowNeighborhoods-CA.shp zillow_neighborhoods | psql
 for i in *.shp; do
-    # guess - is 4326 the right projecition
+    # guess - is 4326 the right projecition                                                                                                                                                                         
     shp2pgsql -a -s 4326 $i zillow_neighborhoods | psql -q gis
 done;
 
+echo "insert into additional_layers (layer, source) values ('zillow_neighborhoods','zillow');" | psql
 echo "insert into additional_polygons (layer,label,geom) (select 'zillow_neighborhoods',name,st_transform(geom,3857) from zillow_neighborhoods);" | psql
+
