@@ -376,13 +376,10 @@ $azure vm create -n "gis-db-02"      --admin-username gisadmin -g $resourcegroup
 #  sudo mkswap /mnt/swap/20GB
 #  sudo swapon /mnt/swap/20GB
 
-
-
-
 # Consider this instead 
 
-$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "map-db-01" --disk map-db-01.01 --size-gb 500
-$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "map-db-01" --disk map-db-01.02 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.01 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.02 --size-gb 500
 
 # or maybe even a RAID array of those.
 
