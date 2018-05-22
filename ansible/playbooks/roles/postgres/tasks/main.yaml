@@ -8,7 +8,7 @@
   with_lines:
     - lsb_release -cs
 
-- name: Install spatial database dev prereqs, for compiling modules against postgres, and compiling newewr postgres if needed
+- name: Install spatial database dev prereqs, for compiling modules against postgres, and compiling newer postgres if needed
   apt: pkg={{ item }} state=latest install_recommends=no
   with_items:
     - autoconf

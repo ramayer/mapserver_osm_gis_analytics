@@ -21,6 +21,9 @@
 
   git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 
+  export PGHOST=localhost
+  sudo -u postgres bin/load_spatial_data --create-default-users
+  bin/load_spatial_data --create-default-database
   ~/mapserver_osm_gis_analytics/bin/install_all
        [enter a password for the gis user if prompted]
 

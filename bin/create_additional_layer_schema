@@ -5,6 +5,7 @@ source $DIR/default_environment.sh
 
 psql << EOF
 
+  CREATE EXTENSIONS hstore IF NOT EXISTS;
   DROP TABLE IF EXISTS additional_layers   CASCADE;
   DROP TABLE IF EXISTS additional_lines    CASCADE;
   DROP TABLE IF EXISTS additional_polygons CASCADE;
