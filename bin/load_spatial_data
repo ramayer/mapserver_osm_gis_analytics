@@ -166,6 +166,11 @@ function load_osm_data {
      osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf
   fi
 
+  if [ "$map_data" == "arizona" ]; then 
+     wget -nc http://download.geofabrik.de/north-america/us/arizona-latest.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs arizona.osm.pbf
+  fi
+
   if [ "$map_data" == "states" ]; then 
      wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
      wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
@@ -304,8 +309,16 @@ function load_osm_data {
   if [ "$map_data" == "smaller" ]; then 
       # This one seems to have pretty old data
       # wget -nc http://osm-metro-extracts.s3.amazonaws.com/sf-bay-area.osm.pbf
-      wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/san-francisco-bay_california.osm.pbf
-      osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs san-francisco-bay_california.osm.pbf
+
+      # MapZen shut down :(
+      # wget -nc https://s3.amazonaws.com/metro-extracts.mapzen.com/san-francisco-bay_california.osm.pbf
+
+      # this seems promising
+      # https://download.bbbike.org/osm/bbbike/ 
+
+      wget -nc http://download.bbbike.org/osm/bbbike/Tucson/Tucson.osm.pbf
+
+      osm2pgsql --proj 3857 -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim  --number-processes $parallel_jobs Tucson.osm.pbf
   fi
 
   if [ "$map_data" == "tiny" ]; then 
