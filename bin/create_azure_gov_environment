@@ -1,0 +1,462 @@
+#!/bin/bash
+
+optspec=":hv-:"
+environment=""
+resourcegroup=""
+azure_public_key=~/.ssh/id_rsa.pub
+
+linuximg=Canonical:UbuntuServer:16.04.0-LTS:16.04.201604203
+windowsimg=MicrosoftWindowsServer:WindowsServer:2012-R2-Datacenter:4.0.20150825
+azure_acct='BizSpark'
+azure_region='westus'
+
+mkdir -p ~/.azure/
+
+function show_usage {
+    echo "usage:" >&2
+    echo "     $0 --environment=[singlevm,3-tier] --resource-group=<group> --azure-acct=<acct> --azure-region=<region> ">&2
+    echo "note:" >&2
+    echo "  --environment=singlevm" >&2
+    echo "    A single virtual machine capable of loading about one matro-extract area from mapzen.com."
+    echo "  --environment=3-tier" >2&
+    echo "    Launch a 3-tier (mapcache in web tier; mapserver in app tier; postgis in DB tier) "
+    echo "    environment capabile of handling a reasonably busy full-planet environment, with"
+    echo "    appropriate firewall rules"
+    echo "  --environment=3-tier-with-redundancy" >2&
+    echo "    [work-in-progress]"
+    echo "examples:"  >&2
+    echo "     $0 --environment=singlevm   --resource-group=maps-dev-1"
+    echo "     $0 --environment=3-tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
+    echo "     For Gov"
+    echo "     $0 --environment=3-tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
+    exit 2
+}
+
+while getopts "$optspec" optchar; do
+    case "${optchar}" in
+        -)
+            case "${OPTARG}" in
+                enabled)
+                    val="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+                    echo "Parsing option: '--${OPTARG}', value: '${val}'" >&2;
+                    ;;
+                environment=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    environment=$val
+                    ;;
+                resource-group=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    resourcegroup=$val
+                    ;;
+                azure-acct=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_acct=$val
+                    ;;
+                azure-region=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_region=$val
+                    ;;
+                *)
+                    if [ "$OPTERR" = 1 ] && [ "${optspec:0:1}" != ":" ]; then
+                        echo "Unknown option --${OPTARG}" >&2
+                    fi
+                    ;;
+            esac;;
+        h)
+            show_usage
+            exit 2
+            ;;
+        v)
+            echo "Parsing option: '-${optchar}'" >&2
+            ;;
+        *)
+            if [ "$OPTERR" != 1 ] || [ "${optspec:0:1}" = ":" ]; then
+                echo "Non-option argument: '-${OPTARG}'" >&2
+            fi
+            ;;
+    esac
+done
+
+if [ "$resourcegroup" = "" ]; then
+    echo "ERROR: --resource-group=<name> required" >&2
+    show_usage
+    exit 2
+fi
+if [ "$environment" = "" ]; then
+    echo "ERROR: --environment=[...] required" >&2
+    show_usage
+    exit 2
+fi
+
+
+# eval `ssh-agent`
+# ssh-add ~/.azure/azure-keypair
+# but read: http://unix.stackexchange.com/questions/52092/how-to-use-ssh-agent-with-multiple-valid-keys-and-yet-choose-which-one-to-use
+
+echo "setting up $environment environment in $resourcegroup at "`date`
+
+######################################################################
+# Set a Resource Group Name for this test environment
+######################################################################
+
+set -x
+azure='/usr/bin/time az'
+
+######################################################################
+# Identify the location in which to create this resource group
+######################################################################
+
+az cloud set --name AzureUSGovernment
+location=`az account list-locations | jq -r ".[] | .name" | grep -i arizona`
+
+
+######################################################################
+# Clear the old QA environment
+######################################################################
+$azure group delete --name $resourcegroup --yes
+
+######################################################################
+# Create a new QA Environment with its own vnet.
+######################################################################
+
+$azure group create --name $resourcegroup  --location "$location"
+$azure network vnet create -g $resourcegroup --name "gis-vnet" --address-prefix 10.1.0.0/16
+
+######################################################################
+# Create all the firewall rules between tiers.
+#  Azure states "the priority must be between 100 and 4096".
+#  Starting at 200 in case we need to add a new rule before those.
+######################################################################
+
+
+if [ "$environment" = "3-tier" ]; then
+
+$azure network nsg      create -g $resourcegroup --name web-tier
+$azure network nsg rule create -g $resourcegroup --priority 200 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 22    --nsg-name web-tier --name admin
+$azure network nsg rule create -g $resourcegroup --priority 250 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 4949  --nsg-name web-tier --name munin
+$azure network nsg rule create -g $resourcegroup --priority 201 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 80    --nsg-name web-tier --name http
+$azure network nsg rule create -g $resourcegroup --priority 202 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 443   --nsg-name web-tier --name https
+$azure network nsg rule create -g $resourcegroup --priority 300 --source-address-prefix 10.1.1.0/24 --source-port-range '*' --destination-port-range '*'   --nsg-name web-tier --name web-tier
+$azure network nsg rule create -g $resourcegroup --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*'   --nsg-name web-tier --name deny --access deny
+
+$azure network nsg      create -g $resourcegroup --name app-tier
+$azure network nsg rule create -g $resourcegroup --priority 200 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 22    --nsg-name app-tier --name admin
+$azure network nsg rule create -g $resourcegroup --priority 250 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 4949  --nsg-name app-tier --name munin
+$azure network nsg rule create -g $resourcegroup --priority 203 --source-address-prefix 10.1.1.0/24 --source-port-range '*' --destination-port-range 10080 --nsg-name app-tier --name mapserv
+$azure network nsg rule create -g $resourcegroup --priority 300 --source-address-prefix 10.1.2.0/24 --source-port-range '*' --destination-port-range '*'   --nsg-name app-tier --name app-tier
+$azure network nsg rule create -g $resourcegroup --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*'   --nsg-name app-tier --name deny --access deny
+
+$azure network nsg      create -g $resourcegroup --name db-tier
+$azure network nsg rule create -g $resourcegroup --priority 200 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 22    --nsg-name db-tier --name admin
+$azure network nsg rule create -g $resourcegroup --priority 250 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 4949  --nsg-name db-tier --name munin
+$azure network nsg rule create -g $resourcegroup --priority 201 --source-address-prefix 10.1.2.0/24 --source-port-range '*' --destination-port-range 5432  --nsg-name db-tier --name postgres
+$azure network nsg rule create -g $resourcegroup --priority 202 --source-address-prefix 10.1.0.0/24 --source-port-range '*' --destination-port-range 5432  --nsg-name db-tier --name postgres-admin
+$azure network nsg rule create -g $resourcegroup --priority 300 --source-address-prefix 10.1.3.0/24 --source-port-range '*' --destination-port-range '*'   --nsg-name db-tier --name db-tier
+$azure network nsg rule create -g $resourcegroup --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*'   --nsg-name db-tier --name deny --access deny 
+
+$azure network nsg      create -g $resourcegroup --name adm-tier
+$azure network nsg rule create -g $resourcegroup --priority 201 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 22    --nsg-name adm-tier --name ssh
+$azure network nsg rule create -g $resourcegroup --priority 202 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 443   --nsg-name adm-tier --name https
+$azure network nsg rule create -g $resourcegroup --priority 203 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 80    --nsg-name adm-tier --name http
+$azure network nsg rule create -g $resourcegroup --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*'   --nsg-name  db-tier --name deny --access deny 
+fi
+
+if [ "$environment" = "singlevm" ]; then
+
+# similar to the 3-tiered web tier -- but also allow ssh
+$azure network nsg create $resourcegroup web-tier $azure_region
+$azure network nsg rule create -g $resourcegroup --priority 201 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 80    --nsg-name web-tier --name http
+$azure network nsg rule create -g $resourcegroup --priority 202 --source-address-prefix 'Internet'  --source-port-range '*' --destination-port-range 443   --nsg-name web-tier --name https
+$azure network nsg rule create -g $resourcegroup --priority 201 --source-address-prefix "Internet"  --source-port-range '*' --destination-port-range 22    --nsg-name adm-tier --name ssh
+$azure network nsg rule create -g $resourcegroup --priority 999 --source-address-prefix '*'         --source-port-range '*' --destination-port-range '*'   --nsg-name web-tier --name deny --access deny
+
+fi
+
+
+######################################################################
+# Create subnets for each tier and associate them to the firewall rules
+# 
+# NOTE: Don't use 10.0.3.0 -- 
+# 10.0.3.0 is the range Azure's Ubuntu default install uses for its internal private address space.
+# 
+#    gisadmin@search-and-map-app:~$ route
+#    Kernel IP routing table
+#    Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+#    default         10.0.2.1        0.0.0.0         UG    0      0        0 eth0
+#    10.0.2.0        *               255.255.255.0   U     0      0        0 eth0
+#    10.0.3.0        *               255.255.255.0   U     0      0        0 lxcbr0
+#    168.63.129.16   10.0.2.1        255.255.255.255 UGH   0      0        0 eth0
+#
+#   gisadmin@linux-admin-01:~$ sudo netstat -a -p | grep  LIST
+#   tcp        0      0 10.0.3.1:domain         *:*                     LISTEN      905/dnsmasq     
+#   gisadmin@linux-admin-01:~$ ps auxg | grep dnsmasq
+#   lxc-dns+   905  0.0  0.3  36840  2620 ?        S    Jan09   0:00 dnsmasq -u lxc-dnsmasq --strict-order --bind-interfaces --pid-file=/run/lxc/dnsmasq.pid --listen-address 10.0.3.1 --dhcp-range 10.0.3.2,10.0.3.254 --dhcp-lease-max=253 --dhcp-no-override --except-interface=lo --interface=lxcbr0 --dhcp-leasefile=/var/lib/misc/dnsmasq.lxcbr0.leases --dhcp-authoritative
+#   gisadmin@linux-admin-01:~$ sudo service lxc
+#   lxc      lxcfs    lxc-net  
+######################################################################
+
+$azure network vnet subnet create -g $resourcegroup --vnet-name "gis-vnet" -n "gis-adm-subnet" --address-prefix 10.1.0.0/24 --network-security-group adm-tier
+$azure network vnet subnet create -g $resourcegroup --vnet-name "gis-vnet" -n "gis-www-subnet" --address-prefix 10.1.1.0/24 --network-security-group web-tier
+$azure network vnet subnet create -g $resourcegroup --vnet-name "gis-vnet" -n "gis-app-subnet" --address-prefix 10.1.2.0/24 --network-security-group app-tier
+$azure network vnet subnet create -g $resourcegroup --vnet-name "gis-vnet" -n "gis-db-subnet"  --address-prefix 10.1.3.0/24 --network-security-group db-tier
+
+######################################################################
+# Create public IP addresses
+#
+# aargh: 
+#   The resource type 'publicIPAddresses' does not support availability zones at location 'usgovarizona' and api-version '2018-01-01'.
+#
+######################################################################
+
+if [ "$environment" = "3-tier" ]; then
+$azure network public-ip create -g $resourcegroup --name "adm-01"
+$azure network public-ip create -g $resourcegroup --name "www-01"
+$azure network public-ip create -g $resourcegroup --name "www-02"
+
+#$azure network public-ip create -g $resourcegroup --name "www-01" --zone 1
+#$azure network public-ip create -g $resourcegroup --name "www-02" --zone 2
+
+fi
+
+if [ "$environment" = "singlevm" ]; then
+$azure network public-ip create -g $resourcegroup --name "www-01"
+fi
+
+######################################################################
+# Create a few virtual NIC cards in each subnet.
+# NOTE --- THIS IS NO LONGER NEEDED SINCE AZURE ADDED THE ABILITY TO
+# SPECIFY THE SUBNET FOR A VM AT THE TIME OF CREATION OF THE VM
+######################################################################
+# 
+# if [ "$environment" = "singlevm" ]; then
+# $azure network nic create $resourcegroup "gis-nic-www-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-01"
+# fi
+# 
+# if [ "$environment" = "3-tier" ]; then
+# $azure network nic create $resourcegroup "gis-nic-adm-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-adm-subnet" --public-ip-name "adm-01"
+# $azure network nic create $resourcegroup "gis-nic-www-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-01"
+# $azure network nic create $resourcegroup "gis-nic-www-02" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-www-subnet" --public-ip-name "www-02"
+# $azure network nic create $resourcegroup "gis-nic-app-01" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+# $azure network nic create $resourcegroup "gis-nic-app-02" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+# $azure network nic create $resourcegroup "gis-nic-app-03" $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-app-subnet"
+# $azure network nic create $resourcegroup "gis-nic-db-01"  $azure_region --subnet-vnet-name "gis-vnet" --subnet-name "gis-db-subnet"
+# fi
+######################################################################
+
+######################################################################
+## Create a Storage Account for this Resource Group
+## 
+## Note - these have some tricky naming gotchas.  
+## Unlike other named items in the system, they must contain only lower case letters and numbers,
+## and can not share the name of any other storage account, even from different resource groups
+##
+## It gives various errors like
+##  "Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only."
+##  "The storage account named gisstorage1 is already taken."
+##
+## Unfortunately we can't just do the following: 
+## 
+#   $azure storage account create --type LRS -l westus  -g $resourcegroup storage_for_$resourcegroup
+#
+## because that would vioate both of their rules
+##
+## The following ugly expression makes a globally unique name for the group by appending a date
+## and removing special characters.
+######################################################################
+
+######################################################################
+# Note that with managed disks, this is no longer necessary.
+######################################################################
+# now=`date +'%Y%m%d%T'` 
+# storage_acct=`echo S$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g; $_ = substr($_,0,23);'` 
+# premium_storage_acct=`echo P$resourcegroup'at'$now | perl -pe '$_=lc($_);s/\W//g;s/_//g; $_ = substr($_,0,23);'` 
+# 
+# echo Using Storage Account: $storage_acct
+# echo Using Premium Storage Account: $premium_storage_acct
+# 
+# $azure storage account create --type LRS -l $azure_region  -g $resourcegroup $storage_acct
+# $azure storage account create --type LRS -l $azure_region --type PLRS -g $resourcegroup $premium_storage_acct
+
+######################################################################
+# Create the virtual servers
+# - Todo - figure out a way to not have passwords in the script
+#          (passwords must contain one of !@#$%^&+= )
+# - Windows computer name cannot be more than 15 characters long, be
+#  entirely numeric, or contain the following
+#  characters: ` ~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?.
+#
+######################################################################
+
+
+if [ "$environment" = "singlevm" ]; then
+web_vm_size=Standard_D1
+ $azure vm create -n test1 --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-adm-subnet" --size $web_vm_size --ssh-key-value @$azure_public_key
+fi
+
+
+if [ "$environment" = "3-tier" ]; then
+
+# Interesting to see if a DS13 ($580/month) with a RAID of 10 spinning disks (hard to look up cost),
+# is better or worse than a DS12 ($290/month) with SSDs (hard to look up cost),
+#
+## This was the first environment tested for maps:
+# web_vm_size=Standard_DS1
+# app_vm_size=Standard_DS1
+# db_vm_size=Standard_DS13
+## It proved insufficient in CPU on the app tier
+## and tight on disk I/O on the database tier.
+#
+#  DS1 + DS1 + DS13        = $57 + $57 + $580       == $694
+#  DS1 + DS2 + DS12 + SSD  = $57 + 115 + 290  + 135 == $597
+#
+#   D1 has a 50GB local SSD.
+#   DS1 only has a 7GB local SSD.
+#
+#   osm2pgsql flat_node node caches are 31GB -- making D1 a wiser choice for those machines.
+#
+#
+#  Note that sometimes a faster machine can be cheaper. 
+#    right now in westus, a D12_v2 is $0.371/hr, compared to D12_v2 at $0.39/hr
+#    right now in westus, a D1_v2 is $0.073/hr, compared to D1 at $0.077/hr
+
+
+adm_vm_size=Standard_D1_v2
+web_vm_size=Standard_D1_v2
+app_vm_size=Standard_D1_v2
+db_vm_size=Standard_DS12_v2
+
+$azure vm create -n "admin-01"       --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-adm-subnet" --size $adm_vm_size --ssh-key-value @$azure_public_key
+$azure vm create -n "mapcache-01"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --size $web_vm_size --ssh-key-value @$azure_public_key &
+$azure vm create -n "mapcache-02"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --size $web_vm_size --ssh-key-value @$azure_public_key &
+$azure vm create -n "mapserv-01"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "mapserv-02"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "mapserv-03"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "gis-db-01"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "gis-db-02"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
+
+
+## TODO - hire a DBA that can set up replication and failover for the database and load balance queries across them
+# Add disks for a large RAID array as configured by this script:
+# https://github.com/Azure/azure-quickstart-templates/blob/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
+
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+# $azure vm disk attach-new -g $resourcegroup "map-db" 100 
+#
+# TODO: figure out how to automate this part: 
+#
+#  git clone https://github.com/Azure/azure-quickstart-templates
+#  sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+#  [ assume that created /datadisks/disk1 ]
+#  sudo service postgresql stop
+#  sudo mv /var/lib/postgresql /datadisks/disk1
+#  sudo ln -s /datadisks/disk1/postgresql /var/lib/postgresql
+#  sudo mkdir /datadisks/disk1/gisdata
+#  sudo ln -s /datadisks/disk1/gisdata /mnt/gisdata
+#  sudo chmod a+w /mnt/gisdata/.
+#  sudo service postgresql start
+#
+# And on a DS12 server, the following is also needed so osm2pgsql doesn't fail: 
+# 
+#  sudo mkdir /mnt/swap
+#  sudo dd if=/dev/zero of=/mnt/swap/20GB bs=1M count=20480
+#  sudo chown root:root /mnt/swap/20GB
+#  sudo chmod 0600 /mnt/swap/20GB
+#  sudo mkswap /mnt/swap/20GB
+#  sudo swapon /mnt/swap/20GB
+
+# Consider this instead 
+
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.01 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.02 --size-gb 500
+
+# or maybe even a RAID array of those.
+
+# Add spinning disks for storing map tiles
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.01 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.02 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-02" --disk mapcache-02.01 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-02" --disk mapcache-02.02 --size-gb 500
+
+
+# TODO: for the map tiles, figure out how to automate this part: 
+#
+#  git clone https://github.com/Azure/azure-quickstart-templates
+#  sudo bash azure-quickstart-templates/shared_scripts/ubuntu/vm-disk-utils-0.1.sh -s
+#  [ assume that created /datadisks/disk1 on /dev/md0]
+#
+# but then we need to re-format it with more inodes like:
+#
+#   sudo umount /datadisks/disk1
+#   sudo dd if=/dev/zero of=/dev/md0 bs=1000 count=10
+#   sudo mkfs.ext4 -i 4096 /dev/md0
+#   sudo mount /dev/md0 /datadisks/disk1
+#   sudo mkdir -p /datadisks/disk1/cache/mapcache
+#   sudo chown www-data /datadisks/disk1/cache/mapcache
+#   sudo rm -rf /var/cache/mapcache
+#   sudo ln -s /datadisks/disk1/cache/mapcache /var/cache/mapcache
+
+# TODO
+#   To generate the nationwide-spotcrime-dot-map, the mapserver VMs need 
+#   much more than the 3.4 GB RAM that the cheap Azure VMs have.
+#
+#   Each spotcrime tile at zoom level 3 takeas about 1.5 GB of RAM;
+#   and the app servers are configured to generate a few tiles in parallel.
+#
+#   Workaround that by adding 10GB of swap to those too.
+#
+#     sudo mkdir /mnt/swap
+#     sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
+#     sudo chown root:root /mnt/swap/10GB 
+#     sudo chmod 0600 /mnt/swap/10GB
+#     sudo mkswap  /mnt/swap/10GB
+#     sudo swapon /mnt/swap/10GB
+
+
+fi
+
+
+
+
+######################################################################
+# Query $Azure to see the running network.
+######################################################################
+vms=`az vm list -g  $resourcegroup | jq -r '.[] | .name'`
+for i in $vms; do
+    echo $i started
+done
+
+echo "To delete this environment, run"
+echo "   $azure group delete -q $resourcegroup"
+echo ""
+echo "IP addresses are at:"
+$azure network public-ip list -g $resourcegroup  | jq -r '.[] | {ipAddress:.ipAddress,name:.name}'
+
+# Note if we upgrade 'jq' we can probably use "objects" instead of 'select(type="object")'
+AZURE_ADMIN_IP=`az network public-ip list -g $resourcegroup | jq -r '.[] | select(type=="object") | {ipAddress:.ipAddress,name:.name} | select(.name == "admin-01PublicIP") | .ipAddress '`
+AZURE_WWW_IP=`az network public-ip list -g $resourcegroup | jq -r '.[] | select(type=="object") | {ipAddress:.ipAddress,name:.name} | select(.name == "mapcache-01PublicIP") | .ipAddress '`
+export AZURE_ADMIN_IP
+ssh-keyscan -t rsa,dsa $AZURE_ADMIN_IP >> ~/.ssh/known_hosts
+
+
+# Keep track of Azure Environments to make it easier to find the servers once they're launched. 
+mkdir -p ~/.azure
+echo "# new azure environment for $resourcegroup at `date`" > $HOME/.azure/azure_environment.$resourcegroup
+echo "export AZURE_RG=$resourcegroup" >> $HOME/.azure/azure_environment.$resourcegroup
+echo "export AZURE_ADMIN_IP=$AZURE_ADMIN_IP" >> $HOME/.azure/azure_environment.$resourcegroup
+echo "export AZURE_WWW_IP=$AZURE_WWW_IP" >> $HOME/.azure/azure_environment.$resourcegroup
+rm $HOME/.azure/azure_environment
+ln -s $HOME/.azure/azure_environment.$resourcegroup $HOME/.azure/azure_environment
+
+echo "finished setting up $environment environment in $resourcegroup at "`date`
