@@ -10,9 +10,9 @@ fontdir=$INSTALL_DIR/etc/mapserver/fonts
 mkdir -p $fontdir
 
 sudo apt-get -y install ttf-dejavu-extra
-sudo apt-get install fonts-ancient-scripts fonts-symbola
+sudo apt-get -y install fonts-ancient-scripts fonts-symbola
 
-[ -f ~/toner-carto/fonts/Arial-Unicode-Bold.ttf ] || (cd; git clone https://github.com/forensiclogic/toner-carto.git)
+[ -f ~/toner-carto/fonts/Arial-Unicode-Bold.ttf ] || (cd; git clone https://github.com/stamen/toner-carto.git)
 [ -f $fontdir/'Arial-Unicode-Bold.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Bold.ttf $fontdir/Arial-Unicode-Bold.ttf
 [ -f $fontdir/'Arial-Unicode-Regular.ttf' ] || cp ~/toner-carto/fonts/Arial-Unicode-Regular.ttf $fontdir/Arial-Unicode-Regular.ttf
 [ -f $fontdir/'DejaVuSansCondensed.ttf' ] || cp /usr/share/fonts/truetype/ttf-dejavu/DejaVu* $fontdir
