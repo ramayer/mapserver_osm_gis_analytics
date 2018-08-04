@@ -38,9 +38,9 @@ grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~
 cd
 
 # some users may prefer  git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
-[ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
-
-cd ~/mapserver_osm_gis_analytics
-
-git pull
+# [ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
+# 
+# cd ~/mapserver_osm_gis_analytics
+# 
+# git pull
 

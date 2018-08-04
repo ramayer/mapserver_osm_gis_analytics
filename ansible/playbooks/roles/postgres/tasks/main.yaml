@@ -52,32 +52,32 @@
 - name: Install spatial database packages from the Postgres project
   apt: pkg={{ item }} state=latest install_recommends=no
   with_items:
-    - postgresql-9.5
-    - postgresql-9.5-dbg
-    - postgresql-9.5-postgis-2.2
-    - postgresql-plperl-9.5
-    - postgresql-plpython3-9.5 
-    - postgresql-9.5-mysql-fdw
-    - postgresql-9.5-pgrouting
-    - postgresql-9.5-pgtap
-    - postgresql-9.5-plproxy
-    - postgresql-9.5-plr
-    - postgresql-9.5-postgis-2.2
-    - postgresql-9.5-postgis-scripts
-    - postgresql-9.5-powa
-    - postgresql-9.5-prefix
-    - postgresql-9.5-repmgr
-    - postgresql-client-9.5
-    - postgresql-contrib-9.5
-    - postgresql-plperl-9.5
-    - postgresql-plpython3-9.5
-    - postgresql-server-dev-9.5
+    - postgresql-10
+    - postgresql-10-dbg
+    - postgresql-10-postgis-2.4
+    - postgresql-plperl-10
+    - postgresql-plpython3-10 
+    - postgresql-10-mysql-fdw
+    - postgresql-10-pgrouting
+    - postgresql-10-pgtap
+    - postgresql-10-plproxy
+    - postgresql-10-plr
+    - postgresql-10-postgis-2.4
+    - postgresql-10-postgis-scripts
+    - postgresql-10-powa
+    - postgresql-10-prefix
+    - postgresql-10-repmgr
+    - postgresql-client-10
+    - postgresql-contrib-10
+    - postgresql-plperl-10
+    - postgresql-plpython3-10
+    - postgresql-server-dev-10
 
 # ALSO CONSIDER:
-#    - postgresql-9.5-mimeo
-#    - postgresql-9.5-partman
-#    - postgresql-9.5-pgq3
-#    - postgresql-9.5-slony1-2
+#    - postgresql-10-mimeo
+#    - postgresql-10-partman
+#    - postgresql-10-pgq3
+#    - postgresql-10-slony1-2
 
 
 # The ansible playbook to install the spatial database now outputs this message
@@ -95,22 +95,22 @@
     - osm2pgsql
 
 - name: Allow replication user to connect from the database tier
-  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+replication"      line="host    replication     postgres        127.0.0.1/32            md5"
+  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+replication"      line="host    replication     postgres        127.0.0.1/32            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+all\s+all\s+10\." line="host    all     all        10.0.0.0/8            md5"
+  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+all\s+all\s+10\." line="host    all     all        10.0.0.0/8            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^host\s+all\s+all\s+192\." line="host    all     all        192.168.0.0/16            md5"
+  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+all\s+all\s+192\." line="host    all     all        192.168.0.0/16            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/9.5/main/pg_hba.conf regexp="^local\s+all\s+all\s+md5" line="local    all     all        md5"
+  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^local\s+all\s+all\s+md5" line="local    all     all        md5"
   notify:
     - restart postgres
 
@@ -128,15 +128,19 @@
   notify: 
     - restart postgres
 
+
+# https://github.com/ansible/ansible/issues/33753
+# Ansible module postgresql_user not compatible with PostgreSQL 10.1 
+
 - name: create privileged gis user 
   become: yes
   become_user: postgres
-  postgresql_user: name=gis role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password }} 
+  postgresql_user: name=gis role_attr_flags=CREATEDB,SUPERUSER  password={{ database_password }} encrypted=yes
 
 - name: create unprivileged mapserver user
   become: yes
   become_user: postgres
-  postgresql_user: name=mapserver role_attr_flags=NOSUPERUSER  password={{ database_password }} 
+  postgresql_user: name=mapserver role_attr_flags=NOSUPERUSER  password={{ database_password }} encrypted=yes
 
 - name: create gis database
   become: yes
