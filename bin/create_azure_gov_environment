@@ -329,14 +329,14 @@ web_vm_size=Standard_D1_v2
 app_vm_size=Standard_D1_v2
 db_vm_size=Standard_DS12_v2
 
-$azure vm create -n "admin-01"       --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-adm-subnet" --size $adm_vm_size --ssh-key-value @$azure_public_key
-$azure vm create -n "mapcache-01"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --size $web_vm_size --ssh-key-value @$azure_public_key &
-$azure vm create -n "mapcache-02"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --size $web_vm_size --ssh-key-value @$azure_public_key &
-$azure vm create -n "mapserv-01"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
-$azure vm create -n "mapserv-02"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
-$azure vm create -n "mapserv-03"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
-$azure vm create -n "gis-db-01"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
-$azure vm create -n "gis-db-02"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "admin-01"       --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-adm-subnet" --nsg adm-tier --size $adm_vm_size --ssh-key-value @$azure_public_key
+$azure vm create -n "mapcache-01"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --nsg web-tier --size $web_vm_size --ssh-key-value @$azure_public_key &
+$azure vm create -n "mapcache-02"    --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-www-subnet" --nsg web-teir --size $web_vm_size --ssh-key-value @$azure_public_key &
+$azure vm create -n "mapserv-01"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --nsg app-tier --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "mapserv-02"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --nsg app-tier --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "mapserv-03"     --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-app-subnet" --nsg app-tier --size $app_vm_size --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "gis-db-01"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --nsg db-tier  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
+$azure vm create -n "gis-db-02"      --admin-username gisadmin -g $resourcegroup --image UbuntuLTS --vnet-name "gis-vnet" --subnet "gis-db-subnet"  --nsg db-tier  --size $db_vm_size  --ssh-key-value @$azure_public_key --public-ip-address ""
 
 
 ## TODO - hire a DBA that can set up replication and failover for the database and load balance queries across them
