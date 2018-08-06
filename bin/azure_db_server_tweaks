@@ -21,7 +21,7 @@ sudo chmod a+w /mnt/gisdata/.
 # because it will try to use over 40GB of RAM just before creating indexes.
 # Possibly much more depending on parameters passed to osm2pgsql.
 # 
-# see https://github.com/forensiclogic/mapserver_osm_gis_analytics/blob/master/doc/loading_osm_data__memory_usage.png
+# see doc/loading_osm_data__memory_usage.png
 
 sudo mkdir /mnt/swap
 sudo dd if=/dev/zero of=/mnt/swap/20GB bs=1M count=20480

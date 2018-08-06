@@ -37,6 +37,9 @@ grep -q github.com ~/.ssh/known_hosts || (ssh-keyscan -t rsa,dsa github.com >> ~
 
 cd
 
+git clone https://github.com/Azure/azure-quickstart-templates
+
+
 # some users may prefer  git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
 # [ -d mapserver_osm_gis_analytics ] || git clone https://github.com/forensiclogic/mapserver_osm_gis_analytics.git
 # 
