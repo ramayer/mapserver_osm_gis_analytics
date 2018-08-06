@@ -5,7 +5,9 @@ environment=""
 resourcegroup=""
 azure_public_key=~/.ssh/id_rsa.pub
 
-linuximg=Canonical:UbuntuServer:16.04.0-LTS:16.04.201604203
+# az vm image list
+# az vm image list-skus
+linuximg=Canonical:UbuntuServer:16.04-LTS:latest
 windowsimg=MicrosoftWindowsServer:WindowsServer:2012-R2-Datacenter:4.0.20150825
 azure_acct='BizSpark'
 azure_region='westus'
@@ -376,19 +378,33 @@ $azure vm create -n "gis-db-02"      --admin-username gisadmin -g $resourcegroup
 #  sudo mkswap /mnt/swap/20GB
 #  sudo swapon /mnt/swap/20GB
 
-# Consider this instead 
 
-$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.01 --size-gb 500
-$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01" --disk gis-db-01.02 --size-gb 500
+# Apparently larger RAID arrays are important on Azure:
+# 
+# https://blogs.msdn.microsoft.com/anubhavk/2017/03/03/migrating-cassandra-cluster-to-azure-premium-storage-at-scale/
+#
+#  "To solve the problems listed above, we started investigating Azure
+#  Premium Storage. This is a latest offering from Azure that provides
+#  network attached SSD storage with a local SSD cache. The highest
+#  SKU is DS 14, and biggest disk is P30 (1 TB). With appropriate RAID
+#  configurations, Azure provides linearly scalable IOPS (1 disk
+#  provides 5000, so a RAID-0 array of 3 disks provides 15000). There
+#  is plenty of documentation online on how this can help run things
+#  at scale with reliability as key tenet."
 
-# or maybe even a RAID array of those.
 
-$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "admin-01"    --disk gis-data-01.01 --size-gb 1000
-$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "admin-01"    --disk gis-data-01.02 --size-gb 1000
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01"    --disk gis-db-01.01 --size-gb 300
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01"    --disk gis-db-01.02 --size-gb 300
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01"    --disk gis-db-01.03 --size-gb 300
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-db-01"    --disk gis-db-01.04 --size-gb 300
+
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "admin-01"    --disk gis-data-01.01 --size-gb 500
+$azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "admin-01"    --disk gis-data-01.02 --size-gb 500
 
 # Add spinning disks for storing map tiles
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.01 --size-gb 500
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.02 --size-gb 500
+
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-02" --disk mapcache-02.01 --size-gb 500
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-02" --disk mapcache-02.02 --size-gb 500
 
