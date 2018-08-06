@@ -111,7 +111,7 @@ azure='/usr/bin/time az'
 ######################################################################
 
 az cloud set --name AzureUSGovernment
-location=`az account list-locations | jq -r ".[] | .name" | grep -i arizona`
+location=`az account list-locations | jq -r ".[] | .name" | grep -i virgin`
 
 
 ######################################################################
