@@ -383,6 +383,9 @@ $azure vm disk attach --new -g $resourcegroup --sku Premium_LRS --vm-name "gis-d
 
 # or maybe even a RAID array of those.
 
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "admin-01"    --disk gis-data-01.01 --size-gb 1000
+$azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "admin-01"    --disk gis-data-01.02 --size-gb 1000
+
 # Add spinning disks for storing map tiles
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.01 --size-gb 500
 $azure vm disk attach --new -g $resourcegroup --sku Standard_LRS --vm-name "mapcache-01" --disk mapcache-01.02 --size-gb 500
@@ -448,7 +451,6 @@ AZURE_ADMIN_IP=`az network public-ip list -g $resourcegroup | jq -r '.[] | selec
 AZURE_WWW_IP=`az network public-ip list -g $resourcegroup | jq -r '.[] | select(type=="object") | {ipAddress:.ipAddress,name:.name} | select(.name == "mapcache-01PublicIP") | .ipAddress '`
 export AZURE_ADMIN_IP
 ssh-keyscan -t rsa,dsa $AZURE_ADMIN_IP >> ~/.ssh/known_hosts
-
 
 # Keep track of Azure Environments to make it easier to find the servers once they're launched. 
 mkdir -p ~/.azure
