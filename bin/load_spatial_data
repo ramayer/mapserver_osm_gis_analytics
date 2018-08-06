@@ -62,7 +62,7 @@ bbox=-122.26463,37.79822,-122.24828,37.81079
 
 if [ -d "/mnt/gisdata" ] ; then
    tmpdir=/mnt/gisdata/tmp
-   gis_data_dir=/mnt/gisdata/tmp
+   gis_data_dir=/mnt/gisdata
 fi
 
 if [ -r "$HOME/.pgpass" ] ; then
@@ -168,19 +168,39 @@ function load_osm_data {
 
   if [ "$map_data" == "arizona" ]; then 
      wget -nc http://download.geofabrik.de/north-america/us/arizona-latest.osm.pbf
-     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs arizona.osm.pbf
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs arizona-latest.osm.pbf
   fi
 
   if [ "$map_data" == "states" ]; then 
-     wget -nc http://download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/texas-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/north-america/us/florida-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/british-isles-latest.osm.pbf
-     wget -nc http://download.geofabrik.de/europe/greece-latest.osm.pbf
-     # note that you can not use the "--slim" mode with states that touch each other.
-     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim --number-processes $parallel_jobs california-latest.osm.pbf british-columbia-latest.osm.pbf new-mexico-latest.osm.pbf texas-latest.osm.pbf florida-latest.osm.pbf british-isles-latest.osm.pbf greece-latest.osm.pbf
+     arr=(
+     download.geofabrik.de/north-america/canada/british-columbia-latest.osm.pbf
+     download.geofabrik.de/north-america/us/arizona-latest.osm.pbf
+     download.geofabrik.de/north-america/us/california-latest.osm.pbf
+     download.geofabrik.de/south-america/argentina-latest.osm.pbf
+    )
+
+#     download.geofabrik.de/europe/british-isles-latest.osm.pbf
+#     download.geofabrik.de/europe/greece-latest.osm.pbf
+#     download.geofabrik.de/north-america/us/florida-latest.osm.pbf
+#     download.geofabrik.de/north-america/us/new-mexico-latest.osm.pbf
+#     download.geofabrik.de/north-america/us/oregon-latest.osm.pbf
+#     download.geofabrik.de/north-america/us/texas-latest.osm.pbf
+#     download.geofabrik.de/asia/iraq-latest.osm.pbf
+
+     states_dir=states
+     mkdir -p $states_dir
+     cd $states_dir
+     for item in ${arr[*]}; do
+         wget -x -nc http://$item
+         if [ ! -f $item.o5m ]; then
+	     echo converting $item
+             osmconvert  $item -o=$item.o5m
+         fi
+     done
+     echo combining `find download.geofabrik.de -name '*'.o5m`
+     osmconvert  `find download.geofabrik.de -name '*'.o5m` -o=./combined.o5m
+     # note that you can not use the "--slim" mode with separate .pbf files that touch each other; since they have redundant nodes.
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST -C 10000 --hstore --slim --number-processes $parallel_jobs combined.o5m
   fi
 
   if [ "$map_data" == "small" ]; then 
@@ -281,11 +301,11 @@ function load_osm_data {
      # Workaround is to add 10GB of swap space like this:
      #
      # sudo mkdir /mnt/swap
-     # sudo dd if=/dev/zero of=/mnt/swap/10GB bs=1M count=10240
-     # sudo chown root:root /mnt/swap/10GB
-     # sudo chmod 0600 /mnt/swap/10GB
-     # sudo mkswap /mnt/swap/10GB
-     # sudo swapon /mnt/swap/10GB
+     # sudo dd if=/dev/zero of=/mnt/swap/15GB bs=1M count=15000
+     # sudo chown root:root /mnt/swap/15GB
+     # sudo chmod 0600 /mnt/swap/15GB
+     # sudo mkswap /mnt/swap/15GB
+     # sudo swapon /mnt/swap/15GB
      osmconvert  tmp/*.o5m -o=./new.o5m
 
      # Even though osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST supports multiple files we can not use it like this

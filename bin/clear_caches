@@ -11,16 +11,16 @@ else
    echo " if you're not installing locally,  consider a symbolic link to creating ~/.ansible/hosts"
    echo " perhaps" 
    echo "    mkdir -p ~/.ansible/hosts"
-   echo "    ln -s ~/mapserver_osm_gis_analytics/ansible/hosts.nonredundant ~/.ansible/hosts"
-   ansible_hosts_file=$HOME/mapserver_osm_gis_analytics/ansible/hosts.minimal
+   echo "    ln -s $PROJECT_DIR/ansible/hosts.nonredundant ~/.ansible/hosts"
+   ansible_hosts_file=$PROJECT_DIR/ansible/hosts.minimal
 fi
 
 cd $PROJECT_DIR/ansible/playbooks   # to find ansible.cfg
 
-ansible-playbook  -i $ansible_hosts_file ~/mapserver_osm_gis_analytics/ansible/playbooks/clear_caches.yaml
+ansible-playbook  -i $ansible_hosts_file $PROJECT_DIR/ansible/playbooks/clear_caches.yaml
 
 
 echo "consider running some of the following on the map cache servers"
 echo "  sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t white_roads  -g g2 -z 0,12"
 echo "  sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t white_roads -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66"
-echo "  for i in `ls /var/cache/mapcache`; do echo $i; sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t $i -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66 ; done"
+echo '  for i in `ls /var/cache/mapcache`; do echo $i; sudo -u  www-data  mapcache_seed -n 10 -c /etc/mapcache/mapcache.xml -t $i -g g2 -z 0,15  -e -13620594.25,4527600.32,-13593742.87,4563243.66 ; done'
