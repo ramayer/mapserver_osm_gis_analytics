@@ -1233,6 +1233,11 @@ LAYER
         END
         <%= road_label("road_label",9,6) %>
     END
+
+    <%
+	# TODO - figure out why road labels for living streets aren't showing:
+	# /test_maps.html#map=19/-12355719.27/3791522.93/0/["Dark Roads","Uncached user-generated layers","School Zones","All OSM Lines"]
+    %>
     <%= road_class('motorway'        ,14  ,10,5) %>
     <%= road_class('trunk'           ,13  , 9,5) %>
     <%= road_class('primary'         ,12  , 8,5) %>
@@ -1240,6 +1245,7 @@ LAYER
     <%= road_class('tertiary'        ,10  , 8,4) %>
     <%= road_class('unclassified'    , 9  , 8,3) %>
     <%= road_class('residential'     , 8  , 8,2) %>
+    <%= road_class('living_street'   , 7  , 7,1) %>
     <%= road_class('service'         , 5  , 7,1) %>     <% # perhaps these should be a different class %>
     <%= road_class('road'            , 5  , 7,1) %>
     <%= road_class('motorway_link'   , 7  , 0,0) %>
@@ -1348,6 +1354,7 @@ LAYER
     <%= road_class('tertiary'        , 9  , 8,4) %>
     <%= road_class('unclassified'    , 8  , 8,3) %>
     <%= road_class('residential'     , 7  , 8,2) %>
+    <%= road_class('living_street'   , 6  , 7,1) %>
     <%= road_class('road'            , 5  , 7,1) %>
     <%= road_class('service'         , 5  , 7,1) %>     <% # perhaps these should be a different class %>
     <%= road_class('motorway_link'   , 7  , 0,0) %>
@@ -1355,7 +1362,6 @@ LAYER
     <%= road_class('primary_link'    , 6  , 0,0) %>
     <%= road_class('secondary_link'  , 5.5, 0,0) %>
     <%= road_class('tertiary_link'   , 5  , 0,0) %>
-
 
     CLASS
         EXPRESSION ('[highway]'='footway' or '[highway]'='pedestrian' or '[route]'='bicycle' or '[highway]'='path' or '[highway]'='track' or '[highway]'='bridleway' or '[highway]'='steps')
@@ -1429,6 +1435,7 @@ LAYER
     <%= road_class('tertiary'        , 6  , 7,3) %>
     <%= road_class('unclassified'    , 4  , 7,2) %>
     <%= road_class('residential'     , 4  , 7,1) %>
+    <%= road_class('living_street'   , 3  , 7,1) %>
     <%= road_class('road'            , 1  , 7,1) %>
     <%= road_class('service'         , 1  , 7,1) %>     <% # perhaps these should be a different class %>
     <%= road_class('motorway_link'   , 7  , 0,0) %>
@@ -1493,6 +1500,7 @@ LAYER
     <%= road_class('tertiary'        , 3  , 7,2) %>
     <%= road_class('unclassified'    , 2  , 0,0) %>
     <%= road_class('residential'     , 2  , 0,0) %>
+    <%= road_class('living_street'   , 1  , 0,0) %>
     <%= road_class('road'            , 1  , 0,0) %>
     <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
     <%= road_class('motorway_link'   , 7  , 0,0) %>
@@ -1557,6 +1565,7 @@ LAYER
     <%= road_class('tertiary'        , 2  , 7,1) %>
     <%= road_class('unclassified'    , 1  , 0,0) %>
     <%= road_class('residential'     , 1  , 0,0) %>
+    <%= road_class('living_street'   , 1  , 0,0) %>
     <%= road_class('road'            , 1  , 0,0) %>
     <%= road_class('service'         , 1  , 0,0) %>     <% # perhaps these should be a different class %>
     <%= road_class('motorway_link'   , 3  , 0,0) %>

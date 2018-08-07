@@ -26,6 +26,7 @@ $map_colors = $map_colors.merge({
   residential:  {color:'#ffffff', outline:'#ded5c2'},
   service:      {color:'#ffffff', outline:'#ded5c2'},
   road:         {color:'#ffffff', outline:'#ded5c2'},
+  living_street:{color:'#ffffff', outline:'#ded5c2'},
 
   road_line:    {color:'#ffffff'},
 
