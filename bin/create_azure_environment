@@ -417,6 +417,8 @@ fi
 
 
 
+$azure keyvault create -g $resourcegroup -n gis-keyvault
+
 
 ######################################################################
 # Query $Azure to see the running network.
