@@ -54,6 +54,7 @@ $map_colors = {
   residential:  {color: interpolate('#ffffff','#ffffff',0.6), outline:road_outline},
   service:      {color: interpolate('#ffffff','#ffffff',0.7), outline:road_outline},
   road:         {color: interpolate('#ffffff','#ffffff',1.0), outline:road_outline},
+  living_street:{color: interpolate('#ffffff','#ffffff',0.7), outline:road_outline},
   road_line:    {color:'#808080'},
   road_label:      {color:'#000000',outline:'#ffffff'}, 
 
