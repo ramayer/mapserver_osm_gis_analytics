@@ -2,11 +2,9 @@
 
 ## Prerequisites
 
-Currently only tested under Ubuntu 15.10
+Currently only tested under Ubuntu 15.10 and 16.04
 
 ## Installation Instructions
-
-
 
 ### Quick start - single dev machine - tiny map.
 
@@ -19,30 +17,22 @@ Currently only tested under Ubuntu 15.10
     git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
     mapserver_osm_gis_analytics/bin/install_all
 
-
 ### Less quick start (3-tiered architecture)
 
 * Load balanced 3-tiered architecture.
-* Full planet of map data (warning - takes days to load)
+* a subset of map data
 
-instructions
+instructions:
 
-    sudo apt-get install git ansible
-    git clone git@github.com:forensiclogic/mapserver_osm_gis_analytics.git
-    cd mapserver_osm_gis_analytics
+    cd <wherever-you-thecked-out-this-project>
+    # possibly  edit ./ansible/hosts.small
+    ./bin/install_3_tier
 
-    [
-       edit ./ansible/hosts/hosts.3-tier
-       and set appropriate IP addresses or Hostnames
-       for the machines 
-    ]
-
-    ansible-playbook -i ~/mapserver_osm_gis_analytics/ansible/hosts.3-tier ~/mapserver_osm_gis_analytics/ansible/playbooks/install_mapserver_osm_gis_analytics.yaml 
-
-# And to load map data.
+To load a larger set of map data, try: 
 
     nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &
 
+but expect it to take days to build the indexes; and will probably give out-of-memory errors if you didn't increase machine sizes and disks.
 
 --------------------------------------------------------------------------------
 
@@ -86,7 +76,7 @@ Copy&paste of each command to create an environment on 2017-01-04:
     nohup env PGUSER=gis PGHOST=localhost PGDATABASE=gis_planet mapserver_osm_gis_analytics/bin/load_spatial_data --load-osm-data=planet &> planet.out &
 
 
-# It's convenient on the admin server to add the following lines to .bashrc
+# Note, It's convenient on the admin server to add the following lines to .bashrc
 export PGPORT=5432
 export PGUSER=gis
 export PGDATABASE=gis
