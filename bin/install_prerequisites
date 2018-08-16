@@ -23,6 +23,8 @@ else
 fi
 
 sudo apt-get update
+sudo apt-get -y upgrade
+sudo apt-get -y autoremove
 # python-keyczar is needed for the 'accelerate: true' ansible optimization
 sudo apt-get install -y ansible git ruby jq  python-keyczar postgresql-client osm2pgsql gdal-bin libwww-perl osmctools
 sudo apt-get install -y openssh-server   # to manage the local (admin) host

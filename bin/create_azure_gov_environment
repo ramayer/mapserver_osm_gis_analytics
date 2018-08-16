@@ -30,7 +30,7 @@ function show_usage {
     echo "     $0 --environment=singlevm   --resource-group=maps-dev-1"
     echo "     $0 --environment=3-tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
     echo "     For Gov"
-    echo "     $0 --environment=3-tier      --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
+    echo "     $0 --environment=3-tier  --key=$HOME/.azure/key.pub  --resource-group=maps-planet-2 --azure-acct='Microsoft Azure Sponsorship'"
     exit 2
 }
 
@@ -46,6 +46,11 @@ while getopts "$optspec" optchar; do
                     val=${OPTARG#*=}
                     opt=${OPTARG%=$val}
                     environment=$val
+                    ;;
+                key=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    azure_public_key=$val
                     ;;
                 resource-group=*)
                     val=${OPTARG#*=}
@@ -105,7 +110,6 @@ echo "setting up $environment environment in $resourcegroup at "`date`
 # Set a Resource Group Name for this test environment
 ######################################################################
 
-set -x
 azure='/usr/bin/time az'
 
 ######################################################################
@@ -324,9 +328,10 @@ if [ "$environment" = "3-tier" ]; then
 #  Note that sometimes a faster machine can be cheaper. 
 #    right now in westus, a D12_v2 is $0.371/hr, compared to D12_v2 at $0.39/hr
 #    right now in westus, a D1_v2 is $0.073/hr, compared to D1 at $0.077/hr
+#
+# az vm list-sizes --output table -l $location
 
-
-adm_vm_size=Standard_D1_v2
+adm_vm_size=Standard_DS2_v2
 web_vm_size=Standard_D1_v2
 app_vm_size=Standard_D1_v2
 db_vm_size=Standard_DS12_v2
