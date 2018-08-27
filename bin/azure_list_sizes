@@ -1,0 +1,4 @@
+#!/bin/bash
+
+location=`az account list-locations | jq -r ".[] | .name" | grep -i virgin`
+az vm list-sizes -l $location -o table
