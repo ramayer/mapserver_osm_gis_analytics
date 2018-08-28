@@ -41,7 +41,6 @@
     - protobuf-c-compiler
     - protobuf-compiler
     - python-dev
-    - repmgr
     - subversion
     - swig
     - tilecache
