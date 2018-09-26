@@ -156,10 +156,13 @@ function load_osm_data {
   echo "DROP TABLE IF EXISTS planet_osm_polygon CASCADE;" | psql
 
   if [ "$map_data" == "planet" ]; then 
-     wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
+     # already downloaded - wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
      # Warning - you need a huge machine to build the whole planet.
-     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 22000 --number-processes $parallel_jobs --keep-coastlines planet-latest.osm.pbf
+echo  $parallel_jobs
+echo "job count"
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 12000 --number-processes $parallel_jobs --keep-coastlines --cache-strategy dense planet-latest.osm.pbf
   fi
+#exit
 
   if [ "$map_data" == "california" ]; then 
      wget -nc http://download.geofabrik.de/north-america/us/california-latest.osm.pbf
@@ -200,7 +203,7 @@ function load_osm_data {
      echo combining `find download.geofabrik.de -name '*'.o5m`
      osmconvert  `find download.geofabrik.de -name '*'.o5m` -o=./combined.o5m
      # note that you can not use the "--slim" mode with separate .pbf files that touch each other; since they have redundant nodes.
-     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST -C 10000 --hstore --slim --number-processes $parallel_jobs combined.o5m
+     osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST -C 6000 --hstore --slim --number-processes $parallel_jobs combined.o5m
   fi
 
   if [ "$map_data" == "small" ]; then 
