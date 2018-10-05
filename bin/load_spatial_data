@@ -60,6 +60,8 @@ osm_data=none
 create_db=false
 bbox=-122.26463,37.79822,-122.24828,37.81079
 
+echo "trying $parallel_jobs parallel jobs"
+
 if [ -d "/mnt/gisdata" ] ; then
    tmpdir=/mnt/gisdata/tmp
    gis_data_dir=/mnt/gisdata
@@ -158,8 +160,7 @@ function load_osm_data {
   if [ "$map_data" == "planet" ]; then 
      # already downloaded - wget -nc http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
      # Warning - you need a huge machine to build the whole planet.
-echo  $parallel_jobs
-echo "job count"
+      echo  $parallel_jobs jobs
      osm2pgsql --proj 3857 --flat-nodes $flat_node_file -d $PGDATABASE -U $PGUSER -H $PGHOST --hstore --slim -C 12000 --number-processes $parallel_jobs --keep-coastlines --cache-strategy dense planet-latest.osm.pbf
   fi
 #exit

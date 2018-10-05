@@ -41,7 +41,6 @@
     - protobuf-c-compiler
     - protobuf-compiler
     - python-dev
-    - repmgr
     - subversion
     - swig
     - tilecache
@@ -52,26 +51,26 @@
 - name: Install spatial database packages from the Postgres project
   apt: pkg={{ item }} state=latest install_recommends=no
   with_items:
-    - postgresql-10
-    - postgresql-10-dbg
-    - postgresql-10-postgis-2.4
-    - postgresql-plperl-10
-    - postgresql-plpython3-10 
-    - postgresql-10-mysql-fdw
-    - postgresql-10-pgrouting
-    - postgresql-10-pgtap
-    - postgresql-10-plproxy
-    - postgresql-10-plr
-    - postgresql-10-postgis-2.4
-    - postgresql-10-postgis-scripts
-    - postgresql-10-powa
-    - postgresql-10-prefix
-    - postgresql-10-repmgr
-    - postgresql-client-10
-    - postgresql-contrib-10
-    - postgresql-plperl-10
-    - postgresql-plpython3-10
-    - postgresql-server-dev-10
+    - postgresql-9.6
+    - postgresql-9.6-dbg
+    - postgresql-9.6-postgis-2.4
+    - postgresql-plperl-9.6
+    - postgresql-plpython3-9.6 
+    - postgresql-9.6-mysql-fdw
+    - postgresql-9.6-pgrouting
+    - postgresql-9.6-pgtap
+    - postgresql-9.6-plproxy
+    - postgresql-9.6-plr
+    - postgresql-9.6-postgis-2.4
+    - postgresql-9.6-postgis-scripts
+    - postgresql-9.6-powa
+    - postgresql-9.6-prefix
+    - postgresql-9.6-repmgr
+    - postgresql-client-9.6
+    - postgresql-contrib-9.6
+    - postgresql-plperl-9.6
+    - postgresql-plpython3-9.6
+    - postgresql-server-dev-9.6
 
 # ALSO CONSIDER:
 #    - postgresql-10-mimeo
@@ -95,22 +94,22 @@
     - osm2pgsql
 
 - name: Allow replication user to connect from the database tier
-  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+replication"      line="host    replication     postgres        127.0.0.1/32            md5"
+  lineinfile: dest=/etc/postgresql/9.6/main/pg_hba.conf regexp="^host\s+replication"      line="host    replication     postgres        127.0.0.1/32            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+all\s+all\s+10\." line="host    all     all        10.0.0.0/8            md5"
+  lineinfile: dest=/etc/postgresql/9.6/main/pg_hba.conf regexp="^host\s+all\s+all\s+10\." line="host    all     all        10.0.0.0/8            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^host\s+all\s+all\s+192\." line="host    all     all        192.168.0.0/16            md5"
+  lineinfile: dest=/etc/postgresql/9.6/main/pg_hba.conf regexp="^host\s+all\s+all\s+192\." line="host    all     all        192.168.0.0/16            md5"
   notify:
     - restart postgres
 
 - name: Allow our other servers to connect using passwords as the firewall allows.
-  lineinfile: dest=/etc/postgresql/10/main/pg_hba.conf regexp="^local\s+all\s+all\s+md5" line="local    all     all        md5"
+  lineinfile: dest=/etc/postgresql/9.6/main/pg_hba.conf regexp="^local\s+all\s+all\s+md5" line="local    all     all        md5"
   notify:
     - restart postgres
 
@@ -127,6 +126,14 @@
   command: psql -U postgres postgres -c "ALTER SYSTEM SET log_min_duration_statement=1000;"
   notify: 
     - restart postgres
+
+- name: increase max connections for faster indexing on large VMs.
+  become: yes
+  become_user: postgres
+  command: psql -U postgres postgres -c "ALTER SYSTEM SET max_connections=200;"
+  notify: 
+    - restart postgres
+
 
 
 # https://github.com/ansible/ansible/issues/33753
