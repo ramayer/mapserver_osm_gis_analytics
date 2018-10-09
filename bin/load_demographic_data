@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# sudo apt install -y python3-csvkit
+#
+#  
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source $DIR/default_environment.sh
+
+mkdir -p $GIS_DATA_DIR/demographics
+cd  $GIS_DATA_DIR/demographics
+
+wget -nc https://www2.census.gov/geo/tiger/TIGER_DP/2016ACS/ACS_2016_5YR_BG_06.gdb.zip
+unzip ACS_2016_5YR_BG_06.gdb.zip
+ogrinfo ACS_2016_5YR_BG_06_CALIFORNIA.gdb
+ogr2ogr -f "PostgreSQL" PG:"dbname=gis"  ACS_2016_5YR_BG_06_CALIFORNIA.gdb  -progress --config PG_USE_COPY YES
+
+
+echo "create index x02_race__geoid on x02_race(geoid);" | psql
+
+
+echo "CREATE VIEW simpler_races AS SELECT geoid, B02001e1 AS total_pop, B02001e2 AS white, B02001e3 AS black, B02001e4 AS nat_am, B02001e5 AS asian, B02001e6 AS pac_island, B02001e7 AS other, B02001e8 AS two_or_more FROM x02_race;" | psql
+
+wget -nc https://www2.census.gov/programs-surveys/popest/geographies/2016/all-geocodes-v2016.xlsx
+in2csv all-geocodes-v2016.xlsx > fips_codes.csv
+tail --lines=+5  fips_codes.csv > fips_codes_without_extra_headers.csv
+echo "CREATE TABLE fips_codes(level TEXT, state TEXT, county TEXT, county_subdivision TEXT, place TEXT, city TEXT, name TEXT)" | psql gis
+echo "\COPY fips_codes FROM 'fips_codes_without_extra_headers.csv' CSV HEADER;" | psql gis
+
+echo "CREATE VIEW simpler_beats AS SELECT name AS beat_name,ST_Union(ST_Transform(geom,4269)) as beat_geom FROM oak_policebeats GROUP BY name;"
+
+# At this point, the following queries can make some pretty interesting observations
+# SELECT geoid_data,'County ' || countyfp || ', Tract ' || tractce || ', ' || namelsad,beat_name FROM acs_2016_5yr_bg_06_california JOIN simpler_beats ON (ST_Intersects(acs_2016_5yr_bg_06_california.wkb_geometry, beat_geom));
+# select sum(st_area(geom))*power(0.3048,2)/1000/1000 from policebeats2014 limit 1;
+# select st_asewkt(beat_geom) from simpler_beats limit 1;
+
+echo "CREATE VIEW simpler_blockgroups AS SELECT geoid_data AS geoid, (select name from fips_codes where statefp = state and countyfp = county and level='050')  || ' Tract ' || tractce || ' ' || namelsad AS blockgroup_name, wkb_geometry AS blockgroup_geom FROM acs_2016_5yr_bg_06_california; " | psql
+
+echo "CREATE VIEW blockgroup_beat_overlap AS SELECT beat_name,blockgroup_name, geoid, ST_Area(geography(ST_Intersection(beat_geom,blockgroup_geom))) / ST_Area(geography(blockgroup_geom)) as fraction_of_blockgroup FROM simpler_blockgroups JOIN simpler_beats ON (ST_Intersects(beat_geom,blockgroup_geom)) order by blockgroup_name,beat_name;" | psql
+
+echo "CREATE VIEW contribution_from_each_bg as SELECT beat_name, total_pop*fraction_of_blockgroup as total, white*fraction_of_blockgroup as white, black*fraction_of_blockgroup as black, nat_am*fraction_of_blockgroup as nat_am, asian*fraction_of_blockgroup as asian, pac_island*fraction_of_blockgroup as pac_island, other*fraction_of_blockgroup as other, two_or_more*fraction_of_blockgroup as two_or_more, '' || round(fraction_of_blockgroup*100) || '% of ' || blockgroup_name as lbl FROM blockgroup_beat_overlap JOIN simpler_races USING(geoid) order by fraction_of_blockgroup desc;" | psql
+
+echo "CREATE MATERIALIZED VIEW beat_demographics_by_race AS SELECT beat_name, round(sum(white)) as white, round(sum(black)) as black, round(sum(nat_am)) as nat_am, round(sum(asian)) as asian, round(sum(pac_island)) as pac_island, round(sum(other)) as other, round(sum(two_or_more)) as two_or_more, array_to_string( array_agg(lbl), '; ', '?') FROM contribution_from_each_bg group by beat_name;" | psql
+
+
+# expect some errors like
+#   ERROR 1: ALTER TABLE "x25_housing_characteristics" ADD COLUMN "b25093m29" FLOAT8
+#   ERROR:  tables can have at most 1600 columns
+#   ERROR:  row is too big: size 12744, maximum size 8160
+
+
+
+# wget https://www2.census.gov/geo/tiger/TIGER_DP/2014ACS/ACS_2014_5YR_BG_06.gdb.zip
+# ogr2ogr -f "PostgreSQL" PG:"host=localhost port=5432 dbname=census user=gis" ACS_2014_5YR_BG_06_CALIFORNIA.gdb -progress --config PG_USE_COPY YES
+# Nope - that doesn't work.
+# ERROR 1: ALTER TABLE "x25_housing_characteristics" ADD COLUMN "b25093m29" INTEGER
+# ERROR:  tables can have at most 1600 columns
+#
+# Also no luck converting it to a shapefile
+#
+#  ogr2ogr acs ACS_2014_5YR_BG_06_CALIFORNIA.gdb
+#   Warning 6: Normalized/laundered field name: 'B07202PRm10' to 'B07202PR_2'
+#   Warning 1: Creating a 256th field, but some DBF readers might only support 255 fields
+#   ... 
+#   Warning 1: Value 384825000 of field B25082e1 of feature 345 not successfully written. Possibly due to too larger number with respect to field width
+#   More than 1000 errors or warnings have been reported. No more will be reported from now.
+#
+# TODO - A different format of demographic data can be found here: 
+# http://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+# I think it's the same data, but not joined to the geospatial information.
+#
+# TODO - also look into if the counties have better demographic data
+# This may
+#   https://data.oaklandnet.com/dataset/Alameda-County-Census-Tract-Results-2010/az9z-tyn9
+#
+# https://www.census.gov/geo/maps-data/data/tiger-data.html
+# https://www2.census.gov/geo/tiger/TIGER2010DP1/
+#   http://www2.census.gov/geo/tiger/TIGER2010DP1/Tract_2010Census_DP1.zip
+
