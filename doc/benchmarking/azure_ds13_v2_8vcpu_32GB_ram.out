@@ -1,0 +1,305 @@
+nohup: ignoring input
+starting ./mapserver_osm_gis_analytics/bin/load_spatial_data  at Thu Aug 30 08:00:09 UTC 2018
+trying 8 parallel jobs
+12448 (process ID) old priority 0, new priority 19
+NOTICE:  materialized view "simple_large_water" does not exist, skipping
+DROP MATERIALIZED VIEW
+NOTICE:  materialized view "simple_large_polygons" does not exist, skipping
+DROP MATERIALIZED VIEW
+NOTICE:  materialized view "planet_admin_boundaries" does not exist, skipping
+DROP MATERIALIZED VIEW
+NOTICE:  table "planet_osm_roads" does not exist, skipping
+DROP TABLE
+NOTICE:  table "planet_osm_polygon" does not exist, skipping
+DROP TABLE
+--2018-08-30 08:00:09--  http://download.bbbike.org/osm/planet/planet-latest.osm.pbf
+Resolving download.bbbike.org (download.bbbike.org)... 138.201.59.14
+Connecting to download.bbbike.org (download.bbbike.org)|138.201.59.14|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 44444988771 (41G) [application/x-pbf]
+Saving to: ‘planet-latest.osm.pbf’
+
+     0K .......... .......... .......... .......... ..........  0%  263K 45h47m
+    50K .......... .......... .......... .......... ..........  0%  527K 34h20m
+   100K .......... .......... .......... .......... ..........  0%  129M 22h55m
+43403250K .......... .......... .......... .......... .......... 99% 15.8M 0s
+43403300K .........                                             100%  301M=23m37s
+
+2018-08-30 08:23:47 (29.9 MB/s) - ‘planet-latest.osm.pbf’ saved [44444988771/44444988771]
+
+osm2pgsql SVN version 0.88.1 (64bit id space)
+
+Using built-in tag processing pipeline
+Using projection SRS 3857 (EPSG:3857)
+Setting up table: planet_osm_point
+Setting up table: planet_osm_line
+Setting up table: planet_osm_polygon
+Setting up table: planet_osm_roads
+Allocating memory for dense node cache
+Allocating dense node cache in one big chunk
+Allocating memory for sparse node cache
+Sharing dense sparse
+Node-cache: cache=30000MB, maxblocks=3840000*8192, allocation method=11
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Allocated space for persistent node cache file
+Maximum node in persistent node cache: 0
+Mid: pgsql, scale=100 cache=30000
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+
+Reading in file: planet-latest.osm.pbf
+Processing: Node(4695188k 1446.5k/s) Way(519982k 28.45k/s) Relation(3373040 69.03/s)
+Standard exception processing relation id=5416751: TopologyException: side location conflict at 3290328.5299999998 8334038.5800000001
+Processing: Node(4695188k 1446.5k/s) Way(519982k 28.45k/s) Relation(3740920 69.62/s)
+Standard exception processing relation id=5892932: TopologyException: side location conflict at 2591494.8799999999 5253466.7800000003
+Processing: Node(4695188k 1446.5k/s) Way(519982k 28.45k/s) Relation(5825750 73.22/s)
+Standard exception processing relation id=8346358: TopologyException: side location conflict at 721638.68999999994 1016915.5699999999
+Processing: Node(4695188k 1446.5k/s) Way(519982k 28.45k/s) Relation(6025710 73.72/s)  parse time: 103266s
+Node stats: total(4695188826), max(5859950885) in 3246s
+Way stats: total(519982451), max(620204251) in 18277s
+Relation stats: total(6025710), max(8601809) in 81743s
+Maximum node in persistent node cache: 5860491263
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+Mid: loading persistent node cache from osm2pgsql.flat_nodes.gis
+Maximum node in persistent node cache: 5860491263
+Setting up table: planet_osm_nodes
+Setting up table: planet_osm_ways
+Setting up table: planet_osm_rels
+Using built-in tag processing pipeline
+
+Going over pending ways...
+	371455513 ways are pending
+
+Using 8 helper-processes
+Finished processing 371455513 ways in 30158 sec
+
+371455513 Pending ways took 30158s at a rate of 12316.98/s
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+Committing transaction for planet_osm_point
+Committing transaction for planet_osm_line
+Committing transaction for planet_osm_polygon
+Committing transaction for planet_osm_roads
+
+Going over pending relations...
+	0 relations are pending
+
+Using 8 helper-processes
+Finished processing 0 relations in 0 sec
+
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_point
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_line
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_polygon
+WARNING:  there is no transaction in progress
+Committing transaction for planet_osm_roads
+WARNING:  there is no transaction in progress
+Stopping table: planet_osm_nodes
+Sorting data and creating indexes for planet_osm_point
+Sorting data and creating indexes for planet_osm_polygon
+Stopping table: planet_osm_ways
+Building index on table: planet_osm_ways
+Sorting data and creating indexes for planet_osm_roads
+Stopping table: planet_osm_rels
+Building index on table: planet_osm_rels
+Sorting data and creating indexes for planet_osm_line
+Stopped table: planet_osm_nodes in 0s
+Copying planet_osm_roads to cluster by geometry finished
+Creating geometry index on  planet_osm_roads
+Stopped table: planet_osm_rels in 2726s
+Creating osm_id index on  planet_osm_roads
+Creating indexes on  planet_osm_roads finished
+All indexes on  planet_osm_roads created  in 3791s
+Completed planet_osm_roads
+Copying planet_osm_point to cluster by geometry finished
+Creating geometry index on  planet_osm_point
+Creating osm_id index on  planet_osm_point
+Creating indexes on  planet_osm_point finished
+All indexes on  planet_osm_point created  in 16882s
+Completed planet_osm_point
+Copying planet_osm_line to cluster by geometry finished
+Creating geometry index on  planet_osm_line
+Creating osm_id index on  planet_osm_line
+Creating indexes on  planet_osm_line finished
+All indexes on  planet_osm_line created  in 29596s
+Completed planet_osm_line
+Copying planet_osm_polygon to cluster by geometry finished
+Creating geometry index on  planet_osm_polygon
+Creating osm_id index on  planet_osm_polygon
+Creating indexes on  planet_osm_polygon finished
+All indexes on  planet_osm_polygon created  in 62591s
+Completed planet_osm_polygon
+Stopped table: planet_osm_ways in 104951s
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+Maximum node in persistent node cache: 5860491263
+node cache: stored: 3585261771(76.36%), storage efficiency: 91.18% (dense blocks: 3521970, sparse nodes: 162831685), hit rate: 21.42%
+
+Osm2pgsql took 238542s overall
+CREATE INDEX
+SELECT 10339
+SELECT 126708
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+FATAL:  terminating connection due to administrator command
+SSL connection has been closed unexpectedly
+connection to server was lost
+psql: FATAL:  the database system is shutting down
+FATAL:  the database system is shutting down
+psql: FATAL:  the database system is shutting down
+FATAL:  the database system is shutting down
+psql: FATAL:  the database system is shutting down
+FATAL:  the database system is shutting down
+psql: FATAL:  the database system is shutting down
+FATAL:  the database system is shutting down
+psql: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+psql: could not connect to server: Connection refused
+	Is the server running on host "localhost" (127.0.0.1) and accepting
+	TCP/IP connections on port 5432?
+psql: could not connect to server: Connection refused
+	Is the server running on host "localhost" (127.0.0.1) and accepting
+	TCP/IP connections on port 5432?
+psql: could not connect to server: Connection refused
+	Is the server running on host "localhost" (127.0.0.1) and accepting
+	TCP/IP connections on port 5432?
+psql: could not connect to server: Connection refused
+	Is the server running on host "localhost" (127.0.0.1) and accepting
+	TCP/IP connections on port 5432?

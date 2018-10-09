@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+# assumes the servers specified in bin/create_azure_gov_environment
+#
+
+#
+# make sure ssh keys exist
+#
+mkdir -p ~/.ssh
+test -f ~/.ssh/id_rsa || ssh-keygen -b 2048 -t rsa -q -N "" -f ~/.ssh/id_rsa
+
+#
+# make sure ssh can connect to all managed servers
+#
+ip_addresses=(10.1.1.4 10.1.1.5 10.1.2.4 10.1.2.5 10.1.2.6 10.1.3.4 127.0.0.1)
+
+for ip in ${ip_addresses[@]}
+do
+  echo "checking $ip"
+  grep -q $ip ~/.ssh/known_hosts || (ssh-keyscan -T 1 -t rsa,dsa $ip  >> ~/.ssh/known_hosts)
+done
+
+for ip in ${ip_addresses[@]}
+do
+  echo "copying public key to $ip"
+  ssh-copy-id -i ~/.ssh/id_rsa.pub $ip
+done
+
+
+# make sure ansible is installed
+sudo apt install -y ansible
+
+mkdir -p ~/.ansible
+cp ./ansible/hosts.small ~/.ansible/hosts
+
+./bin/install_all
+
+
+
+

@@ -6,10 +6,12 @@
     - sysstat
     - jq
     - libdbd-pg-perl
+    - libwww-perl
     - ruby-pg
     - munin-node
 
-# libdbd-pg-perl required for munin-configure to configure its postgres plugins
+# libwww-perl required for munin-node-configure to configure its apache plugins
+# libdbd-pg-perl required for munin-node-configure to configure its postgres plugins
 
 - name: add ansible user
   user: name=ansible
