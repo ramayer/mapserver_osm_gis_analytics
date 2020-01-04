@@ -1,0 +1,19 @@
+#!/bin/bash
+#
+# TODO: make the cache a command line argument
+#
+
+if [ "$1" == "" ]; then
+   printf "Need the name of a cache\n"
+fi
+
+while [ "$1" != "" ]; do
+      case $1 in
+      	   *)
+		arg=$1
+		ansible mapcache -i ~/.ansible/hosts -a "rm -rf /var/cache/mapcache/$arg"  -b
+      esac
+      shift
+done
+
+
